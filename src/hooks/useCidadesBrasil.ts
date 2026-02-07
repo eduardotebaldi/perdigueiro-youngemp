@@ -17,7 +17,7 @@ export interface CidadeBrasil {
   id: number;
   nome: string;
   uf: string;
-  nomeCompleto: string; // "Cidade - UF"
+  nomeCompleto: string; // "Cidade/UF"
 }
 
 export function useCidadesBrasil() {
@@ -40,7 +40,7 @@ export function useCidadesBrasil() {
           id: municipio.id,
           nome: municipio.nome,
           uf: uf,
-          nomeCompleto: uf ? `${municipio.nome} - ${uf}` : municipio.nome,
+          nomeCompleto: uf ? `${municipio.nome}/${uf}` : municipio.nome,
         };
       });
     },

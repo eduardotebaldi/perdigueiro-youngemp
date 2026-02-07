@@ -4,12 +4,15 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Search, Building } from "lucide-react";
 import { useCidades, Cidade } from "@/hooks/useCidades";
+import { useAuth } from "@/contexts/AuthContext";
 import { CidadeCard } from "@/components/cidades/CidadeCard";
 import { CreateCidadeDialog } from "@/components/cidades/CreateCidadeDialog";
 import { EditCidadeDialog } from "@/components/cidades/EditCidadeDialog";
+import { NormalizeCidadesDialog } from "@/components/cidades/NormalizeCidadesDialog";
 
 export default function Cidades() {
   const { cidades, isLoading, deleteCidade } = useCidades();
+  const { isAdmin } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editingCidade, setEditingCidade] = useState<Cidade | null>(null);
@@ -32,10 +35,13 @@ export default function Cidades() {
             Gerencie as cidades e seus planos diretores
           </p>
         </div>
-        <Button onClick={() => setCreateDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nova Cidade
-        </Button>
+        <div className="flex items-center gap-3">
+          {isAdmin && <NormalizeCidadesDialog />}
+          <Button onClick={() => setCreateDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Nova Cidade
+          </Button>
+        </div>
       </div>
 
       {/* Search */}
