@@ -110,10 +110,14 @@ export function GlebaDetailsDialog({
   const getSignedUrl = async (filePath: string): Promise<string | null> => {
     // Extract the storage path from the URL if it's a full URL
     let storagePath = filePath;
-    if (filePath.includes("/storage/v1/object/public/propostas/")) {
-      storagePath = filePath.split("/storage/v1/object/public/propostas/")[1];
-    } else if (filePath.includes("/storage/v1/object/propostas/")) {
-      storagePath = filePath.split("/storage/v1/object/propostas/")[1];
+    
+    // Handle various URL formats from Supabase storage
+    if (filePath.includes("supabase.co/storage/v1/object/")) {
+      // Extract path after the bucket name (propostas/)
+      const match = filePath.match(/\/storage\/v1\/object\/(?:public\/)?propostas\/(.+)/);
+      if (match) {
+        storagePath = match[1];
+      }
     }
     
     const { data, error } = await supabase.storage

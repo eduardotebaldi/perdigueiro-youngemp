@@ -45,10 +45,14 @@ export function PropostaDetailsDialog({ proposta, open, onOpenChange }: Proposta
     try {
       // Extract the storage path from the URL if it's a full URL
       let storagePath = proposta.arquivo_carta;
-      if (storagePath.includes("/storage/v1/object/public/propostas/")) {
-        storagePath = storagePath.split("/storage/v1/object/public/propostas/")[1];
-      } else if (storagePath.includes("/storage/v1/object/propostas/")) {
-        storagePath = storagePath.split("/storage/v1/object/propostas/")[1];
+      
+      // Handle various URL formats from Supabase storage
+      if (storagePath.includes("supabase.co/storage/v1/object/")) {
+        // Extract path after the bucket name (propostas/)
+        const match = storagePath.match(/\/storage\/v1\/object\/(?:public\/)?propostas\/(.+)/);
+        if (match) {
+          storagePath = match[1];
+        }
       }
       
       const signedUrl = await getCartaPropostaUrl(storagePath);
