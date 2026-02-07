@@ -89,24 +89,21 @@ export function GlebaMap({
   const kmzLayerRef = useRef<L.GeoJSON | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Inicializar mapa
+  // Inicializar mapa (apenas uma vez)
   useEffect(() => {
     if (!containerRef.current) return;
 
     if (!mapRef.current) {
       mapRef.current = L.map(containerRef.current).setView(center, zoom);
-
-      const layer = TILE_LAYERS[mapType];
-      tileLayerRef.current = L.tileLayer(layer.url, {
-        attribution: layer.attribution,
-        maxZoom: 19,
-      }).addTo(mapRef.current);
     }
 
     return () => {
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
+        tileLayerRef.current = null;
+        labelsLayerRef.current = null;
+        boundariesLayerRef.current = null;
       }
     };
   }, []);
@@ -115,44 +112,57 @@ export function GlebaMap({
   useEffect(() => {
     if (!mapRef.current) return;
 
-    // Remover camadas anteriores
+    // Remover TODAS as camadas de tiles anteriores
     if (tileLayerRef.current) {
-      tileLayerRef.current.remove();
+      mapRef.current.removeLayer(tileLayerRef.current);
+      tileLayerRef.current = null;
     }
     if (labelsLayerRef.current) {
-      labelsLayerRef.current.remove();
+      mapRef.current.removeLayer(labelsLayerRef.current);
       labelsLayerRef.current = null;
     }
     if (boundariesLayerRef.current) {
-      boundariesLayerRef.current.remove();
+      mapRef.current.removeLayer(boundariesLayerRef.current);
       boundariesLayerRef.current = null;
     }
 
-    // Adicionar camada base
-    const layer = TILE_LAYERS[mapType];
-    tileLayerRef.current = L.tileLayer(layer.url, {
-      attribution: layer.attribution,
-      maxZoom: 19,
-    }).addTo(mapRef.current);
-
-    // Adicionar fronteiras e labels para satélite e híbrido
-    if (mapType === "satellite" || mapType === "hybrid") {
-      // Camada de fronteiras (linhas de estados, países, etc)
-      boundariesLayerRef.current = L.tileLayer(
-        "https://stamen-tiles-{s}.a.ssl.fastly.net/toner-lines/{z}/{x}/{y}{r}.png",
+    // Adicionar camada base conforme o tipo
+    if (mapType === "street") {
+      // Apenas mapa de ruas simples
+      tileLayerRef.current = L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
         {
+          attribution: '&copy; OpenStreetMap',
           maxZoom: 19,
-          opacity: 0.4,
-          subdomains: "abcd",
+        }
+      ).addTo(mapRef.current);
+    } else if (mapType === "satellite") {
+      // Satélite puro (só imagem)
+      tileLayerRef.current = L.tileLayer(
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        {
+          attribution: '&copy; Esri',
+          maxZoom: 19,
+        }
+      ).addTo(mapRef.current);
+    } else if (mapType === "hybrid") {
+      // Híbrido: satélite + labels + fronteiras
+      tileLayerRef.current = L.tileLayer(
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        {
+          attribution: '&copy; Esri',
+          maxZoom: 19,
         }
       ).addTo(mapRef.current);
 
-      // Camada de labels (nomes de cidades, estados, etc)
-      labelsLayerRef.current = L.tileLayer(LABELS_LAYER.url, {
-        attribution: LABELS_LAYER.attribution,
-        maxZoom: 19,
-        pane: "overlayPane",
-      }).addTo(mapRef.current);
+      // Adicionar fronteiras
+      boundariesLayerRef.current = L.tileLayer(
+        "https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png",
+        {
+          maxZoom: 19,
+          subdomains: "abcd",
+        }
+      ).addTo(mapRef.current);
     }
   }, [mapType]);
 
