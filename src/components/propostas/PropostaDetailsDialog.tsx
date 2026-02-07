@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar, FileText, MapPin, Building2, Tag, ExternalLink, Clock, Loader2 } from "lucide-react";
+import { Calendar, FileText, MapPin, Building2, Tag, ExternalLink, Clock, Loader2, DollarSign, Percent } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -131,6 +131,35 @@ export function PropostaDetailsDialog({ proposta, open, onOpenChange }: Proposta
                 })}
               </span>
             </div>
+
+            {/* Preço por hectare - only for compra/mista */}
+            {(proposta.tipo === "compra" || proposta.tipo === "mista") && (proposta as any).preco_ha && (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <DollarSign className="h-4 w-4" />
+                  <span>Preço/ha</span>
+                </div>
+                <span className="font-medium text-green-600">
+                  {new Intl.NumberFormat("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  }).format((proposta as any).preco_ha)}
+                </span>
+              </div>
+            )}
+
+            {/* Percentual proposto - only for parceria/mista */}
+            {(proposta.tipo === "parceria" || proposta.tipo === "mista") && (proposta as any).percentual_proposto && (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Percent className="h-4 w-4" />
+                  <span>Percentual Proposto</span>
+                </div>
+                <span className="font-medium text-purple-600">
+                  {(proposta as any).percentual_proposto}%
+                </span>
+              </div>
+            )}
 
             {/* Created At */}
             <div className="flex items-center justify-between">

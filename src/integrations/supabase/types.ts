@@ -260,6 +260,8 @@ export type Database = {
           descricao: string | null
           gleba_id: string
           id: string
+          percentual_proposto: number | null
+          preco_ha: number | null
           tipo: Database["public"]["Enums"]["tipo_proposta"]
           updated_at: string
         }
@@ -271,6 +273,8 @@ export type Database = {
           descricao?: string | null
           gleba_id: string
           id?: string
+          percentual_proposto?: number | null
+          preco_ha?: number | null
           tipo?: Database["public"]["Enums"]["tipo_proposta"]
           updated_at?: string
         }
@@ -282,6 +286,8 @@ export type Database = {
           descricao?: string | null
           gleba_id?: string
           id?: string
+          percentual_proposto?: number | null
+          preco_ha?: number | null
           tipo?: Database["public"]["Enums"]["tipo_proposta"]
           updated_at?: string
         }
