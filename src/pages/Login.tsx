@@ -110,8 +110,7 @@ export default function Login() {
 
         <div className="space-y-6">
           <h1 className="text-4xl font-bold text-secondary-foreground leading-tight">
-            Sistema de Mapeamento <br />
-            <span className="text-primary">de Glebas</span>
+            Perdigueiro
           </h1>
           <p className="text-secondary-foreground/70 text-lg max-w-md">
             Gerencie terrenos potenciais, acompanhe propostas e visualize suas glebas 
