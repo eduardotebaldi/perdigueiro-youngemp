@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { CreateGlebaDialog } from "@/components/glebas/CreateGlebaDialog";
+import { EditGlebaDialog } from "@/components/glebas/EditGlebaDialog";
 import { GlebaKanban } from "@/components/glebas/GlebaKanban";
 import { Tables } from "@/integrations/supabase/types";
 import { Kanban, Zap } from "lucide-react";
@@ -24,6 +25,13 @@ export default function Glebas() {
         </div>
         <CreateGlebaDialog />
       </div>
+
+      {/* Edit Dialog */}
+      <EditGlebaDialog
+        gleba={editingGleba}
+        open={!!editingGleba}
+        onOpenChange={(open) => !open && setEditingGleba(null)}
+      />
 
       {/* Info Card */}
       <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 flex gap-3">
