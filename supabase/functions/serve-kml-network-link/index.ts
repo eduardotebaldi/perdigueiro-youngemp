@@ -45,6 +45,7 @@ const STATUS_STYLES: Record<string, { fill: string; line: string; label: string 
 
 interface Gleba {
   id: string;
+  numero: number | null;
   apelido: string;
   status: string;
   tamanho_m2: number | null;
@@ -52,6 +53,8 @@ interface Gleba {
   proprietario_nome: string | null;
   poligono_geojson: any;
   prioridade: boolean;
+  aceita_permuta: string | null;
+  comentarios: string | null;
   cidade?: { nome: string } | null;
 }
 
@@ -121,6 +124,12 @@ function escapeXml(text: string): string {
     .replace(/'/g, "&apos;");
 }
 
+function formatPermuta(value: string | null): string {
+  if (value === "sim") return "Sim";
+  if (value === "nao") return "Não";
+  return "Incerto";
+}
+
 function generatePlacemarkDescription(gleba: Gleba, appUrl: string): string {
   const style = STATUS_STYLES[gleba.status] || { label: gleba.status };
   const detailsUrl = `${appUrl}/glebas?id=${gleba.id}`;
@@ -128,7 +137,7 @@ function generatePlacemarkDescription(gleba: Gleba, appUrl: string): string {
   return `<![CDATA[
     <div style="font-family: Arial, sans-serif; max-width: 320px; padding: 10px;">
       <h2 style="margin: 0 0 12px 0; color: #1a1a1a; font-size: 18px; border-bottom: 2px solid #FE5009; padding-bottom: 8px;">
-        ${escapeXml(gleba.apelido)}
+        ${gleba.numero ? `#${gleba.numero} - ` : ""}${escapeXml(gleba.apelido)}
       </h2>
       
       <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px;">
@@ -154,7 +163,17 @@ function generatePlacemarkDescription(gleba: Gleba, appUrl: string): string {
           <td style="padding: 6px 0; color: #666; font-size: 13px;">Proprietário:</td>
           <td style="padding: 6px 0; font-size: 13px;">${escapeXml(gleba.proprietario_nome)}</td>
         </tr>` : ""}
+        <tr>
+          <td style="padding: 6px 0; color: #666; font-size: 13px;">Aceita Permuta:</td>
+          <td style="padding: 6px 0; font-size: 13px;">${formatPermuta(gleba.aceita_permuta)}</td>
+        </tr>
       </table>
+      
+      ${gleba.comentarios ? `
+      <div style="margin-bottom: 12px; padding: 10px; background: #f5f5f5; border-radius: 6px; border-left: 3px solid #FE5009;">
+        <div style="color: #666; font-size: 11px; margin-bottom: 4px;">Comentários:</div>
+        <div style="font-size: 13px; color: #333;">${escapeXml(gleba.comentarios)}</div>
+      </div>` : ""}
       
       ${gleba.prioridade ? `<div style="margin-bottom: 12px; color: #ff6600; font-weight: bold; font-size: 14px;">⭐ Gleba Prioritária</div>` : ""}
       
@@ -229,9 +248,11 @@ function generateKml(glebas: Gleba[], appUrl: string): string {
             <coordinates>${coordinates}</coordinates>
           </Point>`;
 
+      const title = gleba.numero ? `#${gleba.numero} - ${gleba.apelido}` : gleba.apelido;
+      
       return `
     <Placemark id="${gleba.id}">
-      <name>${escapeXml(gleba.apelido)}</name>
+      <name>${escapeXml(title)}</name>
       <description>${generatePlacemarkDescription(gleba, appUrl)}</description>
       <styleUrl>#${styleId}</styleUrl>
       ${geometry}
@@ -303,6 +324,7 @@ Deno.serve(async (req) => {
       .from("glebas")
       .select(`
         id,
+        numero,
         apelido,
         status,
         tamanho_m2,
@@ -310,6 +332,8 @@ Deno.serve(async (req) => {
         proprietario_nome,
         poligono_geojson,
         prioridade,
+        aceita_permuta,
+        comentarios,
         cidade:cidades(nome)
       `)
       .not("poligono_geojson", "is", null);

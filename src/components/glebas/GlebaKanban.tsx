@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, useMemo } from "react";
 import {
   DndContext,
   DragEndEvent,
@@ -16,7 +16,8 @@ import { GlebaCard } from "./GlebaCard";
 import { useToast } from "@/hooks/use-toast";
 import { Tables } from "@/integrations/supabase/types";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Loader2, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Gleba = Tables<"glebas">;
@@ -132,8 +133,28 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
   const { glebas, isLoading, getGlebasByStatus } = useGlebas();
   const { toast } = useToast();
   
+  // Estado para pesquisa
+  const [searchTerm, setSearchTerm] = useState("");
+  
   // Estado para colunas colapsadas
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
+
+  // Filtrar glebas por número ou apelido
+  const filteredGlebas = useMemo(() => {
+    if (!searchTerm.trim()) return glebas;
+    
+    const term = searchTerm.toLowerCase().trim();
+    return glebas.filter((gleba) => {
+      const matchesApelido = gleba.apelido.toLowerCase().includes(term);
+      const matchesNumero = gleba.numero?.toString().includes(term);
+      return matchesApelido || matchesNumero;
+    });
+  }, [glebas, searchTerm]);
+
+  // Função para obter glebas filtradas por status
+  const getFilteredGlebasByStatus = useCallback((status: string) => {
+    return filteredGlebas.filter((g) => g.status === status);
+  }, [filteredGlebas]);
 
   const toggleColumnCollapse = (status: string) => {
     setCollapsedColumns((prev) => {
@@ -174,25 +195,43 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
   }
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCorners}
-      onDragEnd={handleDragEnd}
-    >
-      <div className="overflow-x-auto pb-4">
-        <div className="flex gap-4 min-w-min">
-          {STATUS_ORDER.map((status) => (
-            <KanbanColumn
-              key={status}
-              status={status}
-              glebas={getGlebasByStatus(status)}
-              onViewGleba={onViewGleba}
-              isCollapsed={collapsedColumns.has(status)}
-              onToggleCollapse={() => toggleColumnCollapse(status)}
-            />
-          ))}
-        </div>
+    <div className="space-y-4">
+      {/* Campo de pesquisa */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Pesquisar por número ou apelido..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-10"
+        />
+        {searchTerm && (
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+            {filteredGlebas.length} resultado{filteredGlebas.length !== 1 ? "s" : ""}
+          </span>
+        )}
       </div>
-    </DndContext>
+
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="overflow-x-auto pb-4">
+          <div className="flex gap-4 min-w-min">
+            {STATUS_ORDER.map((status) => (
+              <KanbanColumn
+                key={status}
+                status={status}
+                glebas={getFilteredGlebasByStatus(status)}
+                onViewGleba={onViewGleba}
+                isCollapsed={collapsedColumns.has(status)}
+                onToggleCollapse={() => toggleColumnCollapse(status)}
+              />
+            ))}
+          </div>
+        </div>
+      </DndContext>
+    </div>
   );
 }
