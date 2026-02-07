@@ -1,1 +1,4 @@
 project_id = "vvtympzatclvjaqucebr"
+
+[functions.serve-kml-network-link]
+verify_jwt = false

@@ -12,7 +12,11 @@ import {
   Layers, 
   X,
   MapPin,
-  Satellite
+  Satellite,
+  Globe,
+  Copy,
+  Check,
+  ExternalLink
 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -22,11 +26,22 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 type Gleba = Tables<"glebas">;
 type MapType = "street" | "satellite" | "hybrid";
+
+const NETWORK_LINK_URL = "https://vvtympzatclvjaqucebr.supabase.co/functions/v1/serve-kml-network-link";
 
 export default function Mapa() {
   const { glebas, isLoading, createGleba } = useGlebas();
@@ -35,6 +50,8 @@ export default function Mapa() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mapType, setMapType] = useState<MapType>("street");
   const [isImporting, setIsImporting] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [googleEarthDialogOpen, setGoogleEarthDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -77,6 +94,24 @@ export default function Mapa() {
     }
   };
 
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(NETWORK_LINK_URL);
+      setCopied(true);
+      toast({
+        title: "Link copiado!",
+        description: "Cole este link no Google Earth para sincronizar as glebas",
+      });
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast({
+        variant: "destructive",
+        title: "Erro ao copiar",
+        description: "Não foi possível copiar o link",
+      });
+    }
+  };
+
   const mapTypeLabels: Record<MapType, { label: string; icon: React.ReactNode }> = {
     street: { label: "Ruas", icon: <MapPin className="h-4 w-4" /> },
     satellite: { label: "Satélite", icon: <Satellite className="h-4 w-4" /> },
@@ -96,6 +131,82 @@ export default function Mapa() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Google Earth Integration */}
+          <Dialog open={googleEarthDialogOpen} onOpenChange={setGoogleEarthDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Globe className="h-4 w-4 mr-2" />
+                Google Earth
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Globe className="h-5 w-5" />
+                  Integração Google Earth
+                </DialogTitle>
+                <DialogDescription>
+                  Sincronize as glebas do sistema com o Google Earth Web usando Network Link
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">
+                    Link de Integração (Network Link)
+                  </label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={NETWORK_LINK_URL}
+                      readOnly
+                      className="font-mono text-xs"
+                    />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={handleCopyLink}
+                    >
+                      {copied ? (
+                        <Check className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+                  <h4 className="font-medium text-sm">Como usar no Google Earth:</h4>
+                  <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
+                    <li>Acesse <a href="https://earth.google.com/web" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">earth.google.com/web</a></li>
+                    <li>Clique em <strong>Projetos</strong> no menu lateral</li>
+                    <li>Clique em <strong>Novo projeto</strong> → <strong>Importar arquivo KML</strong></li>
+                    <li>Cole o link acima ou baixe o arquivo KML primeiro</li>
+                    <li>As glebas aparecerão coloridas por status</li>
+                  </ol>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => window.open(NETWORK_LINK_URL, "_blank")}
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Baixar KML
+                  </Button>
+                  <Button
+                    className="flex-1"
+                    onClick={() => window.open("https://earth.google.com/web", "_blank")}
+                  >
+                    <Globe className="h-4 w-4 mr-2" />
+                    Abrir Google Earth
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
           {/* Importar KMZ */}
           <Button
             variant="outline"
