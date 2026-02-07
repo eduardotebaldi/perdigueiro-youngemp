@@ -43,7 +43,15 @@ export function PropostaDetailsDialog({ proposta, open, onOpenChange }: Proposta
     
     setIsLoadingFile(true);
     try {
-      const signedUrl = await getCartaPropostaUrl(proposta.arquivo_carta);
+      // Extract the storage path from the URL if it's a full URL
+      let storagePath = proposta.arquivo_carta;
+      if (storagePath.includes("/storage/v1/object/public/propostas/")) {
+        storagePath = storagePath.split("/storage/v1/object/public/propostas/")[1];
+      } else if (storagePath.includes("/storage/v1/object/propostas/")) {
+        storagePath = storagePath.split("/storage/v1/object/propostas/")[1];
+      }
+      
+      const signedUrl = await getCartaPropostaUrl(storagePath);
       if (signedUrl) {
         window.open(signedUrl, "_blank");
       } else {
