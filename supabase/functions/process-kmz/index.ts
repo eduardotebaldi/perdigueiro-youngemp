@@ -89,6 +89,12 @@ async function downloadFromDriveApi(fileId: string, accessToken: string): Promis
 
   if (!response.ok) {
     const errorText = await response.text();
+    
+    // Check if this is a non-binary file (shortcut, Google Doc, etc.)
+    if (errorText.includes("fileNotDownloadable") || errorText.includes("Only files with binary content")) {
+      throw new Error("NOT_A_BINARY_FILE");
+    }
+    
     throw new Error(`Drive API error: ${response.status} - ${errorText}`);
   }
 
@@ -101,7 +107,7 @@ async function downloadKmzFile(
   kmzUrl: string, 
   fileId: string | null,
   credentials: ServiceAccountCredentials | null
-): Promise<Uint8Array> {
+): Promise<Uint8Array | null> {
   
   // If we have a file ID and credentials, try API first (more reliable)
   if (fileId && credentials) {
@@ -109,6 +115,11 @@ async function downloadKmzFile(
       const accessToken = await getGoogleAccessToken(credentials);
       return await downloadFromDriveApi(fileId, accessToken);
     } catch (apiError: any) {
+      // If the file is not a binary (it's a shortcut or Google Doc), return null
+      if (apiError.message === "NOT_A_BINARY_FILE") {
+        console.log(`File ${fileId} is not a binary file (shortcut or Google Doc). Skipping.`);
+        return null;
+      }
       console.log(`Drive API failed: ${apiError.message}, trying public download...`);
     }
   }
@@ -300,11 +311,25 @@ serve(async (req) => {
     // Download the KMZ file
     const kmzBytes = await downloadKmzFile(kmzUrl, fileId, credentials);
 
+    // If the file couldn't be downloaded (e.g., it's a shortcut or Google Doc)
+    if (!kmzBytes) {
+      console.log("File is not a binary file (shortcut or Google Doc). Returning success without polygon.");
+      return new Response(
+        JSON.stringify({
+          success: true,
+          geojson: null,
+          kmzStoragePath: null,
+          kmzPublicUrl: null,
+          warning: "O arquivo não é um KMZ válido (pode ser um atalho ou documento do Google)."
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Validate it's a ZIP file (KMZ starts with PK)
     if (kmzBytes[0] !== 0x50 || kmzBytes[1] !== 0x4B) {
       console.error("File does not start with PK signature. First bytes:", kmzBytes.slice(0, 20));
       throw new Error("Downloaded file is not a valid KMZ/ZIP file.");
-    }
 
     console.log("KMZ file validated, extracting...");
 
