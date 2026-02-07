@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import JSZip from "https://esm.sh/jszip@3.10.1";
 import { DOMParser } from "https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts";
+import { create, getNumericDate } from "https://deno.land/x/djwt@v2.8/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,6 +12,174 @@ const corsHeaders = {
 interface ProcessKmzRequest {
   kmzUrl: string;
   glebaApelido: string;
+}
+
+interface ServiceAccountCredentials {
+  client_email: string;
+  private_key: string;
+}
+
+// Create a JWT token for Google API authentication
+async function getGoogleAccessToken(credentials: ServiceAccountCredentials): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+  
+  // Clean the private key - handle escaped newlines
+  const privateKeyPem = credentials.private_key.replace(/\\n/g, '\n');
+  
+  // Parse the PEM key
+  const pemHeader = "-----BEGIN PRIVATE KEY-----";
+  const pemFooter = "-----END PRIVATE KEY-----";
+  const pemContents = privateKeyPem
+    .replace(pemHeader, "")
+    .replace(pemFooter, "")
+    .replace(/\s/g, "");
+  
+  const binaryKey = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0));
+  
+  // Import the key for RS256
+  const cryptoKey = await crypto.subtle.importKey(
+    "pkcs8",
+    binaryKey,
+    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+
+  // Create JWT
+  const jwt = await create(
+    { alg: "RS256", typ: "JWT" },
+    {
+      iss: credentials.client_email,
+      scope: "https://www.googleapis.com/auth/drive.readonly",
+      aud: "https://oauth2.googleapis.com/token",
+      iat: getNumericDate(0),
+      exp: getNumericDate(60 * 60), // 1 hour
+    },
+    cryptoKey
+  );
+
+  // Exchange JWT for access token
+  const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+      assertion: jwt,
+    }),
+  });
+
+  if (!tokenResponse.ok) {
+    const errorText = await tokenResponse.text();
+    throw new Error(`Failed to get access token: ${errorText}`);
+  }
+
+  const tokenData = await tokenResponse.json();
+  return tokenData.access_token;
+}
+
+// Download file using Google Drive API
+async function downloadFromDriveApi(fileId: string, accessToken: string): Promise<Uint8Array> {
+  console.log(`Downloading file ${fileId} via Google Drive API...`);
+  
+  const response = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Drive API error: ${response.status} - ${errorText}`);
+  }
+
+  const buffer = await response.arrayBuffer();
+  return new Uint8Array(buffer);
+}
+
+// Try public download first, then fall back to API
+async function downloadKmzFile(
+  kmzUrl: string, 
+  fileId: string | null,
+  credentials: ServiceAccountCredentials | null
+): Promise<Uint8Array> {
+  
+  // If we have a file ID and credentials, try API first (more reliable)
+  if (fileId && credentials) {
+    try {
+      const accessToken = await getGoogleAccessToken(credentials);
+      return await downloadFromDriveApi(fileId, accessToken);
+    } catch (apiError: any) {
+      console.log(`Drive API failed: ${apiError.message}, trying public download...`);
+    }
+  }
+
+  // Try public download
+  const downloadUrl = fileId 
+    ? `https://drive.google.com/uc?export=download&id=${fileId}`
+    : kmzUrl;
+  
+  console.log(`Trying public download: ${downloadUrl}`);
+  
+  let response = await fetch(downloadUrl, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+    },
+    redirect: 'follow',
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Failed to download KMZ: ${response.status} - ${response.statusText}`);
+  }
+
+  let buffer = await response.arrayBuffer();
+  let bytes = new Uint8Array(buffer);
+
+  // Check if we got HTML (confirmation page)
+  const textDecoder = new TextDecoder();
+  const firstBytes = textDecoder.decode(bytes.slice(0, 500));
+  
+  if (firstBytes.includes("<!DOCTYPE") || firstBytes.includes("<html")) {
+    console.log("Got HTML confirmation page...");
+    
+    if (fileId) {
+      // Try confirm=1
+      const confirmUrl = `https://drive.google.com/uc?export=download&confirm=1&id=${fileId}`;
+      console.log(`Trying confirm URL: ${confirmUrl}`);
+      
+      response = await fetch(confirmUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        },
+        redirect: 'follow',
+      });
+      
+      if (response.ok) {
+        buffer = await response.arrayBuffer();
+        bytes = new Uint8Array(buffer);
+        
+        const checkBytes = textDecoder.decode(bytes.slice(0, 500));
+        if (!checkBytes.includes("<!DOCTYPE") && !checkBytes.includes("<html")) {
+          return bytes; // Success!
+        }
+      }
+      
+      // Last resort: try API if we have credentials
+      if (credentials) {
+        console.log("Falling back to Drive API...");
+        const accessToken = await getGoogleAccessToken(credentials);
+        return await downloadFromDriveApi(fileId, accessToken);
+      }
+      
+      throw new Error("Não foi possível baixar o arquivo. Verifique se o arquivo está compartilhado com a Service Account ou publicamente.");
+    }
+    
+    throw new Error("Received HTML instead of KMZ file. The URL may not be a valid direct download link.");
+  }
+
+  return bytes;
 }
 
 serve(async (req) => {
@@ -47,10 +216,19 @@ serve(async (req) => {
 
     console.log(`Processing KMZ from: ${kmzUrl}`);
 
-    // Convert Google Drive links to direct download URLs
-    let downloadUrl = kmzUrl;
-    
-    // Handle various Google Drive URL formats
+    // Get Service Account credentials if available
+    let credentials: ServiceAccountCredentials | null = null;
+    try {
+      const serviceAccountJson = Deno.env.get("GOOGLE_SERVICE_ACCOUNT_JSON");
+      if (serviceAccountJson) {
+        credentials = JSON.parse(serviceAccountJson);
+        console.log(`Using Service Account: ${credentials?.client_email}`);
+      }
+    } catch (e) {
+      console.log("No valid Service Account credentials found, will try public download");
+    }
+
+    // Extract file ID from Google Drive URLs
     const drivePatterns = [
       /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/,
       /drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/,
@@ -62,67 +240,18 @@ serve(async (req) => {
       const match = kmzUrl.match(pattern);
       if (match) {
         fileId = match[1];
-        downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
-        console.log(`Converted to direct download: ${downloadUrl}`);
+        console.log(`Extracted file ID: ${fileId}`);
         break;
       }
     }
 
     // Download the KMZ file
-    let kmzResponse = await fetch(downloadUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      },
-      redirect: 'follow',
-    });
-    
-    if (!kmzResponse.ok) {
-      throw new Error(`Failed to download KMZ: ${kmzResponse.status} - ${kmzResponse.statusText}`);
-    }
-
-    let kmzBuffer = await kmzResponse.arrayBuffer();
-    let kmzBytes = new Uint8Array(kmzBuffer);
-
-    // Check if we got an HTML page instead of a file (Google Drive confirmation page)
-    const textDecoder = new TextDecoder();
-    const firstBytes = textDecoder.decode(kmzBytes.slice(0, 500));
-    
-    if (firstBytes.includes("<!DOCTYPE") || firstBytes.includes("<html")) {
-      console.log("Got HTML confirmation page, trying alternative download method...");
-      
-      if (fileId) {
-        // Try the confirm=1 parameter to bypass confirmation
-        const confirmUrl = `https://drive.google.com/uc?export=download&confirm=1&id=${fileId}`;
-        console.log(`Trying confirm URL: ${confirmUrl}`);
-        
-        kmzResponse = await fetch(confirmUrl, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          },
-          redirect: 'follow',
-        });
-        
-        if (!kmzResponse.ok) {
-          throw new Error(`Failed to download KMZ with confirm: ${kmzResponse.status}`);
-        }
-        
-        kmzBuffer = await kmzResponse.arrayBuffer();
-        kmzBytes = new Uint8Array(kmzBuffer);
-        
-        // Check again
-        const checkBytes = textDecoder.decode(kmzBytes.slice(0, 500));
-        if (checkBytes.includes("<!DOCTYPE") || checkBytes.includes("<html")) {
-          throw new Error("Google Drive requires manual confirmation for this file. Please make sure the file is shared with 'Anyone with the link' and is small enough for direct download.");
-        }
-      } else {
-        throw new Error("Received HTML instead of KMZ file. The URL may not be a valid direct download link.");
-      }
-    }
+    const kmzBytes = await downloadKmzFile(kmzUrl, fileId, credentials);
 
     // Validate it's a ZIP file (KMZ starts with PK)
     if (kmzBytes[0] !== 0x50 || kmzBytes[1] !== 0x4B) {
       console.error("File does not start with PK signature. First bytes:", kmzBytes.slice(0, 20));
-      throw new Error("Downloaded file is not a valid KMZ/ZIP file. Check if the Google Drive file is shared publicly.");
+      throw new Error("Downloaded file is not a valid KMZ/ZIP file.");
     }
 
     // Unzip the KMZ to get KML
