@@ -416,13 +416,12 @@ export default function Mapa() {
           </SheetHeader>
           {selectedGleba && (
             <div className="mt-4">
-              <GlebaCard 
-                gleba={selectedGleba} 
-                onEdit={(g) => {
-                  setEditingGleba(g);
-                  setSelectedGleba(null);
-                }}
-              />
+              <div onClick={() => {
+                setEditingGleba(selectedGleba);
+                setSelectedGleba(null);
+              }}>
+                <GlebaCard gleba={selectedGleba} />
+              </div>
             </div>
           )}
         </SheetContent>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { CreateGlebaDialog } from "@/components/glebas/CreateGlebaDialog";
 import { EditGlebaDialog } from "@/components/glebas/EditGlebaDialog";
+import { GlebaDetailsDialog } from "@/components/glebas/GlebaDetailsDialog";
 import { ImportGlebasDialog } from "@/components/glebas/ImportGlebasDialog";
 import { GlebaKanban } from "@/components/glebas/GlebaKanban";
 import { GlebaTable } from "@/components/glebas/GlebaTable";
@@ -17,10 +18,20 @@ type Gleba = Tables<"glebas">;
 type ViewMode = "kanban" | "table";
 
 export default function Glebas() {
+  const [viewingGleba, setViewingGleba] = useState<Gleba | null>(null);
   const [editingGleba, setEditingGleba] = useState<Gleba | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("kanban");
   const [showConfig, setShowConfig] = useState(false);
   const { isAdmin } = useAuth();
+
+  const handleViewGleba = (gleba: Gleba) => {
+    setViewingGleba(gleba);
+  };
+
+  const handleEditGleba = (gleba: Gleba) => {
+    setViewingGleba(null);
+    setEditingGleba(gleba);
+  };
 
   return (
     <div className="space-y-6">
@@ -79,6 +90,14 @@ export default function Glebas() {
         </div>
       </div>
 
+      {/* Details Dialog - View only */}
+      <GlebaDetailsDialog
+        gleba={viewingGleba}
+        open={!!viewingGleba}
+        onOpenChange={(open) => !open && setViewingGleba(null)}
+        onEdit={handleEditGleba}
+      />
+
       {/* Edit Dialog */}
       <EditGlebaDialog
         gleba={editingGleba}
@@ -93,21 +112,21 @@ export default function Glebas() {
           <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 flex gap-3">
             <Zap className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
             <div>
-              <p className="font-medium text-sm">Dica: Arraste os cards entre as colunas</p>
+              <p className="font-medium text-sm">Dica: Clique em um card para ver detalhes</p>
               <p className="text-sm text-muted-foreground">
-                O status será atualizado automaticamente quando você mover uma gleba
+                Arraste os cards entre as colunas para atualizar o status
               </p>
             </div>
           </div>
 
           {/* Kanban Board */}
-          <GlebaKanban onEditGleba={setEditingGleba} />
+          <GlebaKanban onViewGleba={handleViewGleba} />
         </>
       )}
 
       {/* Table View */}
       {viewMode === "table" && (
-        <GlebaTable onEditGleba={setEditingGleba} />
+        <GlebaTable onViewGleba={handleViewGleba} />
       )}
     </div>
   );

@@ -8,7 +8,6 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import {
-  arrayMove,
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
@@ -16,7 +15,6 @@ import { useGlebas, STATUS_ORDER, STATUS_LABELS } from "@/hooks/useGlebas";
 import { GlebaCard } from "./GlebaCard";
 import { useToast } from "@/hooks/use-toast";
 import { Tables } from "@/integrations/supabase/types";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 
@@ -25,7 +23,7 @@ type Gleba = Tables<"glebas">;
 interface KanbanColumnProps {
   status: string;
   glebas: Gleba[];
-  onEditGleba?: (gleba: Gleba) => void;
+  onViewGleba?: (gleba: Gleba) => void;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -52,7 +50,7 @@ const BADGE_COLORS: Record<string, string> = {
   standby: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
 };
 
-function KanbanColumn({ status, glebas, onEditGleba }: KanbanColumnProps) {
+function KanbanColumn({ status, glebas, onViewGleba }: KanbanColumnProps) {
   return (
     <div className={`flex flex-col bg-muted/30 rounded-lg p-4 border-2 ${STATUS_COLORS[status]} min-h-[600px] flex-shrink-0 w-80`}>
       <div className="flex items-center justify-between mb-4">
@@ -68,8 +66,8 @@ function KanbanColumn({ status, glebas, onEditGleba }: KanbanColumnProps) {
       >
         <div className="space-y-3 flex-1">
           {glebas.map((gleba) => (
-            <div key={gleba.id} draggable>
-              <GlebaCard gleba={gleba} onEdit={onEditGleba} />
+            <div key={gleba.id} draggable onClick={() => onViewGleba?.(gleba)}>
+              <GlebaCard gleba={gleba} />
             </div>
           ))}
           {glebas.length === 0 && (
@@ -84,11 +82,11 @@ function KanbanColumn({ status, glebas, onEditGleba }: KanbanColumnProps) {
 }
 
 interface GlebaKanbanProps {
-  onEditGleba?: (gleba: Gleba) => void;
+  onViewGleba?: (gleba: Gleba) => void;
 }
 
-export function GlebaKanban({ onEditGleba }: GlebaKanbanProps) {
-  const { glebas, isLoading, updateGlebaStatus, getGlebasByStatus } = useGlebas();
+export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
+  const { glebas, isLoading, getGlebasByStatus } = useGlebas();
   const { toast } = useToast();
 
   const sensors = useSensors(
@@ -101,8 +99,6 @@ export function GlebaKanban({ onEditGleba }: GlebaKanbanProps) {
 
       if (!over || active.id === over.id) return;
 
-      // In a real implementation, you would need to track which column each item is in
-      // For now, this is a basic structure that can be enhanced
       toast({
         title: "Aviso",
         description: "Drag and drop será implementado em breve com interatividade completa.",
@@ -132,7 +128,7 @@ export function GlebaKanban({ onEditGleba }: GlebaKanbanProps) {
               key={status}
               status={status}
               glebas={getGlebasByStatus(status)}
-              onEditGleba={onEditGleba}
+              onViewGleba={onViewGleba}
             />
           ))}
         </div>
