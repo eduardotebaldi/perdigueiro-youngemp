@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Tables } from "@/integrations/supabase/types";
 import {
   Dialog,
@@ -26,10 +27,13 @@ import {
   Percent,
   MessageSquare,
   ClipboardList,
+  Receipt,
+  Loader2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { GlebaAtividades } from "./GlebaAtividades";
+import { toast } from "sonner";
 
 type Gleba = Tables<"glebas">;
 
@@ -83,7 +87,64 @@ export function GlebaDetailsDialog({
     },
   });
 
+  // Fetch propostas for this gleba
+  const { data: propostas } = useQuery({
+    queryKey: ["propostas", "gleba", gleba?.id],
+    queryFn: async () => {
+      if (!gleba?.id) return [];
+      const { data, error } = await supabase
+        .from("propostas")
+        .select("*")
+        .eq("gleba_id", gleba.id)
+        .order("data_proposta", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!gleba?.id,
+  });
+
+  const [loadingFile, setLoadingFile] = useState<string | null>(null);
+
   if (!gleba) return null;
+
+  const getSignedUrl = async (filePath: string): Promise<string | null> => {
+    // Extract the storage path from the URL if it's a full URL
+    let storagePath = filePath;
+    if (filePath.includes("/storage/v1/object/public/propostas/")) {
+      storagePath = filePath.split("/storage/v1/object/public/propostas/")[1];
+    } else if (filePath.includes("/storage/v1/object/propostas/")) {
+      storagePath = filePath.split("/storage/v1/object/propostas/")[1];
+    }
+    
+    const { data, error } = await supabase.storage
+      .from("propostas")
+      .createSignedUrl(storagePath, 3600);
+    
+    if (error) {
+      console.error("Error creating signed URL:", error);
+      return null;
+    }
+    return data.signedUrl;
+  };
+
+  const handleOpenPropostaFile = async (proposta: Tables<"propostas">) => {
+    if (!proposta.arquivo_carta) return;
+    
+    setLoadingFile(proposta.id);
+    try {
+      const signedUrl = await getSignedUrl(proposta.arquivo_carta);
+      if (signedUrl) {
+        window.open(signedUrl, "_blank");
+      } else {
+        toast.error("Não foi possível acessar o arquivo");
+      }
+    } catch (error) {
+      console.error("Error getting signed URL:", error);
+      toast.error("Erro ao acessar o arquivo");
+    } finally {
+      setLoadingFile(null);
+    }
+  };
 
   const getCidadeName = (cidadeId: string | null) => {
     if (!cidadeId) return null;
@@ -393,6 +454,72 @@ export function GlebaDetailsDialog({
                   </a>
                 </Button>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Propostas */}
+        {propostas && propostas.length > 0 && (
+          <div className="mt-6">
+            <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+              <Receipt className="h-5 w-5 text-primary" />
+              Propostas ({propostas.length})
+            </h3>
+            <div className="bg-muted/30 rounded-lg p-4 space-y-3">
+              {propostas.map((proposta) => (
+                <div
+                  key={proposta.id}
+                  className="flex items-center justify-between p-3 bg-background rounded-lg border"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant="outline"
+                          className={
+                            proposta.tipo === "compra"
+                              ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                              : proposta.tipo === "parceria"
+                              ? "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
+                              : "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200"
+                          }
+                        >
+                          {proposta.tipo === "compra"
+                            ? "Compra"
+                            : proposta.tipo === "parceria"
+                            ? "Parceria"
+                            : "Mista"}
+                        </Badge>
+                        <span className="text-sm text-muted-foreground">
+                          {format(new Date(proposta.data_proposta + "T00:00:00"), "dd/MM/yyyy", {
+                            locale: ptBR,
+                          })}
+                        </span>
+                      </div>
+                      {proposta.descricao && (
+                        <p className="text-sm text-muted-foreground mt-1 line-clamp-1">
+                          {proposta.descricao}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  {proposta.arquivo_carta && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleOpenPropostaFile(proposta)}
+                      disabled={loadingFile === proposta.id}
+                    >
+                      {loadingFile === proposta.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <ExternalLink className="h-4 w-4" />
+                      )}
+                      <span className="ml-2">Abrir</span>
+                    </Button>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         )}
