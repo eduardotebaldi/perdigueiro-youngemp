@@ -35,10 +35,36 @@ serve(async (req) => {
 
     console.log(`Processing KMZ from: ${kmzUrl}`);
 
+    // Convert Google Drive links to direct download URLs
+    let downloadUrl = kmzUrl;
+    
+    // Handle various Google Drive URL formats
+    const drivePatterns = [
+      /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/,
+      /drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/,
+      /docs\.google\.com\/.*\/d\/([a-zA-Z0-9_-]+)/,
+    ];
+    
+    for (const pattern of drivePatterns) {
+      const match = kmzUrl.match(pattern);
+      if (match) {
+        const fileId = match[1];
+        downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+        console.log(`Converted to direct download: ${downloadUrl}`);
+        break;
+      }
+    }
+
     // Download the KMZ file
-    const kmzResponse = await fetch(kmzUrl);
+    const kmzResponse = await fetch(downloadUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      },
+      redirect: 'follow',
+    });
+    
     if (!kmzResponse.ok) {
-      throw new Error(`Failed to download KMZ: ${kmzResponse.status}`);
+      throw new Error(`Failed to download KMZ: ${kmzResponse.status} - ${kmzResponse.statusText}`);
     }
 
     const kmzBuffer = await kmzResponse.arrayBuffer();
