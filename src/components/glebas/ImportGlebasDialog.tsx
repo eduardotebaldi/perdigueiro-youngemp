@@ -200,20 +200,27 @@ export function ImportGlebasDialog() {
         let geojson: any = null;
 
         // Process KMZ if link provided
-        if (row.kmzLink && row.kmzLink.startsWith("http")) {
+        if (row.kmzLink && row.kmzLink.trim()) {
           try {
+            console.log(`Processing KMZ for ${row.apelido}: ${row.kmzLink}`);
             const { data, error } = await supabase.functions.invoke("process-kmz", {
-              body: { kmzUrl: row.kmzLink, glebaApelido: row.apelido },
+              body: { kmzUrl: row.kmzLink.trim(), glebaApelido: row.apelido },
             });
 
-            if (error) throw error;
+            if (error) {
+              console.error(`KMZ error response: ${JSON.stringify(error)}`);
+              throw error;
+            }
             
-            if (data.success) {
+            if (data && data.success) {
+              console.log(`KMZ processed successfully for ${row.apelido}`);
               kmzStoragePath = data.kmzStoragePath;
               geojson = data.geojson;
+            } else {
+              console.warn(`KMZ processing returned false success for ${row.apelido}`);
             }
           } catch (kmzError: any) {
-            console.warn(`KMZ processing failed for ${row.apelido}:`, kmzError);
+            console.warn(`KMZ processing failed for ${row.apelido}:`, kmzError.message || kmzError);
             // Continue without KMZ data
           }
         }
