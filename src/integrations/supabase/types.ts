@@ -91,6 +91,7 @@ export type Database = {
           kml_id: string | null
           last_sync_at: string | null
           motivo_descarte_id: string | null
+          numero: number | null
           percentual_permuta: number | null
           poligono_geojson: Json | null
           preco: number | null
@@ -122,6 +123,7 @@ export type Database = {
           kml_id?: string | null
           last_sync_at?: string | null
           motivo_descarte_id?: string | null
+          numero?: number | null
           percentual_permuta?: number | null
           poligono_geojson?: Json | null
           preco?: number | null
@@ -153,6 +155,7 @@ export type Database = {
           kml_id?: string | null
           last_sync_at?: string | null
           motivo_descarte_id?: string | null
+          numero?: number | null
           percentual_permuta?: number | null
           poligono_geojson?: Json | null
           preco?: number | null

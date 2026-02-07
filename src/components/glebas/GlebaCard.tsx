@@ -57,7 +57,12 @@ export function GlebaCard({ gleba, onEdit }: GlebaCardProps) {
     <Card className="p-4 space-y-3 hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing">
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold truncate">{gleba.apelido}</h3>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+              #{gleba.numero}
+            </span>
+            <h3 className="font-semibold truncate">{gleba.apelido}</h3>
+          </div>
           <Badge 
             className={`mt-1 ${STATUS_COLORS[gleba.status] || "bg-gray-100 text-gray-800"}`}
             variant="outline"
