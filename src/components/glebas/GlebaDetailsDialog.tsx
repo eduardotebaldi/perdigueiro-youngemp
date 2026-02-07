@@ -224,6 +224,11 @@ export function GlebaDetailsDialog({
                 label="Zona do Plano Diretor"
                 value={gleba.zona_plano_diretor}
               />
+              <InfoItem
+                icon={MapPin}
+                label="Possui Polígono"
+                value={gleba.poligono_geojson ? "Sim" : "Não"}
+              />
             </div>
           </div>
 
@@ -240,33 +245,47 @@ export function GlebaDetailsDialog({
                 value={formatCurrency(gleba.preco)}
                 highlight
               />
-              {gleba.aceita_permuta && (
-                <InfoItem
-                  icon={Percent}
-                  label="Permuta"
-                  value={
-                    gleba.percentual_permuta
-                      ? `${gleba.percentual_permuta}%`
-                      : "Aceita permuta"
-                  }
-                />
-              )}
+              <InfoItem
+                icon={Percent}
+                label="Aceita Permuta"
+                value={
+                  gleba.aceita_permuta
+                    ? gleba.percentual_permuta
+                      ? `Sim (${gleba.percentual_permuta}%)`
+                      : "Sim"
+                    : "Não"
+                }
+              />
               <InfoItem
                 icon={Calendar}
                 label="Data da Visita"
                 value={formatDate(gleba.data_visita)}
               />
-              <InfoItem
-                icon={Calendar}
-                label="Criado em"
-                value={formatDate(gleba.created_at)}
-              />
-              <InfoItem
-                icon={Calendar}
-                label="Última atualização"
-                value={formatDate(gleba.updated_at)}
-              />
             </div>
+          </div>
+        </div>
+
+        {/* Datas e Sincronização */}
+        <div className="mt-4">
+          <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-primary" />
+            Datas
+          </h3>
+          <div className="bg-muted/30 rounded-lg p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Criado em</p>
+              <p className="font-medium">{formatDate(gleba.created_at)}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Última atualização</p>
+              <p className="font-medium">{formatDate(gleba.updated_at)}</p>
+            </div>
+            {gleba.last_sync_at && (
+              <div>
+                <p className="text-sm text-muted-foreground">Última sincronização</p>
+                <p className="font-medium">{formatDate(gleba.last_sync_at)}</p>
+              </div>
+            )}
           </div>
         </div>
 
