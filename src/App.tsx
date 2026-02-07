@@ -13,6 +13,7 @@ import Cidades from "./pages/Cidades";
 import Mapa from "./pages/Mapa";
 import Atividades from "./pages/Atividades";
 import Imobiliarias from "./pages/Imobiliarias";
+import Propostas from "./pages/Propostas";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -65,10 +66,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <AppLayout>
-                    <div className="text-center py-12">
-                      <h1 className="text-2xl font-bold">Propostas</h1>
-                      <p className="text-muted-foreground">Em desenvolvimento...</p>
-                    </div>
+                    <Propostas />
                   </AppLayout>
                 </ProtectedRoute>
               }
