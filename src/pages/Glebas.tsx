@@ -10,6 +10,7 @@ import { Kanban, Table2, Zap, Settings } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 
 type Gleba = Tables<"glebas">;
 type ViewMode = "kanban" | "table";
@@ -18,22 +19,25 @@ export default function Glebas() {
   const [editingGleba, setEditingGleba] = useState<Gleba | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("kanban");
   const [showConfig, setShowConfig] = useState(false);
+  const { isAdmin } = useAuth();
 
   return (
     <div className="space-y-6">
-      {/* Config Section */}
-      <Collapsible open={showConfig} onOpenChange={setShowConfig}>
-        <CollapsibleTrigger asChild>
-          <Button variant="outline" size="sm" className="gap-2">
-            <Settings className="h-4 w-4" />
-            {showConfig ? "Ocultar Integrações" : "Integrações Google Earth"}
-          </Button>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="mt-4 space-y-4">
-          <GoogleEarthIntegrationCard />
-          <GoogleDriveSyncConfig />
-        </CollapsibleContent>
-      </Collapsible>
+      {/* Config Section - Admin Only */}
+      {isAdmin && (
+        <Collapsible open={showConfig} onOpenChange={setShowConfig}>
+          <CollapsibleTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-2">
+              <Settings className="h-4 w-4" />
+              {showConfig ? "Ocultar Integrações" : "Integrações Google Earth"}
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mt-4 space-y-4">
+            <GoogleEarthIntegrationCard />
+            <GoogleDriveSyncConfig />
+          </CollapsibleContent>
+        </Collapsible>
+      )}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
