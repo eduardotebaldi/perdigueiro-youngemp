@@ -195,12 +195,19 @@ export function GlebaMap3D({
     // Limpar entidades existentes
     viewer.entities.removeAll();
 
+    let firstGlebaCenter: { lon: number; lat: number } | null = null;
+
     // Adicionar cada gleba como entidade
-    glebas.forEach((gleba) => {
+    glebas.forEach((gleba, index) => {
       if (!gleba.poligono_geojson) return;
 
       const coordinates = geoJsonToCartesian3Array(gleba.poligono_geojson);
       if (!coordinates || coordinates.length < 3) return;
+
+      // Guardar centro da primeira gleba para voar até ela
+      if (index === 0 && !firstGlebaCenter) {
+        firstGlebaCenter = getPolygonCenterDegrees(gleba.poligono_geojson);
+      }
 
       const fillColor = STATUS_COLORS[gleba.status] || Color.GRAY.withAlpha(0.6);
       const outlineColor = STATUS_OUTLINE_COLORS[gleba.status] || Color.GRAY;
@@ -224,6 +231,14 @@ export function GlebaMap3D({
         },
       });
     });
+
+    // Voar para a primeira gleba quando as glebas forem carregadas
+    if (firstGlebaCenter && glebas.length > 0) {
+      viewer.camera.flyTo({
+        destination: Cartesian3.fromDegrees(firstGlebaCenter.lon, firstGlebaCenter.lat, 15000),
+        duration: 2,
+      });
+    }
   }, [glebas]);
 
   // Handler de clique
