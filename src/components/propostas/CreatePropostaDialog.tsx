@@ -213,10 +213,10 @@ export function CreatePropostaDialog() {
               name="descricao"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Descrição</FormLabel>
+                  <FormLabel>Responsável</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Detalhes da proposta..."
+                      placeholder="Responsável pela proposta..."
                       className="resize-none"
                       rows={3}
                       {...field}
