@@ -44,6 +44,7 @@ import { toast } from "sonner";
 const formSchema = z.object({
   gleba_id: z.string().min(1, "Selecione uma gleba"),
   data_proposta: z.date(),
+  tipo: z.enum(["compra", "parceria", "mista"]),
   descricao: z.string().optional(),
 });
 
@@ -62,6 +63,7 @@ export function CreatePropostaDialog() {
     defaultValues: {
       gleba_id: "",
       data_proposta: new Date(),
+      tipo: "compra",
       descricao: "",
     },
   });
@@ -83,6 +85,7 @@ export function CreatePropostaDialog() {
       await createProposta.mutateAsync({
         gleba_id: values.gleba_id,
         data_proposta: format(values.data_proposta, "yyyy-MM-dd"),
+        tipo: values.tipo,
         descricao: values.descricao || null,
         arquivo_carta: arquivoCarta,
         created_by: user.id,
@@ -144,6 +147,29 @@ export function CreatePropostaDialog() {
                           {gleba.apelido}
                         </SelectItem>
                       ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="tipo"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tipo da Proposta *</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o tipo" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="compra">Compra</SelectItem>
+                      <SelectItem value="parceria">Parceria</SelectItem>
+                      <SelectItem value="mista">Mista</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

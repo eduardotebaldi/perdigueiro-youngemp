@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar, ExternalLink, FileText, MapPin, Trash2 } from "lucide-react";
+import { Calendar, ExternalLink, FileText, MapPin, Trash2, Building2, Tag } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +22,18 @@ import { toast } from "sonner";
 interface PropostaCardProps {
   proposta: PropostaWithGleba;
 }
+
+const TIPO_LABELS: Record<string, string> = {
+  compra: "Compra",
+  parceria: "Parceria",
+  mista: "Mista",
+};
+
+const TIPO_COLORS: Record<string, string> = {
+  compra: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+  parceria: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+  mista: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
+};
 
 export function PropostaCard({ proposta }: PropostaCardProps) {
   const { isAdmin } = useAuth();
@@ -49,13 +61,31 @@ export function PropostaCard({ proposta }: PropostaCardProps) {
 
             {/* Content */}
             <div className="flex-1 min-w-0">
-              {/* Gleba */}
-              <div className="flex items-center gap-2 mb-1">
-                <MapPin className="h-4 w-4 text-primary" />
+              {/* Gleba and Number */}
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
+                {proposta.gleba?.numero && (
+                  <span className="text-xs font-bold text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                    #{proposta.gleba.numero}
+                  </span>
+                )}
                 <span className="font-semibold">
                   {proposta.gleba?.apelido || "Gleba removida"}
                 </span>
+                
+                {/* Tipo Badge */}
+                <Badge className={TIPO_COLORS[proposta.tipo] || ""} variant="outline">
+                  {TIPO_LABELS[proposta.tipo] || proposta.tipo}
+                </Badge>
               </div>
+
+              {/* City */}
+              {proposta.cidade && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                  <Building2 className="h-4 w-4" />
+                  <span>{proposta.cidade.nome}</span>
+                </div>
+              )}
 
               {/* Date */}
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">

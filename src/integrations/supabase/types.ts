@@ -254,6 +254,7 @@ export type Database = {
           descricao: string | null
           gleba_id: string
           id: string
+          tipo: Database["public"]["Enums"]["tipo_proposta"]
           updated_at: string
         }
         Insert: {
@@ -264,6 +265,7 @@ export type Database = {
           descricao?: string | null
           gleba_id: string
           id?: string
+          tipo?: Database["public"]["Enums"]["tipo_proposta"]
           updated_at?: string
         }
         Update: {
@@ -274,6 +276,7 @@ export type Database = {
           descricao?: string | null
           gleba_id?: string
           id?: string
+          tipo?: Database["public"]["Enums"]["tipo_proposta"]
           updated_at?: string
         }
         Relationships: [
@@ -360,6 +363,7 @@ export type Database = {
         | "negocio_fechado"
         | "standby"
       permuta_status: "incerto" | "nao" | "sim"
+      tipo_proposta: "compra" | "parceria" | "mista"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -500,6 +504,7 @@ export const Constants = {
         "standby",
       ],
       permuta_status: ["incerto", "nao", "sim"],
+      tipo_proposta: ["compra", "parceria", "mista"],
     },
   },
 } as const
