@@ -3,9 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 interface MunicipioIBGE {
   id: number;
   nome: string;
-  microrregiao: {
-    mesorregiao: {
-      UF: {
+  microrregiao?: {
+    mesorregiao?: {
+      UF?: {
         sigla: string;
         nome: string;
       };
@@ -34,12 +34,15 @@ export function useCidadesBrasil() {
       
       const data: MunicipioIBGE[] = await response.json();
       
-      return data.map((municipio) => ({
-        id: municipio.id,
-        nome: municipio.nome,
-        uf: municipio.microrregiao.mesorregiao.UF.sigla,
-        nomeCompleto: `${municipio.nome} - ${municipio.microrregiao.mesorregiao.UF.sigla}`,
-      }));
+      return data.map((municipio) => {
+        const uf = municipio.microrregiao?.mesorregiao?.UF?.sigla || "";
+        return {
+          id: municipio.id,
+          nome: municipio.nome,
+          uf: uf,
+          nomeCompleto: uf ? `${municipio.nome} - ${uf}` : municipio.nome,
+        };
+      });
     },
     staleTime: 1000 * 60 * 60 * 24, // 24 horas - dados não mudam frequentemente
     gcTime: 1000 * 60 * 60 * 24 * 7, // 7 dias
