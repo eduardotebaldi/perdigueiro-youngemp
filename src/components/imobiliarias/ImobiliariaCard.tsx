@@ -24,9 +24,10 @@ interface ImobiliariaCardProps {
   imobiliaria: Imobiliaria;
   glebaCount: number;
   onEdit: (imobiliaria: Imobiliaria) => void;
+  onClick?: () => void;
 }
 
-export function ImobiliariaCard({ imobiliaria, glebaCount, onEdit }: ImobiliariaCardProps) {
+export function ImobiliariaCard({ imobiliaria, glebaCount, onEdit, onClick }: ImobiliariaCardProps) {
   const { isAdmin } = useAuth();
   const { deleteImobiliaria } = useImobiliarias();
 
@@ -41,7 +42,7 @@ export function ImobiliariaCard({ imobiliaria, glebaCount, onEdit }: Imobiliaria
   };
 
   return (
-    <Card className="group hover:shadow-md transition-shadow">
+    <Card className="group hover:shadow-md transition-shadow cursor-pointer" onClick={onClick}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
@@ -58,7 +59,7 @@ export function ImobiliariaCard({ imobiliaria, glebaCount, onEdit }: Imobiliaria
           </div>
 
           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Button variant="ghost" size="icon" onClick={() => onEdit(imobiliaria)}>
+            <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onEdit(imobiliaria); }}>
               <Pencil className="h-4 w-4" />
             </Button>
             {isAdmin && (

@@ -6,14 +6,30 @@ import { useImobiliarias } from "@/hooks/useImobiliarias";
 import { CreateImobiliariaDialog } from "@/components/imobiliarias/CreateImobiliariaDialog";
 import { EditImobiliariaDialog } from "@/components/imobiliarias/EditImobiliariaDialog";
 import { ImobiliariaCard } from "@/components/imobiliarias/ImobiliariaCard";
+import { ImobiliariaGlebasDialog } from "@/components/imobiliarias/ImobiliariaGlebasDialog";
+import { GlebaDetailsDialog } from "@/components/glebas/GlebaDetailsDialog";
+import { EditGlebaDialog } from "@/components/glebas/EditGlebaDialog";
 import { Tables } from "@/integrations/supabase/types";
 
 type Imobiliaria = Tables<"imobiliarias">;
+type Gleba = Tables<"glebas">;
 
 export default function Imobiliarias() {
   const { imobiliarias, isLoading, glebaCounts } = useImobiliarias();
   const [search, setSearch] = useState("");
   const [editingImobiliaria, setEditingImobiliaria] = useState<Imobiliaria | null>(null);
+  const [viewingImobiliaria, setViewingImobiliaria] = useState<Imobiliaria | null>(null);
+  const [viewingGleba, setViewingGleba] = useState<Gleba | null>(null);
+  const [editingGleba, setEditingGleba] = useState<Gleba | null>(null);
+
+  const handleViewGleba = (gleba: Gleba) => {
+    setViewingGleba(gleba);
+  };
+
+  const handleEditGleba = (gleba: Gleba) => {
+    setViewingGleba(null);
+    setEditingGleba(gleba);
+  };
 
   const filteredImobiliarias = useMemo(() => {
     if (!search) return imobiliarias;
@@ -61,6 +77,29 @@ export default function Imobiliarias() {
         onOpenChange={(open) => !open && setEditingImobiliaria(null)}
       />
 
+      {/* Imobiliaria Glebas Dialog */}
+      <ImobiliariaGlebasDialog
+        imobiliaria={viewingImobiliaria}
+        open={!!viewingImobiliaria}
+        onOpenChange={(open) => !open && setViewingImobiliaria(null)}
+        onViewGleba={handleViewGleba}
+      />
+
+      {/* Gleba Details Dialog */}
+      <GlebaDetailsDialog
+        gleba={viewingGleba}
+        open={!!viewingGleba}
+        onOpenChange={(open) => !open && setViewingGleba(null)}
+        onEdit={handleEditGleba}
+      />
+
+      {/* Gleba Edit Dialog */}
+      <EditGlebaDialog
+        gleba={editingGleba}
+        open={!!editingGleba}
+        onOpenChange={(open) => !open && setEditingGleba(null)}
+      />
+
       {/* Results count */}
       <p className="text-sm text-muted-foreground">
         {filteredImobiliarias.length} imobiliária{filteredImobiliarias.length !== 1 && "s"}
@@ -87,6 +126,7 @@ export default function Imobiliarias() {
               imobiliaria={imobiliaria}
               glebaCount={glebaCounts[imobiliaria.id] || 0}
               onEdit={setEditingImobiliaria}
+              onClick={() => setViewingImobiliaria(imobiliaria)}
             />
           ))}
         </div>
