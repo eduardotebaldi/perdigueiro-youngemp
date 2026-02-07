@@ -8,6 +8,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import Glebas from "./pages/Glebas";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,10 +41,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <AppLayout>
-                    <div className="text-center py-12">
-                      <h1 className="text-2xl font-bold">Glebas (Kanban)</h1>
-                      <p className="text-muted-foreground">Em desenvolvimento...</p>
-                    </div>
+                    <Glebas />
                   </AppLayout>
                 </ProtectedRoute>
               }
