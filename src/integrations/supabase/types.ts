@@ -14,16 +14,312 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      atividades: {
+        Row: {
+          created_at: string
+          data: string
+          descricao: string
+          gleba_id: string | null
+          id: string
+          responsavel_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: string
+          descricao: string
+          gleba_id?: string | null
+          id?: string
+          responsavel_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          descricao?: string
+          gleba_id?: string | null
+          id?: string
+          responsavel_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "atividades_gleba_id_fkey"
+            columns: ["gleba_id"]
+            isOneToOne: false
+            referencedRelation: "glebas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cidades: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+          planos_diretores: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+          planos_diretores?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+          planos_diretores?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      glebas: {
+        Row: {
+          aceita_permuta: boolean | null
+          apelido: string
+          arquivo_contrato: string | null
+          arquivo_kmz: string | null
+          arquivo_protocolo: string | null
+          cidade_id: string | null
+          comentarios: string | null
+          created_at: string
+          data_visita: string | null
+          descricao_descarte: string | null
+          id: string
+          imobiliaria_id: string | null
+          motivo_descarte_id: string | null
+          percentual_permuta: number | null
+          poligono_geojson: Json | null
+          preco: number | null
+          prioridade: boolean
+          proprietario_nome: string | null
+          responsavel_analise: string | null
+          standby_inicio: string | null
+          standby_motivo: string | null
+          status: Database["public"]["Enums"]["gleba_status"]
+          tamanho_lote_minimo: number | null
+          tamanho_m2: number | null
+          updated_at: string
+          zona_plano_diretor: string | null
+        }
+        Insert: {
+          aceita_permuta?: boolean | null
+          apelido: string
+          arquivo_contrato?: string | null
+          arquivo_kmz?: string | null
+          arquivo_protocolo?: string | null
+          cidade_id?: string | null
+          comentarios?: string | null
+          created_at?: string
+          data_visita?: string | null
+          descricao_descarte?: string | null
+          id?: string
+          imobiliaria_id?: string | null
+          motivo_descarte_id?: string | null
+          percentual_permuta?: number | null
+          poligono_geojson?: Json | null
+          preco?: number | null
+          prioridade?: boolean
+          proprietario_nome?: string | null
+          responsavel_analise?: string | null
+          standby_inicio?: string | null
+          standby_motivo?: string | null
+          status?: Database["public"]["Enums"]["gleba_status"]
+          tamanho_lote_minimo?: number | null
+          tamanho_m2?: number | null
+          updated_at?: string
+          zona_plano_diretor?: string | null
+        }
+        Update: {
+          aceita_permuta?: boolean | null
+          apelido?: string
+          arquivo_contrato?: string | null
+          arquivo_kmz?: string | null
+          arquivo_protocolo?: string | null
+          cidade_id?: string | null
+          comentarios?: string | null
+          created_at?: string
+          data_visita?: string | null
+          descricao_descarte?: string | null
+          id?: string
+          imobiliaria_id?: string | null
+          motivo_descarte_id?: string | null
+          percentual_permuta?: number | null
+          poligono_geojson?: Json | null
+          preco?: number | null
+          prioridade?: boolean
+          proprietario_nome?: string | null
+          responsavel_analise?: string | null
+          standby_inicio?: string | null
+          standby_motivo?: string | null
+          status?: Database["public"]["Enums"]["gleba_status"]
+          tamanho_lote_minimo?: number | null
+          tamanho_m2?: number | null
+          updated_at?: string
+          zona_plano_diretor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "glebas_cidade_id_fkey"
+            columns: ["cidade_id"]
+            isOneToOne: false
+            referencedRelation: "cidades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "glebas_imobiliaria_id_fkey"
+            columns: ["imobiliaria_id"]
+            isOneToOne: false
+            referencedRelation: "imobiliarias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "glebas_motivo_descarte_id_fkey"
+            columns: ["motivo_descarte_id"]
+            isOneToOne: false
+            referencedRelation: "motivos_descarte"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      imobiliarias: {
+        Row: {
+          contato_nome: string | null
+          created_at: string
+          id: string
+          link_social: string | null
+          nome: string
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          contato_nome?: string | null
+          created_at?: string
+          id?: string
+          link_social?: string | null
+          nome: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          contato_nome?: string | null
+          created_at?: string
+          id?: string
+          link_social?: string | null
+          nome?: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      motivos_descarte: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          nome: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
+      propostas: {
+        Row: {
+          arquivo_carta: string | null
+          created_at: string
+          created_by: string | null
+          data_proposta: string
+          descricao: string | null
+          gleba_id: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          arquivo_carta?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_proposta?: string
+          descricao?: string | null
+          gleba_id: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          arquivo_carta?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_proposta?: string
+          descricao?: string | null
+          gleba_id?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "propostas_gleba_id_fkey"
+            columns: ["gleba_id"]
+            isOneToOne: false
+            referencedRelation: "glebas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
+      gleba_status:
+        | "identificada"
+        | "informacoes_recebidas"
+        | "visita_realizada"
+        | "proposta_enviada"
+        | "protocolo_assinado"
+        | "descartada"
+        | "proposta_recusada"
+        | "negocio_fechado"
+        | "standby"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +446,19 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+      gleba_status: [
+        "identificada",
+        "informacoes_recebidas",
+        "visita_realizada",
+        "proposta_enviada",
+        "protocolo_assinado",
+        "descartada",
+        "proposta_recusada",
+        "negocio_fechado",
+        "standby",
+      ],
+    },
   },
 } as const
