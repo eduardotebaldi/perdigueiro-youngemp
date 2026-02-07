@@ -40,17 +40,21 @@ const COLUMN_MAPPINGS: Record<string, keyof ParsedProposta> = {
   "gleba": "glebaApelido",
   "apelido": "glebaApelido",
   "apelido da gleba": "glebaApelido",
+  "apelido gleba": "glebaApelido",
   "nome da gleba": "glebaApelido",
   "nome gleba": "glebaApelido",
   "area": "glebaApelido",
   "área": "glebaApelido",
   "terreno": "glebaApelido",
   
-  // Gleba número variations
+  // Gleba número/código variations
   "numero": "glebaNumero",
   "número": "glebaNumero",
   "numero da gleba": "glebaNumero",
   "número da gleba": "glebaNumero",
+  "codigo gleba": "glebaNumero",
+  "código gleba": "glebaNumero",
+  "cod gleba": "glebaNumero",
   "n°": "glebaNumero",
   "nº": "glebaNumero",
   "n": "glebaNumero",
@@ -85,6 +89,8 @@ const COLUMN_MAPPINGS: Record<string, keyof ParsedProposta> = {
   "comentario": "descricao",
   "comentário": "descricao",
   "detalhes": "descricao",
+  "responsável": "descricao",
+  "responsavel": "descricao",
   
   // Arquivo variations
   "arquivo": "arquivoLink",
