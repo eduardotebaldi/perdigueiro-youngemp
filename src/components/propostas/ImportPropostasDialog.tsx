@@ -165,10 +165,13 @@ function parseSpreadsheetData(text: string): { propostas: ParsedProposta[]; dete
 
   // Check if at least one required column was found
   if (columnIndexes.glebaApelido === undefined && columnIndexes.glebaNumero === undefined) {
+    console.log("No gleba column found - cannot proceed");
     return { propostas: [], detectedHeaders, unmappedHeaders };
   }
 
   const propostas: ParsedProposta[] = [];
+
+  console.log("Processing", lines.length - 1, "data rows");
 
   for (let i = 1; i < lines.length; i++) {
     const values = lines[i].split(delimiter).map((v) => v.trim());
@@ -182,6 +185,9 @@ function parseSpreadsheetData(text: string): { propostas: ParsedProposta[]; dete
       ? values[columnIndexes.glebaNumero] || ""
       : "";
 
+    // Skip invalid numero values like #REF!, #N/A
+    const cleanNumeroStr = glebaNumeroStr.replace(/[^0-9]/g, "");
+    
     const dataProposta = columnIndexes.dataProposta !== undefined
       ? values[columnIndexes.dataProposta] || ""
       : "";
@@ -200,18 +206,26 @@ function parseSpreadsheetData(text: string): { propostas: ParsedProposta[]; dete
       ? values[columnIndexes.arquivoLink] || undefined
       : undefined;
 
-    if (glebaApelido || glebaNumeroStr) {
-      propostas.push({
+    if (glebaApelido || cleanNumeroStr) {
+      const parsed: ParsedProposta = {
         glebaApelido,
-        glebaNumero: glebaNumeroStr ? parseInt(glebaNumeroStr, 10) : undefined,
+        glebaNumero: cleanNumeroStr ? parseInt(cleanNumeroStr, 10) : undefined,
         dataProposta,
         tipo,
         descricao,
         arquivoLink,
-      });
+      };
+      propostas.push(parsed);
+      
+      if (i <= 3) {
+        console.log(`Row ${i} parsed:`, parsed);
+      }
+    } else {
+      console.log(`Row ${i} skipped - no gleba identifier. Values:`, values.slice(0, 10));
     }
   }
 
+  console.log("Total propostas parsed:", propostas.length);
   return { propostas, detectedHeaders, unmappedHeaders };
 }
 
@@ -268,6 +282,9 @@ export function ImportPropostasDialog() {
 
     const importResults: ImportResult[] = [];
 
+    console.log("Starting import of", parsedPropostas.length, "propostas");
+    console.log("Available glebas:", glebas.length, glebas.slice(0, 5).map(g => ({ numero: g.numero, apelido: g.apelido })));
+
     for (let i = 0; i < parsedPropostas.length; i++) {
       const proposta = parsedPropostas[i];
       const progressPercent = Math.round(((i + 1) / parsedPropostas.length) * 100);
@@ -280,6 +297,10 @@ export function ImportPropostasDialog() {
           if (proposta.glebaApelido && g.apelido.toLowerCase() === proposta.glebaApelido.toLowerCase()) return true;
           return false;
         });
+
+        if (i < 3) {
+          console.log(`Proposta ${i}: numero=${proposta.glebaNumero}, apelido="${proposta.glebaApelido}", found=${!!gleba}`);
+        }
 
         if (!gleba) {
           importResults.push({
