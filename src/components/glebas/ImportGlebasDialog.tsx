@@ -99,7 +99,7 @@ export function ImportGlebasDialog() {
     const colIndexes = {
       numero: findCol(["numero", "nº", "n°", "#"]),
       apelido: findCol(["apelido", "nome", "gleba"]),
-      kmzLink: findCol(["kmz", "kml", "matrícula", "matricula", "link"]),
+      kmzLink: findCol(["link"]),
       percentual: findCol(["% pedida", "percentual", "pedida"]),
       tamanho: findCol(["tamanho", "área", "area", "m²", "m2", "hectare"]),
       proprietario: findCol(["proprietário", "proprietario", "dono"]),
