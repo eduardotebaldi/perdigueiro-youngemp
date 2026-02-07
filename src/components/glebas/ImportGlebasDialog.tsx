@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2, Loader2, Building2, MapPin } from "lucide-react";
+import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2, Loader2, Building2, MapPin, Minimize2, Maximize2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useGlebas, STATUS_LABELS } from "@/hooks/useGlebas";
@@ -38,9 +38,11 @@ interface ParsedRow {
 }
 
 interface ImportResult {
+  numero?: number;
   apelido: string;
   success: boolean;
   message: string;
+  isKmzWarning?: boolean;
 }
 
 interface CreatedEntity {
@@ -72,6 +74,7 @@ const STATUS_MAP: Record<string, string> = {
 
 export function ImportGlebasDialog() {
   const [open, setOpen] = useState(false);
+  const [minimized, setMinimized] = useState(false);
   const [pastedData, setPastedData] = useState("");
   const [parsedRows, setParsedRows] = useState<ParsedRow[]>([]);
   const [isImporting, setIsImporting] = useState(false);
@@ -121,7 +124,7 @@ export function ImportGlebasDialog() {
       status: findCol(["status", "situação", "situacao", "fase"]),
       cidade: findCol(["cidade", "município", "municipio", "local"]),
       dataPreco: findCol(["data", "preço", "preco"]),
-      parceria: findCol(["parceria", "permuta", "troca"]),
+      parceria: findCol(["parceria", "permuta", "troca", "aceita parceria"]),
     };
 
     if (colIndexes.apelido === -1) {
@@ -279,6 +282,7 @@ export function ImportGlebasDialog() {
         const imobiliariaId = await findOrCreateImobiliaria(row.imobiliaria);
 
         // Process KMZ if link provided
+        let kmzWarning: string | null = null;
         if (row.kmzLink && row.kmzLink.trim()) {
           try {
             console.log(`Processing KMZ for ${row.apelido}: ${row.kmzLink}`);
@@ -295,12 +299,19 @@ export function ImportGlebasDialog() {
               console.log(`KMZ processed successfully for ${row.apelido}`);
               kmzStoragePath = data.kmzStoragePath;
               geojson = data.geojson;
+              
+              // Check if there's a warning (e.g., file is not a valid KMZ)
+              if (data.warning) {
+                kmzWarning = data.warning;
+              }
+            } else if (data && data.error === "not_a_url") {
+              kmzWarning = "Link não é uma URL válida";
             } else {
-              console.warn(`KMZ processing returned false success for ${row.apelido}`);
+              kmzWarning = "KMZ não processado";
             }
           } catch (kmzError: any) {
             console.warn(`KMZ processing failed for ${row.apelido}:`, kmzError.message || kmzError);
-            // Continue without KMZ data
+            kmzWarning = `Falha no KMZ: ${kmzError.message || "link inválido"}`;
           }
         }
 
@@ -328,13 +339,21 @@ export function ImportGlebasDialog() {
 
         if (insertError) throw insertError;
 
+        let message = geojson ? "Importado com polígono" : "Importado sem polígono";
+        if (kmzWarning) {
+          message = `${message} (⚠️ ${kmzWarning})`;
+        }
+        
         importResults.push({
+          numero: row.numero,
           apelido: row.apelido,
           success: true,
-          message: geojson ? "Importado com polígono" : "Importado sem polígono",
+          message,
+          isKmzWarning: !!kmzWarning,
         });
       } catch (error: any) {
         importResults.push({
+          numero: row.numero,
           apelido: row.apelido,
           success: false,
           message: error.message || "Erro desconhecido",
@@ -366,6 +385,7 @@ export function ImportGlebasDialog() {
     setCreatedEntities([]);
     setProgress(0);
     setStep("paste");
+    setMinimized(false);
     setCidadesCache(new Map());
     setImobiliariasCache(new Map());
   };
@@ -382,6 +402,31 @@ export function ImportGlebasDialog() {
   const createdCidades = createdEntities.filter(e => e.type === "cidade");
   const createdImobiliarias = createdEntities.filter(e => e.type === "imobiliaria");
 
+  // Minimized floating bar during import
+  if (minimized && isImporting) {
+    return (
+      <>
+        <Button variant="outline" className="gap-2" disabled>
+          <Upload className="h-4 w-4" />
+          Importar Planilha
+        </Button>
+        <div className="fixed bottom-4 right-4 z-50 bg-card border rounded-lg shadow-lg p-4 flex items-center gap-4 min-w-[300px]">
+          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+          <div className="flex-1">
+            <p className="text-sm font-medium">Importando glebas...</p>
+            <div className="flex items-center gap-2 mt-1">
+              <Progress value={progress} className="flex-1 h-2" />
+              <span className="text-xs text-muted-foreground">{results.length}/{parsedRows.length}</span>
+            </div>
+          </div>
+          <Button variant="ghost" size="icon" onClick={() => { setMinimized(false); setOpen(true); }}>
+            <Maximize2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogTrigger asChild>
@@ -392,9 +437,16 @@ export function ImportGlebasDialog() {
       </DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FileSpreadsheet className="h-5 w-5" />
-            Importar Glebas do Google Sheets
+          <DialogTitle className="flex items-center gap-2 justify-between">
+            <div className="flex items-center gap-2">
+              <FileSpreadsheet className="h-5 w-5" />
+              Importar Glebas do Google Sheets
+            </div>
+            {isImporting && (
+              <Button variant="ghost" size="icon" onClick={() => { setMinimized(true); setOpen(false); }}>
+                <Minimize2 className="h-4 w-4" />
+              </Button>
+            )}
           </DialogTitle>
           <DialogDescription>
             Copie e cole os dados da sua planilha (incluindo o cabeçalho) diretamente abaixo.
@@ -416,8 +468,8 @@ export function ImportGlebasDialog() {
             <div className="rounded-lg bg-muted/50 p-4 space-y-2">
               <h4 className="font-medium text-sm">Colunas reconhecidas:</h4>
               <p className="text-xs text-muted-foreground">
-                Número, Apelido/Nome, Link KMZ/Matrícula, % Pedida, Tamanho, Proprietário, 
-                Observações, Imobiliária, Status, Cidade, Aceita Parceria
+                Número, Apelido/Nome, Link KMZ/Matrícula, % Pedida, Tamanho (ha), Proprietário, 
+                Observações, Imobiliária, Status, Cidade, Aceita Parceria?
               </p>
               <p className="text-xs text-muted-foreground mt-2">
                 <strong>Nota:</strong> Cidades e imobiliárias não cadastradas serão criadas automaticamente.
@@ -492,12 +544,21 @@ export function ImportGlebasDialog() {
                 {results.map((result, idx) => (
                   <div key={idx} className="flex items-center gap-2 text-sm">
                     {result.success ? (
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      result.isKmzWarning ? (
+                        <AlertCircle className="h-4 w-4 text-yellow-500" />
+                      ) : (
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      )
                     ) : (
                       <AlertCircle className="h-4 w-4 text-destructive" />
                     )}
+                    <span className="font-mono text-xs text-muted-foreground w-8">
+                      #{result.numero ?? "-"}
+                    </span>
                     <span className="font-medium">{result.apelido}</span>
-                    <span className="text-muted-foreground">{result.message}</span>
+                    <span className={result.isKmzWarning ? "text-yellow-600" : "text-muted-foreground"}>
+                      {result.message}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -553,12 +614,21 @@ export function ImportGlebasDialog() {
                 {results.map((result, idx) => (
                   <div key={idx} className="flex items-center gap-2 text-sm">
                     {result.success ? (
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      result.isKmzWarning ? (
+                        <AlertCircle className="h-4 w-4 text-yellow-500" />
+                      ) : (
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      )
                     ) : (
                       <AlertCircle className="h-4 w-4 text-destructive" />
                     )}
+                    <span className="font-mono text-xs text-muted-foreground w-8">
+                      #{result.numero ?? "-"}
+                    </span>
                     <span className="font-medium">{result.apelido}</span>
-                    <span className="text-muted-foreground">{result.message}</span>
+                    <span className={result.isKmzWarning ? "text-yellow-600" : "text-muted-foreground"}>
+                      {result.message}
+                    </span>
                   </div>
                 ))}
               </div>
