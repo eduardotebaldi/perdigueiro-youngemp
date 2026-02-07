@@ -2,7 +2,14 @@ import { Tables } from "@/integrations/supabase/types";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { STATUS_LABELS } from "@/hooks/useGlebas";
-import { MapPin, Users, DollarSign } from "lucide-react";
+import { MapPin, Users, DollarSign, AlertTriangle } from "lucide-react";
+import { validateGlebaStatus, getValidationMessage } from "@/lib/glebaValidation";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type Gleba = Tables<"glebas">;
 
@@ -23,8 +30,27 @@ interface GlebaCardProps {
 }
 
 export function GlebaCard({ gleba }: GlebaCardProps) {
+  const validation = validateGlebaStatus(gleba);
+
   return (
-    <Card className="p-4 space-y-3 hover:shadow-md transition-shadow cursor-pointer">
+    <Card className="p-4 space-y-3 hover:shadow-md transition-shadow cursor-pointer relative">
+      {/* Indicador de alerta quando há informações faltando */}
+      {!validation.isValid && (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="absolute -top-2 -right-2 bg-amber-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md cursor-help">
+                <AlertTriangle className="h-4 w-4" />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-[250px]">
+              <p className="font-medium text-amber-600">Informações faltando</p>
+              <p className="text-sm">{getValidationMessage(validation)}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
+
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
