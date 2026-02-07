@@ -1,16 +1,17 @@
-import { useEffect, useRef, useCallback } from "react";
-import { Viewer, Entity, PolygonGraphics, CameraFlyTo } from "resium";
+import { useEffect, useRef } from "react";
 import {
-  Ion,
   Cartesian3,
   Color,
   PolygonHierarchy,
-  Cesium3DTileset,
   createGooglePhotorealistic3DTileset,
   ScreenSpaceEventHandler,
   ScreenSpaceEventType,
   defined,
-  Viewer as CesiumViewer,
+  Viewer,
+  Cesium3DTileset,
+  Cartographic,
+  Math as CesiumMath,
+  ClassificationType,
 } from "cesium";
 import "cesium/Build/Cesium/Widgets/widgets.css";
 import { Tables } from "@/integrations/supabase/types";
@@ -18,11 +19,9 @@ import { Tables } from "@/integrations/supabase/types";
 type Gleba = Tables<"glebas">;
 
 // ⚠️ IMPORTANTE: Sua Google Maps API Key
-// Para obter: https://console.cloud.google.com/apis/credentials
-// Habilite a API "Map Tiles API"
 const GOOGLE_MAPS_API_KEY = "AIzaSyDqTgpc8FdUMf622yGI7IFHDcS_e9JncBI";
 
-// Cores por status (formato Cesium RGBA 0-1)
+// Cores por status
 const STATUS_COLORS: Record<string, Color> = {
   identificada: Color.fromCssColorString("#3b82f6").withAlpha(0.6),
   informacoes_recebidas: Color.fromCssColorString("#06b6d4").withAlpha(0.6),
@@ -61,193 +60,225 @@ function geoJsonToCartesian3Array(geojson: any): Cartesian3[] | null {
   try {
     let coordinates: number[][] = [];
 
-    // Handle FeatureCollection
     if (geojson.type === "FeatureCollection" && geojson.features?.length > 0) {
       return geoJsonToCartesian3Array(geojson.features[0]);
     }
 
-    // Handle Feature
     if (geojson.type === "Feature" && geojson.geometry) {
       return geoJsonToCartesian3Array(geojson.geometry);
     }
 
-    // Handle Polygon
     if (geojson.type === "Polygon" && geojson.coordinates?.[0]) {
       coordinates = geojson.coordinates[0];
-    }
-    // Handle MultiPolygon (use first polygon)
-    else if (geojson.type === "MultiPolygon" && geojson.coordinates?.[0]?.[0]) {
+    } else if (geojson.type === "MultiPolygon" && geojson.coordinates?.[0]?.[0]) {
       coordinates = geojson.coordinates[0][0];
-    }
-    // Handle Point
-    else if (geojson.type === "Point" && geojson.coordinates) {
+    } else if (geojson.type === "Point" && geojson.coordinates) {
       return [Cartesian3.fromDegrees(geojson.coordinates[0], geojson.coordinates[1])];
     } else {
       return null;
     }
 
-    // Converter coordenadas [lng, lat] para Cartesian3
-    return coordinates.map((coord) =>
-      Cartesian3.fromDegrees(coord[0], coord[1])
-    );
+    return coordinates.map((coord) => Cartesian3.fromDegrees(coord[0], coord[1]));
   } catch (error) {
     console.error("Erro ao converter GeoJSON:", error);
     return null;
   }
 }
 
-// Calcula o centro de um polígono
-function getPolygonCenter(coordinates: Cartesian3[]): Cartesian3 | null {
-  if (!coordinates || coordinates.length === 0) return null;
+// Calcula o centro de um polígono em graus
+function getPolygonCenterDegrees(geojson: any): { lon: number; lat: number } | null {
+  if (!geojson) return null;
 
-  let sumX = 0, sumY = 0, sumZ = 0;
-  for (const coord of coordinates) {
-    sumX += coord.x;
-    sumY += coord.y;
-    sumZ += coord.z;
+  try {
+    let coordinates: number[][] = [];
+
+    if (geojson.type === "FeatureCollection" && geojson.features?.length > 0) {
+      return getPolygonCenterDegrees(geojson.features[0]);
+    }
+
+    if (geojson.type === "Feature" && geojson.geometry) {
+      return getPolygonCenterDegrees(geojson.geometry);
+    }
+
+    if (geojson.type === "Polygon" && geojson.coordinates?.[0]) {
+      coordinates = geojson.coordinates[0];
+    } else if (geojson.type === "MultiPolygon" && geojson.coordinates?.[0]?.[0]) {
+      coordinates = geojson.coordinates[0][0];
+    } else if (geojson.type === "Point" && geojson.coordinates) {
+      return { lon: geojson.coordinates[0], lat: geojson.coordinates[1] };
+    } else {
+      return null;
+    }
+
+    let sumLon = 0, sumLat = 0;
+    for (const coord of coordinates) {
+      sumLon += coord[0];
+      sumLat += coord[1];
+    }
+    return { lon: sumLon / coordinates.length, lat: sumLat / coordinates.length };
+  } catch {
+    return null;
   }
-  const count = coordinates.length;
-  return new Cartesian3(sumX / count, sumY / count, sumZ / count);
 }
 
 export function GlebaMap3D({
   glebas,
   onSelectGleba,
   selectedGlebaId,
-  isFullscreen = false,
 }: GlebaMap3DProps) {
-  const viewerRef = useRef<CesiumViewer | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const viewerRef = useRef<Viewer | null>(null);
   const tilesetRef = useRef<Cesium3DTileset | null>(null);
+  const handlerRef = useRef<ScreenSpaceEventHandler | null>(null);
 
-  // Configurar Google 3D Tiles quando o viewer estiver pronto
-  const handleViewerReady = useCallback(async (viewer: CesiumViewer) => {
+  // Inicializar o viewer
+  useEffect(() => {
+    if (!containerRef.current || viewerRef.current) return;
+
+    const viewer = new Viewer(containerRef.current, {
+      timeline: false,
+      animation: false,
+      baseLayerPicker: false,
+      geocoder: false,
+      homeButton: false,
+      sceneModePicker: false,
+      selectionIndicator: true,
+      navigationHelpButton: false,
+      infoBox: true,
+      fullscreenButton: false,
+    });
+
     viewerRef.current = viewer;
 
-    // Remover widgets desnecessários
+    // Ocultar widgets
     const timelineContainer = viewer.timeline?.container as HTMLElement;
     const animationContainer = viewer.animation?.container as HTMLElement;
     if (timelineContainer) timelineContainer.style.display = "none";
     if (animationContainer) animationContainer.style.display = "none";
-    
-    // Configurar terreno e iluminação
+
+    // Habilitar iluminação
     viewer.scene.globe.enableLighting = true;
 
-    // Carregar Google Photorealistic 3D Tiles
-    try {
-      const tileset = await createGooglePhotorealistic3DTileset({
-        key: GOOGLE_MAPS_API_KEY
+    // Carregar Google 3D Tiles
+    createGooglePhotorealistic3DTileset({ key: GOOGLE_MAPS_API_KEY })
+      .then((tileset) => {
+        viewer.scene.primitives.add(tileset);
+        tilesetRef.current = tileset;
+      })
+      .catch((error) => {
+        console.error("Erro ao carregar Google 3D Tiles:", error);
       });
-      viewer.scene.primitives.add(tileset);
-      tilesetRef.current = tileset;
-    } catch (error) {
-      console.error("Erro ao carregar Google 3D Tiles:", error);
+
+    // Posição inicial (Brasil)
+    viewer.camera.flyTo({
+      destination: Cartesian3.fromDegrees(-47.8822, -15.7942, 50000),
+      duration: 2,
+    });
+
+    return () => {
+      if (handlerRef.current) {
+        handlerRef.current.destroy();
+        handlerRef.current = null;
+      }
+      if (viewerRef.current && !viewerRef.current.isDestroyed()) {
+        viewerRef.current.destroy();
+        viewerRef.current = null;
+      }
+    };
+  }, []);
+
+  // Adicionar entidades das glebas
+  useEffect(() => {
+    const viewer = viewerRef.current;
+    if (!viewer) return;
+
+    // Limpar entidades existentes
+    viewer.entities.removeAll();
+
+    // Adicionar cada gleba como entidade
+    glebas.forEach((gleba) => {
+      if (!gleba.poligono_geojson) return;
+
+      const coordinates = geoJsonToCartesian3Array(gleba.poligono_geojson);
+      if (!coordinates || coordinates.length < 3) return;
+
+      const fillColor = STATUS_COLORS[gleba.status] || Color.GRAY.withAlpha(0.6);
+      const outlineColor = STATUS_OUTLINE_COLORS[gleba.status] || Color.GRAY;
+
+      viewer.entities.add({
+        id: gleba.id,
+        name: gleba.apelido,
+        description: `
+          <h3>${gleba.apelido}</h3>
+          <p><strong>Status:</strong> ${gleba.status.replace(/_/g, " ")}</p>
+          ${gleba.tamanho_m2 ? `<p><strong>Área:</strong> ${gleba.tamanho_m2.toLocaleString()} m²</p>` : ""}
+          ${gleba.preco ? `<p><strong>Preço:</strong> R$ ${gleba.preco.toLocaleString()}</p>` : ""}
+        `,
+        polygon: {
+          hierarchy: new PolygonHierarchy(coordinates),
+          material: fillColor,
+          outline: true,
+          outlineColor: outlineColor,
+          outlineWidth: 2,
+          classificationType: ClassificationType.CESIUM_3D_TILE,
+        },
+      });
+    });
+  }, [glebas]);
+
+  // Handler de clique
+  useEffect(() => {
+    const viewer = viewerRef.current;
+    if (!viewer || !onSelectGleba) return;
+
+    if (handlerRef.current) {
+      handlerRef.current.destroy();
     }
 
-    // Configurar handler de clique
     const handler = new ScreenSpaceEventHandler(viewer.scene.canvas);
     handler.setInputAction((click: any) => {
       const pickedObject = viewer.scene.pick(click.position);
-      if (defined(pickedObject) && pickedObject.id) {
+      if (defined(pickedObject) && pickedObject.id?.id) {
         const glebaId = pickedObject.id.id;
         const gleba = glebas.find((g) => g.id === glebaId);
-        if (gleba && onSelectGleba) {
+        if (gleba) {
           onSelectGleba(gleba);
         }
       }
     }, ScreenSpaceEventType.LEFT_CLICK);
 
-    // Posição inicial (Brasil - Brasília)
-    viewer.camera.flyTo({
-      destination: Cartesian3.fromDegrees(-47.8822, -15.7942, 50000),
-      duration: 2,
-    });
+    handlerRef.current = handler;
+
+    return () => {
+      if (handlerRef.current) {
+        handlerRef.current.destroy();
+        handlerRef.current = null;
+      }
+    };
   }, [glebas, onSelectGleba]);
 
-  // FlyTo quando uma gleba é selecionada na sidebar
+  // FlyTo quando uma gleba é selecionada
   useEffect(() => {
-    if (!selectedGlebaId || !viewerRef.current) return;
+    const viewer = viewerRef.current;
+    if (!selectedGlebaId || !viewer) return;
 
     const gleba = glebas.find((g) => g.id === selectedGlebaId);
     if (!gleba?.poligono_geojson) return;
 
-    const coordinates = geoJsonToCartesian3Array(gleba.poligono_geojson);
-    if (!coordinates) return;
-
-    const center = getPolygonCenter(coordinates);
+    const center = getPolygonCenterDegrees(gleba.poligono_geojson);
     if (!center) return;
 
-    viewerRef.current.camera.flyTo({
-      destination: Cartesian3.fromDegrees(
-        // Precisa converter de volta para degrees - simplificando aqui
-        -47.8822, // TODO: calcular centro real
-        -15.7942,
-        5000
-      ),
+    viewer.camera.flyTo({
+      destination: Cartesian3.fromDegrees(center.lon, center.lat, 5000),
       duration: 1.5,
     });
   }, [selectedGlebaId, glebas]);
 
-  // Preparar entidades das glebas
-  const glebaEntities = glebas
-    .filter((gleba) => gleba.poligono_geojson)
-    .map((gleba) => {
-      const coordinates = geoJsonToCartesian3Array(gleba.poligono_geojson);
-      if (!coordinates || coordinates.length < 3) return null;
-
-      const fillColor = STATUS_COLORS[gleba.status] || Color.GRAY.withAlpha(0.6);
-      const outlineColor = STATUS_OUTLINE_COLORS[gleba.status] || Color.GRAY;
-
-      return (
-        <Entity
-          key={gleba.id}
-          id={gleba.id}
-          name={gleba.apelido}
-          description={`
-            <h3>${gleba.apelido}</h3>
-            <p><strong>Status:</strong> ${gleba.status.replace(/_/g, " ")}</p>
-            ${gleba.tamanho_m2 ? `<p><strong>Área:</strong> ${gleba.tamanho_m2.toLocaleString()} m²</p>` : ""}
-            ${gleba.preco ? `<p><strong>Preço:</strong> R$ ${gleba.preco.toLocaleString()}</p>` : ""}
-          `}
-        >
-          <PolygonGraphics
-            hierarchy={new PolygonHierarchy(coordinates)}
-            material={fillColor}
-            outline
-            outlineColor={outlineColor}
-            outlineWidth={2}
-            classificationType={1} // CESIUM_3D_TILE - clamp to 3D tiles
-            height={0}
-            extrudedHeight={undefined}
-          />
-        </Entity>
-      );
-    })
-    .filter(Boolean);
-
   return (
-    <div style={{ height: "100%", width: "100%" }}>
-      <Viewer
-        full
-        timeline={false}
-        animation={false}
-        baseLayerPicker={false}
-        geocoder={false}
-        homeButton={false}
-        sceneModePicker={false}
-        selectionIndicator
-        navigationHelpButton={false}
-        infoBox
-        ref={(ref) => {
-          if (ref?.cesiumElement) {
-            handleViewerReady(ref.cesiumElement);
-          }
-        }}
-      >
-        {glebaEntities}
-      </Viewer>
-
-      {/* Aviso se API Key não configurada - removido já que está configurada */}
-    </div>
+    <div 
+      ref={containerRef} 
+      style={{ height: "100%", width: "100%" }}
+    />
   );
 }
 
