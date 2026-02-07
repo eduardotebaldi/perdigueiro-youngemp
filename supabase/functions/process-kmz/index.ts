@@ -1,7 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import JSZip from "https://esm.sh/jszip@3.10.1";
-import { DOMParser } from "https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts";
 import { create, getNumericDate } from "https://deno.land/x/djwt@v2.8/mod.ts";
 
 const corsHeaders = {
@@ -21,8 +20,6 @@ interface ServiceAccountCredentials {
 
 // Create a JWT token for Google API authentication
 async function getGoogleAccessToken(credentials: ServiceAccountCredentials): Promise<string> {
-  const now = Math.floor(Date.now() / 1000);
-  
   // Clean the private key - handle escaped newlines
   const privateKeyPem = credentials.private_key.replace(/\\n/g, '\n');
   
@@ -99,7 +96,7 @@ async function downloadFromDriveApi(fileId: string, accessToken: string): Promis
   return new Uint8Array(buffer);
 }
 
-// Try public download first, then fall back to API
+// Try to download with API first, then public
 async function downloadKmzFile(
   kmzUrl: string, 
   fileId: string | null,
@@ -173,13 +170,68 @@ async function downloadKmzFile(
         return await downloadFromDriveApi(fileId, accessToken);
       }
       
-      throw new Error("Não foi possível baixar o arquivo. Verifique se o arquivo está compartilhado com a Service Account ou publicamente.");
+      throw new Error("Não foi possível baixar o arquivo. Verifique se o arquivo está compartilhado com a Service Account.");
     }
     
     throw new Error("Received HTML instead of KMZ file. The URL may not be a valid direct download link.");
   }
 
   return bytes;
+}
+
+// Simple KML parser using regex (works in Deno Edge Functions without DOMParser)
+function parseKmlCoordinates(kmlContent: string): any {
+  // Find coordinates element using regex
+  const coordsMatch = kmlContent.match(/<coordinates[^>]*>([\s\S]*?)<\/coordinates>/i);
+  
+  if (!coordsMatch || !coordsMatch[1]) {
+    console.log("No coordinates found in KML");
+    return null;
+  }
+
+  const coordsText = coordsMatch[1].trim();
+  const coordPairs = coordsText.split(/\s+/).filter(Boolean);
+  
+  if (coordPairs.length === 0) {
+    console.log("Empty coordinates in KML");
+    return null;
+  }
+
+  const coordinates = coordPairs.map((pair) => {
+    const [lon, lat] = pair.split(",").map(Number);
+    return [lon, lat];
+  }).filter(coord => !isNaN(coord[0]) && !isNaN(coord[1]));
+
+  if (coordinates.length === 0) {
+    console.log("No valid coordinates parsed");
+    return null;
+  }
+
+  console.log(`Parsed ${coordinates.length} coordinates`);
+
+  // Determine geometry type
+  const isPolygon = coordinates.length > 2 && 
+    coordinates[0][0] === coordinates[coordinates.length - 1][0] &&
+    coordinates[0][1] === coordinates[coordinates.length - 1][1];
+
+  if (isPolygon) {
+    return {
+      type: "Polygon",
+      coordinates: [coordinates],
+    };
+  } else if (coordinates.length > 1) {
+    return {
+      type: "LineString",
+      coordinates: coordinates,
+    };
+  } else if (coordinates.length === 1) {
+    return {
+      type: "Point",
+      coordinates: coordinates[0],
+    };
+  }
+
+  return null;
 }
 
 serve(async (req) => {
@@ -254,6 +306,8 @@ serve(async (req) => {
       throw new Error("Downloaded file is not a valid KMZ/ZIP file.");
     }
 
+    console.log("KMZ file validated, extracting...");
+
     // Unzip the KMZ to get KML
     const zip = new JSZip();
     const zipContent = await zip.loadAsync(kmzBytes);
@@ -261,8 +315,10 @@ serve(async (req) => {
     // Find the KML file inside the KMZ
     let kmlContent: string | null = null;
     for (const filename of Object.keys(zipContent.files)) {
+      console.log(`Found file in KMZ: ${filename}`);
       if (filename.endsWith(".kml")) {
         kmlContent = await zipContent.files[filename].async("string");
+        console.log(`KML content length: ${kmlContent.length}`);
         break;
       }
     }
@@ -271,48 +327,13 @@ serve(async (req) => {
       throw new Error("No KML file found inside KMZ");
     }
 
-    // Parse KML to extract coordinates
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(kmlContent, "text/xml");
-    
-    if (!doc) {
-      throw new Error("Failed to parse KML");
-    }
+    // Parse KML to extract coordinates using simple regex parser
+    const geojson = parseKmlCoordinates(kmlContent);
 
-    // Extract polygon coordinates
-    const coordinatesElement = doc.querySelector("coordinates");
-    let geojson: any = null;
-
-    if (coordinatesElement) {
-      const coordsText = coordinatesElement.textContent?.trim() || "";
-      const coordPairs = coordsText.split(/\s+/).filter(Boolean);
-      
-      const coordinates = coordPairs.map((pair) => {
-        const [lon, lat, alt] = pair.split(",").map(Number);
-        return [lon, lat];
-      });
-
-      // Determine if it's a polygon (closed) or linestring
-      const isPolygon = coordinates.length > 2 && 
-        coordinates[0][0] === coordinates[coordinates.length - 1][0] &&
-        coordinates[0][1] === coordinates[coordinates.length - 1][1];
-
-      if (isPolygon) {
-        geojson = {
-          type: "Polygon",
-          coordinates: [coordinates],
-        };
-      } else if (coordinates.length > 1) {
-        geojson = {
-          type: "LineString",
-          coordinates: coordinates,
-        };
-      } else if (coordinates.length === 1) {
-        geojson = {
-          type: "Point",
-          coordinates: coordinates[0],
-        };
-      }
+    if (geojson) {
+      console.log(`Successfully extracted ${geojson.type} geometry`);
+    } else {
+      console.log("No geometry extracted from KML");
     }
 
     // Upload the original KMZ file to storage
