@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { Tables } from "@/integrations/supabase/types";
 import { useGlebas, STATUS_LABELS } from "@/hooks/useGlebas";
 import { useCidades } from "@/hooks/useCidades";
+import { validateGlebaStatus } from "@/lib/glebaValidation";
 import {
   Table,
   TableBody,
@@ -21,7 +22,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, X, Star, Check } from "lucide-react";
+import { Toggle } from "@/components/ui/toggle";
+import { Search, X, Star, Check, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useQuery } from "@tanstack/react-query";
@@ -88,6 +90,12 @@ export function GlebaTable({ onViewGleba }: GlebaTableProps) {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [cidadeFilter, setCidadeFilter] = useState<string>("all");
   const [imobiliariaFilter, setImobiliariaFilter] = useState<string>("all");
+  const [showPendingOnly, setShowPendingOnly] = useState(false);
+
+  // Contagem de pendentes
+  const pendingCount = useMemo(() => {
+    return glebas.filter((gleba) => !validateGlebaStatus(gleba).isValid).length;
+  }, [glebas]);
 
   // Aplicar filtros
   const filteredGlebas = useMemo(() => {
@@ -101,23 +109,27 @@ export function GlebaTable({ onViewGleba }: GlebaTableProps) {
       const matchesCidade = cidadeFilter === "all" || gleba.cidade_id === cidadeFilter;
       const matchesImobiliaria =
         imobiliariaFilter === "all" || gleba.imobiliaria_id === imobiliariaFilter;
+      
+      const matchesPending = !showPendingOnly || !validateGlebaStatus(gleba).isValid;
 
-      return matchesSearch && matchesStatus && matchesCidade && matchesImobiliaria;
+      return matchesSearch && matchesStatus && matchesCidade && matchesImobiliaria && matchesPending;
     });
-  }, [glebas, searchTerm, statusFilter, cidadeFilter, imobiliariaFilter]);
+  }, [glebas, searchTerm, statusFilter, cidadeFilter, imobiliariaFilter, showPendingOnly]);
 
   const clearFilters = () => {
     setSearchTerm("");
     setStatusFilter("all");
     setCidadeFilter("all");
     setImobiliariaFilter("all");
+    setShowPendingOnly(false);
   };
 
   const hasActiveFilters =
     searchTerm ||
     statusFilter !== "all" ||
     cidadeFilter !== "all" ||
-    imobiliariaFilter !== "all";
+    imobiliariaFilter !== "all" ||
+    showPendingOnly;
 
   const getCidadeName = (cidadeId: string | null) => {
     if (!cidadeId) return "-";
@@ -213,6 +225,18 @@ export function GlebaTable({ onViewGleba }: GlebaTableProps) {
             ))}
           </SelectContent>
         </Select>
+
+        {/* Filtro de Pendentes */}
+        <Toggle
+          pressed={showPendingOnly}
+          onPressedChange={setShowPendingOnly}
+          variant="outline"
+          className="gap-2 data-[state=on]:bg-amber-500/10 data-[state=on]:text-amber-600 data-[state=on]:border-amber-500/50"
+          aria-label="Filtrar pendentes"
+        >
+          <AlertTriangle className="h-4 w-4" />
+          Pendentes ({pendingCount})
+        </Toggle>
 
         {/* Seletor de Colunas */}
         <ColumnSelector
