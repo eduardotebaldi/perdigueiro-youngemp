@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar, ExternalLink, FileText, MapPin, Building2 } from "lucide-react";
+import { Calendar, ExternalLink, FileText, MapPin, Building2, DollarSign, Percent } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PropostaWithGleba } from "@/hooks/usePropostas";
@@ -72,6 +72,28 @@ export function PropostaCard({ proposta, onClick }: PropostaCardProps) {
                     locale: ptBR,
                   })}
                 </span>
+              </div>
+
+              {/* Price/Percentage info */}
+              <div className="flex items-center gap-4 text-sm mb-2">
+                {(proposta.tipo === "compra" || proposta.tipo === "mista") && (proposta as any).preco_ha && (
+                  <div className="flex items-center gap-1 text-muted-foreground">
+                    <DollarSign className="h-3 w-3" />
+                    <span>
+                      {new Intl.NumberFormat("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                        maximumFractionDigits: 0,
+                      }).format((proposta as any).preco_ha)}/ha
+                    </span>
+                  </div>
+                )}
+                {(proposta.tipo === "parceria" || proposta.tipo === "mista") && (proposta as any).percentual_proposto && (
+                  <div className="flex items-center gap-1 text-muted-foreground">
+                    <Percent className="h-3 w-3" />
+                    <span>{(proposta as any).percentual_proposto}%</span>
+                  </div>
+                )}
               </div>
 
               {/* Responsável */}

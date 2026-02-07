@@ -33,6 +33,8 @@ interface ParsedProposta {
   tipo: "compra" | "parceria" | "mista";
   descricao?: string;
   arquivoLink?: string;
+  precoHa?: number;
+  percentualProposto?: number;
 }
 
 const COLUMN_MAPPINGS: Record<string, keyof ParsedProposta> = {
@@ -88,6 +90,26 @@ const COLUMN_MAPPINGS: Record<string, keyof ParsedProposta> = {
   "doc": "arquivoLink",
   "pdf": "arquivoLink",
   "file": "arquivoLink",
+  
+  // Preço por hectare variations
+  "preco ha": "precoHa",
+  "preco por ha": "precoHa",
+  "preco por hectare": "precoHa",
+  "valor ha": "precoHa",
+  "valor por ha": "precoHa",
+  "valor por hectare": "precoHa",
+  "r ha": "precoHa",
+  "rs ha": "precoHa",
+  "preco": "precoHa",
+  "valor": "precoHa",
+  
+  // Percentual proposto variations
+  "percentual proposto": "percentualProposto",
+  "percentual": "percentualProposto",
+  "percent proposto": "percentualProposto",
+  "proposto": "percentualProposto",
+  "permuta": "percentualProposto",
+  "parceria": "percentualProposto",
 };
 
 const TIPO_MAPPINGS: Record<string, "compra" | "parceria" | "mista"> = {
@@ -202,6 +224,24 @@ function parseSpreadsheetData(text: string, logRef: React.MutableRefObject<strin
       ? values[columnIndexes.arquivoLink] || undefined
       : undefined;
 
+    // Parse preço por hectare (remove currency symbols and convert)
+    let precoHa: number | undefined;
+    if (columnIndexes.precoHa !== undefined) {
+      const precoStr = values[columnIndexes.precoHa] || "";
+      const cleanPreco = precoStr.replace(/[R$\s.]/g, "").replace(",", ".");
+      const precoNum = parseFloat(cleanPreco);
+      if (!isNaN(precoNum)) precoHa = precoNum;
+    }
+
+    // Parse percentual proposto (remove % symbol)
+    let percentualProposto: number | undefined;
+    if (columnIndexes.percentualProposto !== undefined) {
+      const percentStr = values[columnIndexes.percentualProposto] || "";
+      const cleanPercent = percentStr.replace(/[%\s]/g, "").replace(",", ".");
+      const percentNum = parseFloat(cleanPercent);
+      if (!isNaN(percentNum)) percentualProposto = percentNum;
+    }
+
     if (glebaApelido || cleanNumeroStr) {
       const parsed: ParsedProposta = {
         glebaApelido,
@@ -210,6 +250,8 @@ function parseSpreadsheetData(text: string, logRef: React.MutableRefObject<strin
         tipo,
         descricao,
         arquivoLink,
+        precoHa,
+        percentualProposto,
       };
       propostas.push(parsed);
       
@@ -322,8 +364,19 @@ export function ImportPropostasDialog() {
           continue;
         }
 
-        let arquivoCarta: string | null = null;
-        if (proposta.arquivoLink) {
+        // Check if proposta already exists for this gleba and date
+        const dataParsed = parseDate(proposta.dataProposta);
+        const { data: existingProposta } = await supabase
+          .from("propostas")
+          .select("id, arquivo_carta, preco_ha, percentual_proposto, descricao")
+          .eq("gleba_id", gleba.id)
+          .eq("data_proposta", dataParsed)
+          .maybeSingle();
+
+        let arquivoCarta: string | null = existingProposta?.arquivo_carta || null;
+        
+        // Only download file if there's a link AND we don't already have a file
+        if (proposta.arquivoLink && !arquivoCarta) {
           try {
             const response = await supabase.functions.invoke("download-proposta-file", {
               body: { url: proposta.arquivoLink },
@@ -353,23 +406,64 @@ export function ImportPropostasDialog() {
           }
         }
 
-        const { error } = await supabase.from("propostas").insert({
+        // Build data object, only including fields that have values or need updating
+        const propostaData: any = {
           gleba_id: gleba.id,
-          data_proposta: parseDate(proposta.dataProposta),
+          data_proposta: dataParsed,
           tipo: proposta.tipo,
-          descricao: proposta.descricao || null,
-          arquivo_carta: arquivoCarta,
-          created_by: user.id,
-        });
+        };
+
+        // Only set fields if they have values (to avoid overwriting existing data with null)
+        if (proposta.descricao) propostaData.descricao = proposta.descricao;
+        if (arquivoCarta) propostaData.arquivo_carta = arquivoCarta;
+        if (proposta.precoHa !== undefined) propostaData.preco_ha = proposta.precoHa;
+        if (proposta.percentualProposto !== undefined) propostaData.percentual_proposto = proposta.percentualProposto;
+
+        let error;
+        let action: string;
+
+        if (existingProposta) {
+          // Update existing - only update fields that have new values
+          const updateData: any = {};
+          if (proposta.descricao && proposta.descricao !== existingProposta.descricao) {
+            updateData.descricao = proposta.descricao;
+          }
+          if (arquivoCarta && arquivoCarta !== existingProposta.arquivo_carta) {
+            updateData.arquivo_carta = arquivoCarta;
+          }
+          if (proposta.precoHa !== undefined && proposta.precoHa !== existingProposta.preco_ha) {
+            updateData.preco_ha = proposta.precoHa;
+          }
+          if (proposta.percentualProposto !== undefined && proposta.percentualProposto !== existingProposta.percentual_proposto) {
+            updateData.percentual_proposto = proposta.percentualProposto;
+          }
+
+          if (Object.keys(updateData).length > 0) {
+            const result = await supabase
+              .from("propostas")
+              .update(updateData)
+              .eq("id", existingProposta.id);
+            error = result.error;
+            action = "Atualizada";
+          } else {
+            action = "Sem alterações";
+          }
+        } else {
+          // Insert new
+          propostaData.created_by = user.id;
+          const result = await supabase.from("propostas").insert(propostaData);
+          error = result.error;
+          action = "Criada";
+        }
 
         if (error) throw error;
 
-        logRef.current.push(`[Import] SUCCESS: ${gleba.apelido}`);
+        logRef.current.push(`[Import] SUCCESS: ${gleba.apelido} - ${action}`);
         importResults.push({
           numero: gleba.numero || undefined,
           gleba: gleba.apelido,
           success: true,
-          message: arquivoCarta ? "Importada com arquivo" : "Importada sem arquivo",
+          message: action + (arquivoCarta && !existingProposta?.arquivo_carta ? " com arquivo" : ""),
         });
       } catch (error: any) {
         logRef.current.push(`[Import] ERROR: ${proposta.glebaApelido || proposta.glebaNumero} - ${error.message}`);
@@ -449,9 +543,14 @@ export function ImportPropostasDialog() {
               <li><strong>Gleba / Número</strong> - Apelido ou número da gleba</li>
               <li><strong>Data</strong> - Data da proposta (DD/MM/AAAA)</li>
               <li><strong>Tipo</strong> - compra, parceria ou mista</li>
-              <li><strong>Descrição</strong> - Descrição opcional</li>
+              <li><strong>Preço/ha</strong> - Valor em R$ por hectare (para compra)</li>
+              <li><strong>Percentual</strong> - % proposto (para parceria/permuta)</li>
+              <li><strong>Responsável</strong> - Responsável pela proposta</li>
               <li><strong>Arquivo/Link</strong> - Link para arquivo (PDF, PPT, etc.)</li>
             </ul>
+            <p className="text-xs text-muted-foreground mt-2">
+              💡 Reimportar a tabela atualiza apenas os dados faltantes nas propostas existentes.
+            </p>
           </div>
 
           {/* Paste Area */}
