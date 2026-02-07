@@ -1,32 +1,96 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useAuth } from "@/contexts/AuthContext";
-import { MapPin, Building2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { MapPin, Building2, Loader2, ArrowLeft } from "lucide-react";
+
+const loginSchema = z.object({
+  email: z.string().email("Email inválido"),
+  password: z.string().min(6, "Senha deve ter no mínimo 6 caracteres"),
+});
+
+const resetSchema = z.object({
+  email: z.string().email("Email inválido"),
+});
+
+type LoginForm = z.infer<typeof loginSchema>;
+type ResetForm = z.infer<typeof resetSchema>;
 
 export default function Login() {
-  const { user, isLoading, signInWithGoogle } = useAuth();
+  const { user, isLoading: authLoading, signIn, resetPassword } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showResetForm, setShowResetForm] = useState(false);
+
+  const loginForm = useForm<LoginForm>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  const resetForm = useForm<ResetForm>({
+    resolver: zodResolver(resetSchema),
+    defaultValues: {
+      email: "",
+    },
+  });
 
   useEffect(() => {
-    if (user && !isLoading) {
+    if (user && !authLoading) {
       navigate("/");
     }
-  }, [user, isLoading, navigate]);
+  }, [user, authLoading, navigate]);
 
-  const handleGoogleLogin = async () => {
-    try {
-      await signInWithGoogle();
-    } catch (error) {
-      console.error("Erro ao fazer login:", error);
+  const handleLogin = async (data: LoginForm) => {
+    setIsSubmitting(true);
+    const { error } = await signIn(data.email, data.password);
+    
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro no login",
+        description: error.message === "Invalid login credentials" 
+          ? "Email ou senha incorretos" 
+          : error.message,
+      });
     }
+    setIsSubmitting(false);
   };
 
-  if (isLoading) {
+  const handleResetPassword = async (data: ResetForm) => {
+    setIsSubmitting(true);
+    const { error } = await resetPassword(data.email);
+    
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível enviar o email de recuperação.",
+      });
+    } else {
+      toast({
+        title: "Email enviado!",
+        description: "Verifique sua caixa de entrada para redefinir a senha.",
+      });
+      setShowResetForm(false);
+    }
+    setIsSubmitting(false);
+  };
+
+  if (authLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-secondary">
-        <div className="animate-pulse text-primary-foreground">Carregando...</div>
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -70,39 +134,131 @@ export default function Login() {
                 <Building2 className="h-8 w-8 text-primary-foreground" />
               </div>
             </div>
-            <CardTitle className="text-2xl font-bold">Bem-vindo de volta</CardTitle>
-            <CardDescription>
-              Entre com sua conta Google corporativa para acessar o sistema
-            </CardDescription>
+            
+            {showResetForm ? (
+              <>
+                <CardTitle className="text-2xl font-bold">Recuperar Senha</CardTitle>
+                <CardDescription>
+                  Digite seu email para receber um link de recuperação
+                </CardDescription>
+              </>
+            ) : (
+              <>
+                <CardTitle className="text-2xl font-bold">Bem-vindo de volta</CardTitle>
+                <CardDescription>
+                  Entre com suas credenciais para acessar o sistema
+                </CardDescription>
+              </>
+            )}
           </CardHeader>
+          
           <CardContent className="space-y-6">
-            <Button
-              onClick={handleGoogleLogin}
-              variant="outline"
-              className="w-full h-12 gap-3 text-base font-medium hover:bg-muted"
-            >
-              <svg className="h-5 w-5" viewBox="0 0 24 24">
-                <path
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                  fill="#4285F4"
-                />
-                <path
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                  fill="#34A853"
-                />
-                <path
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                  fill="#FBBC05"
-                />
-                <path
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                  fill="#EA4335"
-                />
-              </svg>
-              Continuar com Google
-            </Button>
+            {showResetForm ? (
+              <Form {...resetForm}>
+                <form onSubmit={resetForm.handleSubmit(handleResetPassword)} className="space-y-4">
+                  <FormField
+                    control={resetForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="email" 
+                            placeholder="seu@email.com" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-            <p className="text-center text-sm text-muted-foreground">
+                  <Button type="submit" className="w-full" disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Enviando...
+                      </>
+                    ) : (
+                      "Enviar Link de Recuperação"
+                    )}
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full"
+                    onClick={() => setShowResetForm(false)}
+                  >
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Voltar ao login
+                  </Button>
+                </form>
+              </Form>
+            ) : (
+              <Form {...loginForm}>
+                <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
+                  <FormField
+                    control={loginForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="email" 
+                            placeholder="seu@email.com" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={loginForm.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Senha</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="password" 
+                            placeholder="••••••••" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <Button type="submit" className="w-full" disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Entrando...
+                      </>
+                    ) : (
+                      "Entrar"
+                    )}
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="w-full text-muted-foreground"
+                    onClick={() => setShowResetForm(true)}
+                  >
+                    Esqueci minha senha
+                  </Button>
+                </form>
+              </Form>
+            )}
+
+            <p className="text-center text-xs text-muted-foreground">
               Acesso restrito a colaboradores Young Empreendimentos
             </p>
           </CardContent>

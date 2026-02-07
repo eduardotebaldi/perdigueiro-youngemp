@@ -10,8 +10,9 @@ interface AuthContextType {
   role: AppRole | null;
   isLoading: boolean;
   isAdmin: boolean;
-  signInWithGoogle: () => Promise<void>;
+  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -69,22 +70,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: window.location.origin,
-        queryParams: {
-          // Para restringir ao domínio, configure no Google Cloud Console
-          hd: "*", // Pode ser substituído pelo domínio específico
-        },
-      },
+  const signIn = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
     });
 
     if (error) {
       console.error("Erro no login:", error);
-      throw error;
+      return { error };
     }
+
+    return { error: null };
   };
 
   const signOut = async () => {
@@ -95,6 +92,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const resetPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+
+    if (error) {
+      console.error("Erro ao enviar email de recuperação:", error);
+      return { error };
+    }
+
+    return { error: null };
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -103,8 +113,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role,
         isLoading,
         isAdmin: role === "admin",
-        signInWithGoogle,
+        signIn,
         signOut,
+        resetPassword,
       }}
     >
       {children}
