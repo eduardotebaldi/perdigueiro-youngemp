@@ -112,15 +112,6 @@ export default function Login() {
           <h1 className="text-4xl font-bold text-secondary-foreground leading-tight">
             Perdigueiro
           </h1>
-          <p className="text-secondary-foreground/70 text-lg max-w-md">
-            Gerencie terrenos potenciais, acompanhe propostas e visualize suas glebas 
-            em mapas integrados com o Google Earth.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 text-secondary-foreground/50">
-          <MapPin className="h-4 w-4" />
-          <span className="text-sm">Identificando oportunidades, construindo futuros.</span>
         </div>
       </div>
 
