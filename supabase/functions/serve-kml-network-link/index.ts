@@ -7,28 +7,16 @@ const corsHeaders = {
 };
 
 // Status colors for Google Earth (AABBGGRR format - Alpha, Blue, Green, Red)
-const STATUS_COLORS: Record<string, string> = {
-  identificada: "ff0000ff", // Red
-  informacoes_recebidas: "ff00a5ff", // Orange
-  visita_realizada: "ff00ffff", // Yellow
-  proposta_enviada: "ffff0000", // Blue
-  protocolo_assinado: "ff00ff00", // Green
-  descartada: "ff808080", // Gray
-  proposta_recusada: "ff0000aa", // Dark Red
-  negocio_fechado: "ff00aa00", // Dark Green
-  standby: "ffaa00aa", // Purple
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  identificada: "Identificada",
-  informacoes_recebidas: "Informações Recebidas",
-  visita_realizada: "Visita Realizada",
-  proposta_enviada: "Proposta Enviada",
-  protocolo_assinado: "Protocolo Assinado",
-  descartada: "Descartada",
-  proposta_recusada: "Proposta Recusada",
-  negocio_fechado: "Negócio Fechado",
-  standby: "Standby",
+const STATUS_STYLES: Record<string, { fill: string; line: string; label: string }> = {
+  identificada: { fill: "800000ff", line: "ff0000ff", label: "Identificada" }, // Red
+  informacoes_recebidas: { fill: "8000a5ff", line: "ff00a5ff", label: "Informações Recebidas" }, // Orange
+  visita_realizada: { fill: "8000ffff", line: "ff00ffff", label: "Visita Realizada" }, // Yellow
+  proposta_enviada: { fill: "80ff0000", line: "ffff0000", label: "Proposta Enviada" }, // Blue
+  protocolo_assinado: { fill: "8000ff00", line: "ff00ff00", label: "Protocolo Assinado" }, // Green
+  descartada: { fill: "80808080", line: "ff808080", label: "Descartada" }, // Gray
+  proposta_recusada: { fill: "800000aa", line: "ff0000aa", label: "Proposta Recusada" }, // Dark Red
+  negocio_fechado: { fill: "8000aa00", line: "ff00aa00", label: "Negócio Fechado" }, // Dark Green
+  standby: { fill: "80aa00aa", line: "ffaa00aa", label: "Standby" }, // Purple
 };
 
 interface Gleba {
@@ -100,50 +88,6 @@ function geoJsonToKmlCoordinates(geojson: any): { coordinates: string; type: str
   }
 }
 
-function generatePlacemarkDescription(
-  gleba: Gleba,
-  appUrl: string
-): string {
-  const statusColor = STATUS_COLORS[gleba.status] || "ffffffff";
-  const statusLabel = STATUS_LABELS[gleba.status] || gleba.status;
-  const detailsUrl = `${appUrl}/glebas?id=${gleba.id}`;
-
-  return `<![CDATA[
-    <div style="font-family: Arial, sans-serif; max-width: 300px;">
-      <h3 style="margin: 0 0 10px 0; color: #333;">${escapeXml(gleba.apelido)}</h3>
-      
-      <div style="margin-bottom: 8px;">
-        <strong>Status:</strong> 
-        <span style="background-color: #${statusColor.slice(2)}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px;">
-          ${statusLabel}
-        </span>
-      </div>
-      
-      ${gleba.cidade ? `<div style="margin-bottom: 5px;"><strong>Cidade:</strong> ${escapeXml(gleba.cidade.nome)}</div>` : ""}
-      
-      <div style="margin-bottom: 5px;"><strong>Área:</strong> ${formatArea(gleba.tamanho_m2)}</div>
-      
-      <div style="margin-bottom: 5px;"><strong>Valor:</strong> ${formatCurrency(gleba.preco)}</div>
-      
-      ${gleba.proprietario_nome ? `<div style="margin-bottom: 5px;"><strong>Proprietário:</strong> ${escapeXml(gleba.proprietario_nome)}</div>` : ""}
-      
-      ${gleba.prioridade ? `<div style="margin-bottom: 10px; color: #ff6600; font-weight: bold;">⭐ Prioridade</div>` : ""}
-      
-      <div style="margin-top: 15px;">
-        <a href="${detailsUrl}" target="_blank" style="
-          display: inline-block;
-          background-color: #FE5009;
-          color: white;
-          padding: 8px 16px;
-          text-decoration: none;
-          border-radius: 4px;
-          font-weight: bold;
-        ">Abrir no Sistema</a>
-      </div>
-    </div>
-  ]]>`;
-}
-
 function escapeXml(text: string): string {
   return text
     .replace(/&/g, "&amp;")
@@ -151,6 +95,89 @@ function escapeXml(text: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
+}
+
+function generatePlacemarkDescription(gleba: Gleba, appUrl: string): string {
+  const style = STATUS_STYLES[gleba.status] || { label: gleba.status };
+  const detailsUrl = `${appUrl}/glebas?id=${gleba.id}`;
+
+  return `<![CDATA[
+    <div style="font-family: Arial, sans-serif; max-width: 320px; padding: 10px;">
+      <h2 style="margin: 0 0 12px 0; color: #1a1a1a; font-size: 18px; border-bottom: 2px solid #FE5009; padding-bottom: 8px;">
+        ${escapeXml(gleba.apelido)}
+      </h2>
+      
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px;">
+        <tr>
+          <td style="padding: 6px 0; color: #666; font-size: 13px;">Status:</td>
+          <td style="padding: 6px 0; font-weight: bold; font-size: 13px;">${style.label}</td>
+        </tr>
+        ${gleba.cidade ? `
+        <tr>
+          <td style="padding: 6px 0; color: #666; font-size: 13px;">Cidade:</td>
+          <td style="padding: 6px 0; font-size: 13px;">${escapeXml(gleba.cidade.nome)}</td>
+        </tr>` : ""}
+        <tr>
+          <td style="padding: 6px 0; color: #666; font-size: 13px;">Área:</td>
+          <td style="padding: 6px 0; font-size: 13px;">${formatArea(gleba.tamanho_m2)}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; color: #666; font-size: 13px;">Valor:</td>
+          <td style="padding: 6px 0; font-weight: bold; font-size: 13px;">${formatCurrency(gleba.preco)}</td>
+        </tr>
+        ${gleba.proprietario_nome ? `
+        <tr>
+          <td style="padding: 6px 0; color: #666; font-size: 13px;">Proprietário:</td>
+          <td style="padding: 6px 0; font-size: 13px;">${escapeXml(gleba.proprietario_nome)}</td>
+        </tr>` : ""}
+      </table>
+      
+      ${gleba.prioridade ? `<div style="margin-bottom: 12px; color: #ff6600; font-weight: bold; font-size: 14px;">⭐ Gleba Prioritária</div>` : ""}
+      
+      <div style="text-align: center; margin-top: 15px;">
+        <a href="${detailsUrl}" target="_blank" style="
+          display: inline-block;
+          background: linear-gradient(135deg, #FE5009 0%, #ff6b2b 100%);
+          color: white;
+          padding: 10px 24px;
+          text-decoration: none;
+          border-radius: 6px;
+          font-weight: bold;
+          font-size: 14px;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        ">🔗 Abrir no Sistema</a>
+      </div>
+    </div>
+  ]]>`;
+}
+
+function generateGlobalStyles(): string {
+  let styles = "";
+  
+  for (const [status, { fill, line, label }] of Object.entries(STATUS_STYLES)) {
+    styles += `
+    <Style id="style_${status}">
+      <PolyStyle>
+        <color>${fill}</color>
+        <fill>1</fill>
+        <outline>1</outline>
+      </PolyStyle>
+      <LineStyle>
+        <color>${line}</color>
+        <width>2</width>
+      </LineStyle>
+      <IconStyle>
+        <color>${line}</color>
+        <scale>1.0</scale>
+      </IconStyle>
+      <BalloonStyle>
+        <bgColor>ffffffff</bgColor>
+        <textColor>ff000000</textColor>
+      </BalloonStyle>
+    </Style>`;
+  }
+  
+  return styles;
 }
 
 function generateKml(glebas: Gleba[], appUrl: string): string {
@@ -161,48 +188,57 @@ function generateKml(glebas: Gleba[], appUrl: string): string {
       if (!result) return "";
 
       const { coordinates, type } = result;
-      const color = STATUS_COLORS[gleba.status] || "ffffffff";
+      const styleId = `style_${gleba.status}`;
 
       const geometry = type === "Polygon"
         ? `<Polygon>
+            <extrude>0</extrude>
+            <altitudeMode>clampToGround</altitudeMode>
             <outerBoundaryIs>
               <LinearRing>
                 <coordinates>${coordinates}</coordinates>
               </LinearRing>
             </outerBoundaryIs>
           </Polygon>`
-        : `<Point><coordinates>${coordinates}</coordinates></Point>`;
+        : `<Point>
+            <altitudeMode>clampToGround</altitudeMode>
+            <coordinates>${coordinates}</coordinates>
+          </Point>`;
 
       return `
-        <Placemark id="${gleba.id}">
-          <name>${escapeXml(gleba.apelido)}</name>
-          <description>${generatePlacemarkDescription(gleba, appUrl)}</description>
-          <Style>
-            <PolyStyle>
-              <color>${color}</color>
-              <fill>1</fill>
-              <outline>1</outline>
-            </PolyStyle>
-            <LineStyle>
-              <color>${color}</color>
-              <width>2</width>
-            </LineStyle>
-            <IconStyle>
-              <color>${color}</color>
-            </IconStyle>
-          </Style>
-          ${geometry}
-        </Placemark>
-      `;
+    <Placemark id="${gleba.id}">
+      <name>${escapeXml(gleba.apelido)}</name>
+      <description>${generatePlacemarkDescription(gleba, appUrl)}</description>
+      <styleUrl>#${styleId}</styleUrl>
+      ${geometry}
+    </Placemark>`;
     })
     .join("\n");
 
+  // Group glebas by status for folders
+  const glebasByStatus: Record<string, Gleba[]> = {};
+  for (const gleba of glebas) {
+    if (!glebasByStatus[gleba.status]) {
+      glebasByStatus[gleba.status] = [];
+    }
+    glebasByStatus[gleba.status].push(gleba);
+  }
+
   return `<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
+  <NetworkLinkControl>
+    <minRefreshPeriod>60</minRefreshPeriod>
+    <maxSessionLength>-1</maxSessionLength>
+    <message>Glebas atualizadas em ${new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}</message>
+    <linkName>Glebas - Young Empreendimentos</linkName>
+    <linkDescription>Mapa de glebas com atualização automática a cada 60 segundos</linkDescription>
+  </NetworkLinkControl>
   <Document>
     <name>Glebas - Young Empreendimentos</name>
-    <description>Mapa de glebas mapeadas pelo sistema</description>
+    <description>Mapa de glebas mapeadas pelo sistema. Atualização automática ativada.</description>
     <open>1</open>
+    
+    ${generateGlobalStyles()}
     
     ${placemarks}
     

@@ -4,6 +4,7 @@ import { EditGlebaDialog } from "@/components/glebas/EditGlebaDialog";
 import { GlebaKanban } from "@/components/glebas/GlebaKanban";
 import { GlebaTable } from "@/components/glebas/GlebaTable";
 import { GoogleDriveSyncConfig } from "@/components/glebas/GoogleDriveSyncConfig";
+import { GoogleEarthIntegrationCard } from "@/components/glebas/GoogleEarthIntegrationCard";
 import { Tables } from "@/integrations/supabase/types";
 import { Kanban, Table2, Zap, Settings } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -25,10 +26,11 @@ export default function Glebas() {
         <CollapsibleTrigger asChild>
           <Button variant="outline" size="sm" className="gap-2">
             <Settings className="h-4 w-4" />
-            {showConfig ? "Ocultar Configurações" : "Configurações de Sync"}
+            {showConfig ? "Ocultar Integrações" : "Integrações Google Earth"}
           </Button>
         </CollapsibleTrigger>
-        <CollapsibleContent className="mt-4">
+        <CollapsibleContent className="mt-4 space-y-4">
+          <GoogleEarthIntegrationCard />
           <GoogleDriveSyncConfig />
         </CollapsibleContent>
       </Collapsible>
