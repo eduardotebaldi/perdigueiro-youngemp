@@ -46,7 +46,7 @@ const glebaSchema = z.object({
   tamanho_m2: z.coerce.number().positive().optional().nullable(),
   preco: z.coerce.number().positive().optional().nullable(),
   percentual_permuta: z.coerce.number().min(0).max(100).optional().nullable(),
-  aceita_permuta: z.boolean().default(false),
+  aceita_permuta: z.enum(["incerto", "nao", "sim"]).default("incerto"),
   zona_plano_diretor: z.string().optional(),
   tamanho_lote_minimo: z.coerce.number().positive().optional().nullable(),
   comentarios: z.string().optional(),
@@ -123,7 +123,7 @@ export function EditGlebaDialog({ gleba, open, onOpenChange }: EditGlebaDialogPr
       tamanho_m2: null,
       preco: null,
       percentual_permuta: null,
-      aceita_permuta: false,
+      aceita_permuta: "incerto",
       zona_plano_diretor: "",
       tamanho_lote_minimo: null,
       comentarios: "",
@@ -145,7 +145,7 @@ export function EditGlebaDialog({ gleba, open, onOpenChange }: EditGlebaDialogPr
         tamanho_m2: gleba.tamanho_m2 ? Number(gleba.tamanho_m2) : null,
         preco: gleba.preco ? Number(gleba.preco) : null,
         percentual_permuta: gleba.percentual_permuta ? Number(gleba.percentual_permuta) : null,
-        aceita_permuta: gleba.aceita_permuta || false,
+        aceita_permuta: gleba.aceita_permuta || "incerto",
         zona_plano_diretor: gleba.zona_plano_diretor || "",
         tamanho_lote_minimo: gleba.tamanho_lote_minimo ? Number(gleba.tamanho_lote_minimo) : null,
         comentarios: gleba.comentarios || "",
@@ -403,19 +403,24 @@ export function EditGlebaDialog({ gleba, open, onOpenChange }: EditGlebaDialogPr
                   control={form.control}
                   name="aceita_permuta"
                   render={({ field }) => (
-                    <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">Aceita Permuta</FormLabel>
-                        <FormDescription>
-                          O proprietário aceita permuta?
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
+                    <FormItem>
+                      <FormLabel>Aceita Permuta</FormLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="incerto">Incerto</SelectItem>
+                          <SelectItem value="nao">Não</SelectItem>
+                          <SelectItem value="sim">Sim</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />

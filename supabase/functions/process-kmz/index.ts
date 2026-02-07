@@ -330,6 +330,7 @@ serve(async (req) => {
     if (kmzBytes[0] !== 0x50 || kmzBytes[1] !== 0x4B) {
       console.error("File does not start with PK signature. First bytes:", kmzBytes.slice(0, 20));
       throw new Error("Downloaded file is not a valid KMZ/ZIP file.");
+    }
 
     console.log("KMZ file validated, extracting...");
 

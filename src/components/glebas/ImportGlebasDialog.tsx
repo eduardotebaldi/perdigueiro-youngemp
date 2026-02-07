@@ -13,15 +13,16 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2, Loader2, Building2, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useGlebas, STATUS_LABELS } from "@/hooks/useGlebas";
 import { useCidades } from "@/hooks/useCidades";
 import { useImobiliarias } from "@/hooks/useImobiliarias";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ParsedRow {
-  numero?: string;
+  numero?: number;
   apelido: string;
   kmzLink?: string;
   percentualPedida?: number;
@@ -33,13 +34,18 @@ interface ParsedRow {
   status?: string;
   cidade?: string;
   dataPreco?: string;
-  aceitaParceria?: boolean;
+  aceitaParceria?: "incerto" | "nao" | "sim";
 }
 
 interface ImportResult {
   apelido: string;
   success: boolean;
   message: string;
+}
+
+interface CreatedEntity {
+  type: "cidade" | "imobiliaria";
+  nome: string;
 }
 
 const STATUS_MAP: Record<string, string> = {
@@ -71,11 +77,17 @@ export function ImportGlebasDialog() {
   const [isImporting, setIsImporting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<ImportResult[]>([]);
+  const [createdEntities, setCreatedEntities] = useState<CreatedEntity[]>([]);
   const [step, setStep] = useState<"paste" | "preview" | "importing" | "done">("paste");
 
+  const queryClient = useQueryClient();
   const { refetch } = useGlebas();
-  const { cidades } = useCidades();
-  const { imobiliarias } = useImobiliarias();
+  const { cidades, createCidade } = useCidades();
+  const { imobiliarias, createImobiliaria } = useImobiliarias();
+
+  // Cache for created entities during import
+  const [cidadesCache, setCidadesCache] = useState<Map<string, string>>(new Map());
+  const [imobiliariasCache, setImobiliariasCache] = useState<Map<string, string>>(new Map());
 
   const parseData = () => {
     if (!pastedData.trim()) {
@@ -131,14 +143,16 @@ export function ImportGlebasDialog() {
         return parseFloat(cleaned) || undefined;
       };
 
-      const parseBool = (val: string | undefined) => {
-        if (!val) return undefined;
+      const parsePermuta = (val: string | undefined): "incerto" | "nao" | "sim" => {
+        if (!val) return "incerto";
         const lower = val.toLowerCase().trim();
-        return ["sim", "yes", "s", "1", "true", "x"].includes(lower);
+        if (["sim", "yes", "s", "1", "true", "x"].includes(lower)) return "sim";
+        if (["não", "nao", "no", "n", "0", "false"].includes(lower)) return "nao";
+        return "incerto";
       };
 
       rows.push({
-        numero: colIndexes.numero >= 0 ? cols[colIndexes.numero]?.trim() : undefined,
+        numero: colIndexes.numero >= 0 ? parseNumber(cols[colIndexes.numero]) : undefined,
         apelido,
         kmzLink: colIndexes.kmzLink >= 0 ? cols[colIndexes.kmzLink]?.trim() : undefined,
         percentualPedida: colIndexes.percentual >= 0 ? parseNumber(cols[colIndexes.percentual]) : undefined,
@@ -150,7 +164,7 @@ export function ImportGlebasDialog() {
         status: colIndexes.status >= 0 ? cols[colIndexes.status]?.trim() : undefined,
         cidade: colIndexes.cidade >= 0 ? cols[colIndexes.cidade]?.trim() : undefined,
         dataPreco: colIndexes.dataPreco >= 0 ? cols[colIndexes.dataPreco]?.trim() : undefined,
-        aceitaParceria: colIndexes.parceria >= 0 ? parseBool(cols[colIndexes.parceria]) : undefined,
+        aceitaParceria: colIndexes.parceria >= 0 ? parsePermuta(cols[colIndexes.parceria]) : "incerto",
       });
     }
 
@@ -170,18 +184,76 @@ export function ImportGlebasDialog() {
     return STATUS_MAP[lower] || "identificada";
   };
 
-  const findCidadeId = (cidadeNome?: string): string | null => {
-    if (!cidadeNome || !cidades) return null;
-    const lower = cidadeNome.toLowerCase().trim();
-    const found = cidades.find((c) => c.nome.toLowerCase().includes(lower));
-    return found?.id || null;
+  const findOrCreateCidade = async (cidadeNome?: string): Promise<string | null> => {
+    if (!cidadeNome || !cidadeNome.trim()) return null;
+    const normalizedName = cidadeNome.trim();
+    const lower = normalizedName.toLowerCase();
+    
+    // Check local cache first
+    if (cidadesCache.has(lower)) {
+      return cidadesCache.get(lower)!;
+    }
+    
+    // Check existing cidades
+    const found = cidades?.find((c) => c.nome.toLowerCase() === lower || c.nome.toLowerCase().includes(lower));
+    if (found) {
+      setCidadesCache(prev => new Map(prev).set(lower, found.id));
+      return found.id;
+    }
+    
+    // Create new cidade
+    try {
+      const { data, error } = await supabase
+        .from("cidades")
+        .insert({ nome: normalizedName })
+        .select("id")
+        .single();
+      
+      if (error) throw error;
+      
+      setCidadesCache(prev => new Map(prev).set(lower, data.id));
+      setCreatedEntities(prev => [...prev, { type: "cidade", nome: normalizedName }]);
+      return data.id;
+    } catch (error) {
+      console.error("Error creating cidade:", error);
+      return null;
+    }
   };
 
-  const findImobiliariaId = (imobiliariaNome?: string): string | null => {
-    if (!imobiliariaNome || !imobiliarias) return null;
-    const lower = imobiliariaNome.toLowerCase().trim();
-    const found = imobiliarias.find((i) => i.nome.toLowerCase().includes(lower));
-    return found?.id || null;
+  const findOrCreateImobiliaria = async (imobiliariaNome?: string): Promise<string | null> => {
+    if (!imobiliariaNome || !imobiliariaNome.trim()) return null;
+    const normalizedName = imobiliariaNome.trim();
+    const lower = normalizedName.toLowerCase();
+    
+    // Check local cache first
+    if (imobiliariasCache.has(lower)) {
+      return imobiliariasCache.get(lower)!;
+    }
+    
+    // Check existing imobiliarias
+    const found = imobiliarias?.find((i) => i.nome.toLowerCase() === lower || i.nome.toLowerCase().includes(lower));
+    if (found) {
+      setImobiliariasCache(prev => new Map(prev).set(lower, found.id));
+      return found.id;
+    }
+    
+    // Create new imobiliaria
+    try {
+      const { data, error } = await supabase
+        .from("imobiliarias")
+        .insert({ nome: normalizedName })
+        .select("id")
+        .single();
+      
+      if (error) throw error;
+      
+      setImobiliariasCache(prev => new Map(prev).set(lower, data.id));
+      setCreatedEntities(prev => [...prev, { type: "imobiliaria", nome: normalizedName }]);
+      return data.id;
+    } catch (error) {
+      console.error("Error creating imobiliaria:", error);
+      return null;
+    }
   };
 
   const startImport = async () => {
@@ -189,6 +261,9 @@ export function ImportGlebasDialog() {
     setStep("importing");
     setProgress(0);
     setResults([]);
+    setCreatedEntities([]);
+    setCidadesCache(new Map());
+    setImobiliariasCache(new Map());
 
     const importResults: ImportResult[] = [];
 
@@ -198,6 +273,10 @@ export function ImportGlebasDialog() {
       try {
         let kmzStoragePath: string | null = null;
         let geojson: any = null;
+
+        // Find or create cidade and imobiliaria
+        const cidadeId = await findOrCreateCidade(row.cidade);
+        const imobiliariaId = await findOrCreateImobiliaria(row.imobiliaria);
 
         // Process KMZ if link provided
         if (row.kmzLink && row.kmzLink.trim()) {
@@ -225,20 +304,27 @@ export function ImportGlebasDialog() {
           }
         }
 
-        // Create gleba record
-        const { error: insertError } = await supabase.from("glebas").insert({
+        // Create gleba record with numero from spreadsheet
+        const insertData: any = {
           apelido: row.apelido,
-          status: mapStatus(row.status) as any,
-          cidade_id: findCidadeId(row.cidade),
-          imobiliaria_id: findImobiliariaId(row.imobiliaria),
+          status: mapStatus(row.status),
+          cidade_id: cidadeId,
+          imobiliaria_id: imobiliariaId,
           proprietario_nome: row.proprietario || null,
           tamanho_m2: row.tamanho || null,
           percentual_permuta: row.percentualPedida || null,
-          aceita_permuta: row.aceitaParceria ?? null,
+          aceita_permuta: row.aceitaParceria || "incerto",
           comentarios: row.observacoes || null,
           arquivo_kmz: kmzStoragePath,
           poligono_geojson: geojson,
-        });
+        };
+
+        // Add numero if provided in spreadsheet
+        if (row.numero !== undefined && row.numero !== null) {
+          insertData.numero = row.numero;
+        }
+
+        const { error: insertError } = await supabase.from("glebas").insert(insertData);
 
         if (insertError) throw insertError;
 
@@ -261,7 +347,13 @@ export function ImportGlebasDialog() {
 
     setIsImporting(false);
     setStep("done");
-    await refetch();
+    
+    // Refresh all related queries
+    await Promise.all([
+      refetch(),
+      queryClient.invalidateQueries({ queryKey: ["cidades"] }),
+      queryClient.invalidateQueries({ queryKey: ["imobiliarias"] }),
+    ]);
 
     const successCount = importResults.filter((r) => r.success).length;
     toast.success(`Importação concluída: ${successCount}/${parsedRows.length} glebas`);
@@ -271,8 +363,11 @@ export function ImportGlebasDialog() {
     setPastedData("");
     setParsedRows([]);
     setResults([]);
+    setCreatedEntities([]);
     setProgress(0);
     setStep("paste");
+    setCidadesCache(new Map());
+    setImobiliariasCache(new Map());
   };
 
   const handleClose = (isOpen: boolean) => {
@@ -283,6 +378,9 @@ export function ImportGlebasDialog() {
       setOpen(isOpen);
     }
   };
+
+  const createdCidades = createdEntities.filter(e => e.type === "cidade");
+  const createdImobiliarias = createdEntities.filter(e => e.type === "imobiliaria");
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -318,8 +416,11 @@ export function ImportGlebasDialog() {
             <div className="rounded-lg bg-muted/50 p-4 space-y-2">
               <h4 className="font-medium text-sm">Colunas reconhecidas:</h4>
               <p className="text-xs text-muted-foreground">
-                Apelido/Nome, Link KMZ/Matrícula, % Pedida, Tamanho, Proprietário, 
+                Número, Apelido/Nome, Link KMZ/Matrícula, % Pedida, Tamanho, Proprietário, 
                 Observações, Imobiliária, Status, Cidade, Aceita Parceria
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">
+                <strong>Nota:</strong> Cidades e imobiliárias não cadastradas serão criadas automaticamente.
               </p>
             </div>
 
@@ -346,7 +447,7 @@ export function ImportGlebasDialog() {
                 {parsedRows.map((row, idx) => (
                   <div key={idx} className="flex items-center gap-3 p-2 rounded bg-muted/30">
                     <span className="font-mono text-xs text-muted-foreground w-8">
-                      {idx + 1}
+                      {row.numero ?? idx + 1}
                     </span>
                     <span className="font-medium flex-1 truncate">{row.apelido}</span>
                     <Badge variant="outline" className="text-xs">
@@ -415,6 +516,37 @@ export function ImportGlebasDialog() {
                 </p>
               </div>
             </div>
+
+            {/* Show created entities */}
+            {(createdCidades.length > 0 || createdImobiliarias.length > 0) && (
+              <div className="rounded-lg border p-4 space-y-3">
+                <h4 className="font-medium text-sm">Cadastros criados automaticamente:</h4>
+                
+                {createdCidades.length > 0 && (
+                  <div className="flex items-start gap-2">
+                    <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
+                    <div>
+                      <span className="text-sm font-medium">Cidades ({createdCidades.length}):</span>
+                      <p className="text-xs text-muted-foreground">
+                        {createdCidades.map(c => c.nome).join(", ")}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
+                {createdImobiliarias.length > 0 && (
+                  <div className="flex items-start gap-2">
+                    <Building2 className="h-4 w-4 text-muted-foreground mt-0.5" />
+                    <div>
+                      <span className="text-sm font-medium">Imobiliárias ({createdImobiliarias.length}):</span>
+                      <p className="text-xs text-muted-foreground">
+                        {createdImobiliarias.map(i => i.nome).join(", ")}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             <ScrollArea className="h-[200px] border rounded-lg">
               <div className="p-4 space-y-1">

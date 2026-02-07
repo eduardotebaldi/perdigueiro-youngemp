@@ -249,11 +249,13 @@ export function GlebaDetailsDialog({
                 icon={Percent}
                 label="Aceita Permuta"
                 value={
-                  gleba.aceita_permuta
+                  gleba.aceita_permuta === "sim"
                     ? gleba.percentual_permuta
                       ? `Sim (${gleba.percentual_permuta}%)`
                       : "Sim"
-                    : "Não"
+                    : gleba.aceita_permuta === "nao"
+                    ? "Não"
+                    : "Incerto"
                 }
               />
               <InfoItem

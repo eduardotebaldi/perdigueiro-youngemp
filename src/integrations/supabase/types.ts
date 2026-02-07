@@ -75,7 +75,7 @@ export type Database = {
       }
       glebas: {
         Row: {
-          aceita_permuta: boolean | null
+          aceita_permuta: Database["public"]["Enums"]["permuta_status"] | null
           apelido: string
           arquivo_contrato: string | null
           arquivo_kmz: string | null
@@ -107,7 +107,7 @@ export type Database = {
           zona_plano_diretor: string | null
         }
         Insert: {
-          aceita_permuta?: boolean | null
+          aceita_permuta?: Database["public"]["Enums"]["permuta_status"] | null
           apelido: string
           arquivo_contrato?: string | null
           arquivo_kmz?: string | null
@@ -139,7 +139,7 @@ export type Database = {
           zona_plano_diretor?: string | null
         }
         Update: {
-          aceita_permuta?: boolean | null
+          aceita_permuta?: Database["public"]["Enums"]["permuta_status"] | null
           apelido?: string
           arquivo_contrato?: string | null
           arquivo_kmz?: string | null
@@ -359,6 +359,7 @@ export type Database = {
         | "proposta_recusada"
         | "negocio_fechado"
         | "standby"
+      permuta_status: "incerto" | "nao" | "sim"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -498,6 +499,7 @@ export const Constants = {
         "negocio_fechado",
         "standby",
       ],
+      permuta_status: ["incerto", "nao", "sim"],
     },
   },
 } as const
