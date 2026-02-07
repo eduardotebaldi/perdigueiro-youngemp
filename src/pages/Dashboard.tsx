@@ -1,9 +1,14 @@
 import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Kanban, Map, FileText, Building, CalendarDays, TrendingUp } from "lucide-react";
+import { useDashboardStats } from "@/hooks/useDashboardStats";
+import { StatsCards } from "@/components/dashboard/StatsCards";
+import { PropostasChart } from "@/components/dashboard/PropostasChart";
+import { AtividadesChart } from "@/components/dashboard/AtividadesChart";
+import { StatusPieChart } from "@/components/dashboard/StatusPieChart";
+import { QuickAccess } from "@/components/dashboard/QuickAccess";
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { data: stats, isLoading } = useDashboardStats();
 
   const firstName = user?.user_metadata?.full_name?.split(" ")[0] || "Usuário";
 
@@ -17,100 +22,40 @@ export default function Dashboard() {
         </p>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Glebas</CardTitle>
-            <Kanban className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-muted-foreground">
-              Nenhuma gleba cadastrada
-            </p>
-          </CardContent>
-        </Card>
+      {/* KPI Cards */}
+      <StatsCards
+        totalGlebas={stats?.totalGlebas || 0}
+        totalPropostas={stats?.totalPropostas || 0}
+        totalCidades={stats?.totalCidades || 0}
+        negociosFechados={stats?.negociosFechados || 0}
+        glebasEmStandby={stats?.glebasEmStandby || 0}
+        glebasPrioritarias={stats?.glebasPrioritarias || 0}
+        isLoading={isLoading}
+      />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Propostas Ativas</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-muted-foreground">
-              Nenhuma proposta enviada
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Cidades Mapeadas</CardTitle>
-            <Map className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-muted-foreground">
-              Nenhuma cidade cadastrada
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Negócios Fechados</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-muted-foreground">
-              Nenhum negócio concluído
-            </p>
-          </CardContent>
-        </Card>
+      {/* Charts Row */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <PropostasChart 
+          data={stats?.propostasPorMes || []} 
+          isLoading={isLoading} 
+        />
+        <AtividadesChart 
+          data={stats?.atividadesPorDia || []} 
+          atividadesEstaSemana={stats?.atividadesEstaSemana || 0}
+          isLoading={isLoading} 
+        />
       </div>
 
-      {/* Quick Access */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Acesso Rápido</h2>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <Card className="hover:border-primary/50 transition-colors cursor-pointer">
-            <CardHeader>
-              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center mb-2">
-                <Kanban className="h-5 w-5 text-primary" />
-              </div>
-              <CardTitle className="text-lg">Kanban de Glebas</CardTitle>
-              <CardDescription>
-                Visualize e gerencie suas glebas em um quadro Kanban interativo
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          <Card className="hover:border-primary/50 transition-colors cursor-pointer">
-            <CardHeader>
-              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center mb-2">
-                <Map className="h-5 w-5 text-primary" />
-              </div>
-              <CardTitle className="text-lg">Mapa Integrado</CardTitle>
-              <CardDescription>
-                Visualize todas as glebas no mapa e desenhe novos polígonos
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          <Card className="hover:border-primary/50 transition-colors cursor-pointer">
-            <CardHeader>
-              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center mb-2">
-                <CalendarDays className="h-5 w-5 text-primary" />
-              </div>
-              <CardTitle className="text-lg">Atividades</CardTitle>
-              <CardDescription>
-                Registre e acompanhe todas as atividades realizadas
-              </CardDescription>
-            </CardHeader>
-          </Card>
+      {/* Status Distribution */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <StatusPieChart 
+          data={stats?.glebasPorStatus || {}} 
+          isLoading={isLoading} 
+        />
+        
+        {/* Quick Access moved to second column */}
+        <div className="lg:self-start">
+          <QuickAccess />
         </div>
       </div>
     </div>
