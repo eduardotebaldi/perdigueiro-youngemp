@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Tables } from "@/integrations/supabase/types";
 import { useGlebas, STATUS_LABELS } from "@/hooks/useGlebas";
 import { useCidades } from "@/hooks/useCidades";
@@ -21,16 +21,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Pencil, Search, X, Star } from "lucide-react";
+import { Search, X, Star, Check } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { ColumnSelector, AVAILABLE_COLUMNS } from "./ColumnSelector";
 
 type Gleba = Tables<"glebas">;
 
 interface GlebaTableProps {
-  onEditGleba: (gleba: Gleba) => void;
+  onViewGleba: (gleba: Gleba) => void;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -45,10 +46,30 @@ const STATUS_COLORS: Record<string, string> = {
   standby: "bg-purple-500/10 text-purple-600 border-purple-500/30",
 };
 
-export function GlebaTable({ onEditGleba }: GlebaTableProps) {
+const STORAGE_KEY = "gleba-table-columns";
+
+export function GlebaTable({ onViewGleba }: GlebaTableProps) {
   const { glebas, isLoading } = useGlebas();
   const { cidades } = useCidades();
-  
+
+  // Colunas visíveis - persistidas no localStorage
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(() => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      try {
+        return JSON.parse(stored);
+      } catch {
+        return AVAILABLE_COLUMNS.filter((c) => c.defaultVisible).map((c) => c.key);
+      }
+    }
+    return AVAILABLE_COLUMNS.filter((c) => c.defaultVisible).map((c) => c.key);
+  });
+
+  // Persistir colunas no localStorage
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(visibleColumns));
+  }, [visibleColumns]);
+
   // Buscar imobiliárias
   const { data: imobiliarias } = useQuery({
     queryKey: ["imobiliarias"],
@@ -71,20 +92,15 @@ export function GlebaTable({ onEditGleba }: GlebaTableProps) {
   // Aplicar filtros
   const filteredGlebas = useMemo(() => {
     return glebas.filter((gleba) => {
-      // Filtro de busca por texto
-      const matchesSearch = 
+      const matchesSearch =
         gleba.apelido.toLowerCase().includes(searchTerm.toLowerCase()) ||
         gleba.proprietario_nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         gleba.comentarios?.toLowerCase().includes(searchTerm.toLowerCase());
 
-      // Filtro de status
       const matchesStatus = statusFilter === "all" || gleba.status === statusFilter;
-
-      // Filtro de cidade
       const matchesCidade = cidadeFilter === "all" || gleba.cidade_id === cidadeFilter;
-
-      // Filtro de imobiliária
-      const matchesImobiliaria = imobiliariaFilter === "all" || gleba.imobiliaria_id === imobiliariaFilter;
+      const matchesImobiliaria =
+        imobiliariaFilter === "all" || gleba.imobiliaria_id === imobiliariaFilter;
 
       return matchesSearch && matchesStatus && matchesCidade && matchesImobiliaria;
     });
@@ -97,7 +113,11 @@ export function GlebaTable({ onEditGleba }: GlebaTableProps) {
     setImobiliariaFilter("all");
   };
 
-  const hasActiveFilters = searchTerm || statusFilter !== "all" || cidadeFilter !== "all" || imobiliariaFilter !== "all";
+  const hasActiveFilters =
+    searchTerm ||
+    statusFilter !== "all" ||
+    cidadeFilter !== "all" ||
+    imobiliariaFilter !== "all";
 
   const getCidadeName = (cidadeId: string | null) => {
     if (!cidadeId) return "-";
@@ -122,6 +142,8 @@ export function GlebaTable({ onEditGleba }: GlebaTableProps) {
     if (!value) return "-";
     return `${value.toLocaleString("pt-BR")} m²`;
   };
+
+  const isColumnVisible = (key: string) => visibleColumns.includes(key);
 
   if (isLoading) {
     return (
@@ -192,6 +214,12 @@ export function GlebaTable({ onEditGleba }: GlebaTableProps) {
           </SelectContent>
         </Select>
 
+        {/* Seletor de Colunas */}
+        <ColumnSelector
+          visibleColumns={visibleColumns}
+          onColumnsChange={setVisibleColumns}
+        />
+
         {/* Limpar filtros */}
         {hasActiveFilters && (
           <Button variant="ghost" size="sm" onClick={clearFilters}>
@@ -207,27 +235,36 @@ export function GlebaTable({ onEditGleba }: GlebaTableProps) {
       </div>
 
       {/* Tabela */}
-      <div className="rounded-md border overflow-hidden">
+      <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
-              <TableHead className="w-[60px]">Nº</TableHead>
-              <TableHead className="w-[50px]"></TableHead>
-              <TableHead>Apelido</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Cidade</TableHead>
-              <TableHead>Imobiliária</TableHead>
-              <TableHead>Proprietário</TableHead>
-              <TableHead className="text-right">Área</TableHead>
-              <TableHead className="text-right">Preço</TableHead>
-              <TableHead>Atualização</TableHead>
-              <TableHead className="w-[80px]"></TableHead>
+              {isColumnVisible("numero") && <TableHead className="w-[60px]">Nº</TableHead>}
+              {isColumnVisible("prioridade") && <TableHead className="w-[50px]"></TableHead>}
+              {isColumnVisible("apelido") && <TableHead>Apelido</TableHead>}
+              {isColumnVisible("status") && <TableHead>Status</TableHead>}
+              {isColumnVisible("cidade") && <TableHead>Cidade</TableHead>}
+              {isColumnVisible("imobiliaria") && <TableHead>Imobiliária</TableHead>}
+              {isColumnVisible("proprietario") && <TableHead>Proprietário</TableHead>}
+              {isColumnVisible("area") && <TableHead className="text-right">Área</TableHead>}
+              {isColumnVisible("preco") && <TableHead className="text-right">Preço</TableHead>}
+              {isColumnVisible("zona_plano_diretor") && <TableHead>Zona PD</TableHead>}
+              {isColumnVisible("lote_minimo") && (
+                <TableHead className="text-right">Lote Mín.</TableHead>
+              )}
+              {isColumnVisible("permuta") && <TableHead>Permuta</TableHead>}
+              {isColumnVisible("data_visita") && <TableHead>Visita</TableHead>}
+              {isColumnVisible("created_at") && <TableHead>Criação</TableHead>}
+              {isColumnVisible("updated_at") && <TableHead>Atualização</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredGlebas.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={11} className="h-32 text-center">
+                <TableCell
+                  colSpan={visibleColumns.length}
+                  className="h-32 text-center"
+                >
                   <p className="text-muted-foreground">
                     {hasActiveFilters
                       ? "Nenhuma gleba encontrada com os filtros aplicados"
@@ -240,46 +277,89 @@ export function GlebaTable({ onEditGleba }: GlebaTableProps) {
                 <TableRow
                   key={gleba.id}
                   className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => onEditGleba(gleba)}
+                  onClick={() => onViewGleba(gleba)}
                 >
-                  <TableCell className="font-mono text-sm font-bold text-muted-foreground">
-                    #{gleba.numero}
-                  </TableCell>
-                  <TableCell>
-                    {gleba.prioridade && (
-                      <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
-                    )}
-                  </TableCell>
-                  <TableCell className="font-medium">{gleba.apelido}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={STATUS_COLORS[gleba.status] || ""}
-                    >
-                      {STATUS_LABELS[gleba.status] || gleba.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{getCidadeName(gleba.cidade_id)}</TableCell>
-                  <TableCell>{getImobiliariaName(gleba.imobiliaria_id)}</TableCell>
-                  <TableCell>{gleba.proprietario_nome || "-"}</TableCell>
-                  <TableCell className="text-right">{formatArea(gleba.tamanho_m2)}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(gleba.preco)}</TableCell>
-                  <TableCell>
-                    {format(new Date(gleba.updated_at), "dd/MM/yy", { locale: ptBR })}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEditGleba(gleba);
-                      }}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
+                  {isColumnVisible("numero") && (
+                    <TableCell className="font-mono text-sm font-bold text-muted-foreground">
+                      #{gleba.numero}
+                    </TableCell>
+                  )}
+                  {isColumnVisible("prioridade") && (
+                    <TableCell>
+                      {gleba.prioridade && (
+                        <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
+                      )}
+                    </TableCell>
+                  )}
+                  {isColumnVisible("apelido") && (
+                    <TableCell className="font-medium">{gleba.apelido}</TableCell>
+                  )}
+                  {isColumnVisible("status") && (
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className={STATUS_COLORS[gleba.status] || ""}
+                      >
+                        {STATUS_LABELS[gleba.status] || gleba.status}
+                      </Badge>
+                    </TableCell>
+                  )}
+                  {isColumnVisible("cidade") && (
+                    <TableCell>{getCidadeName(gleba.cidade_id)}</TableCell>
+                  )}
+                  {isColumnVisible("imobiliaria") && (
+                    <TableCell>{getImobiliariaName(gleba.imobiliaria_id)}</TableCell>
+                  )}
+                  {isColumnVisible("proprietario") && (
+                    <TableCell>{gleba.proprietario_nome || "-"}</TableCell>
+                  )}
+                  {isColumnVisible("area") && (
+                    <TableCell className="text-right">
+                      {formatArea(gleba.tamanho_m2)}
+                    </TableCell>
+                  )}
+                  {isColumnVisible("preco") && (
+                    <TableCell className="text-right">
+                      {formatCurrency(gleba.preco)}
+                    </TableCell>
+                  )}
+                  {isColumnVisible("zona_plano_diretor") && (
+                    <TableCell>{gleba.zona_plano_diretor || "-"}</TableCell>
+                  )}
+                  {isColumnVisible("lote_minimo") && (
+                    <TableCell className="text-right">
+                      {formatArea(gleba.tamanho_lote_minimo)}
+                    </TableCell>
+                  )}
+                  {isColumnVisible("permuta") && (
+                    <TableCell>
+                      {gleba.aceita_permuta ? (
+                        <div className="flex items-center gap-1">
+                          <Check className="h-4 w-4 text-green-500" />
+                          {gleba.percentual_permuta && `${gleba.percentual_permuta}%`}
+                        </div>
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
+                  )}
+                  {isColumnVisible("data_visita") && (
+                    <TableCell>
+                      {gleba.data_visita
+                        ? format(new Date(gleba.data_visita), "dd/MM/yy", { locale: ptBR })
+                        : "-"}
+                    </TableCell>
+                  )}
+                  {isColumnVisible("created_at") && (
+                    <TableCell>
+                      {format(new Date(gleba.created_at), "dd/MM/yy", { locale: ptBR })}
+                    </TableCell>
+                  )}
+                  {isColumnVisible("updated_at") && (
+                    <TableCell>
+                      {format(new Date(gleba.updated_at), "dd/MM/yy", { locale: ptBR })}
+                    </TableCell>
+                  )}
                 </TableRow>
               ))
             )}
