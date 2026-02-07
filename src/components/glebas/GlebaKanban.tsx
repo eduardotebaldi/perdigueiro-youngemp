@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import {
   DndContext,
   DragEndEvent,
@@ -16,7 +16,8 @@ import { GlebaCard } from "./GlebaCard";
 import { useToast } from "@/hooks/use-toast";
 import { Tables } from "@/integrations/supabase/types";
 import { Badge } from "@/components/ui/badge";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type Gleba = Tables<"glebas">;
 
@@ -24,6 +25,8 @@ interface KanbanColumnProps {
   status: string;
   glebas: Gleba[];
   onViewGleba?: (gleba: Gleba) => void;
+  isCollapsed: boolean;
+  onToggleCollapse: () => void;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -50,11 +53,51 @@ const BADGE_COLORS: Record<string, string> = {
   standby: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
 };
 
-function KanbanColumn({ status, glebas, onViewGleba }: KanbanColumnProps) {
+function KanbanColumn({ status, glebas, onViewGleba, isCollapsed, onToggleCollapse }: KanbanColumnProps) {
+  if (isCollapsed) {
+    return (
+      <div
+        className={cn(
+          "flex flex-col bg-muted/30 rounded-lg border-2 min-h-[600px] flex-shrink-0 cursor-pointer transition-all duration-300 hover:bg-muted/50",
+          STATUS_COLORS[status],
+          "w-14 p-2"
+        )}
+        onClick={onToggleCollapse}
+        title={`${STATUS_LABELS[status]} - Clique para expandir`}
+      >
+        <div className="flex flex-col items-center gap-3">
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          <Badge variant="secondary" className={cn("text-xs", BADGE_COLORS[status])}>
+            {glebas.length}
+          </Badge>
+          <span
+            className="text-xs font-medium text-muted-foreground writing-mode-vertical whitespace-nowrap"
+            style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}
+          >
+            {STATUS_LABELS[status]}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={`flex flex-col bg-muted/30 rounded-lg p-4 border-2 ${STATUS_COLORS[status]} min-h-[600px] flex-shrink-0 w-80`}>
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-sm">{STATUS_LABELS[status]}</h3>
+    <div
+      className={cn(
+        "flex flex-col bg-muted/30 rounded-lg p-4 border-2 min-h-[600px] flex-shrink-0 transition-all duration-300",
+        STATUS_COLORS[status],
+        "w-80"
+      )}
+    >
+      <div
+        className="flex items-center justify-between mb-4 cursor-pointer hover:opacity-70 transition-opacity"
+        onClick={onToggleCollapse}
+        title="Clique para colapsar"
+      >
+        <div className="flex items-center gap-2">
+          <ChevronLeft className="h-4 w-4 text-muted-foreground" />
+          <h3 className="font-semibold text-sm">{STATUS_LABELS[status]}</h3>
+        </div>
         <Badge variant="secondary" className={BADGE_COLORS[status]}>
           {glebas.length}
         </Badge>
@@ -88,6 +131,21 @@ interface GlebaKanbanProps {
 export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
   const { glebas, isLoading, getGlebasByStatus } = useGlebas();
   const { toast } = useToast();
+  
+  // Estado para colunas colapsadas
+  const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
+
+  const toggleColumnCollapse = (status: string) => {
+    setCollapsedColumns((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(status)) {
+        newSet.delete(status);
+      } else {
+        newSet.add(status);
+      }
+      return newSet;
+    });
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor)
@@ -129,6 +187,8 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
               status={status}
               glebas={getGlebasByStatus(status)}
               onViewGleba={onViewGleba}
+              isCollapsed={collapsedColumns.has(status)}
+              onToggleCollapse={() => toggleColumnCollapse(status)}
             />
           ))}
         </div>
