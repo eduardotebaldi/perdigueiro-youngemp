@@ -1,9 +1,10 @@
 import { Tables } from "@/integrations/supabase/types";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { STATUS_LABELS } from "@/hooks/useGlebas";
-import { MapPin, Users, DollarSign, AlertTriangle } from "lucide-react";
+import { STATUS_LABELS, useGlebas } from "@/hooks/useGlebas";
+import { MapPin, Users, DollarSign, AlertTriangle, Star } from "lucide-react";
 import { validateGlebaStatus, getValidationMessage } from "@/lib/glebaValidation";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Tooltip,
   TooltipContent,
@@ -31,6 +32,14 @@ interface GlebaCardProps {
 
 export function GlebaCard({ gleba }: GlebaCardProps) {
   const validation = validateGlebaStatus(gleba);
+  const { isAdmin } = useAuth();
+  const { updateGleba } = useGlebas();
+
+  const handlePriorityToggle = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isAdmin) return;
+    await updateGleba(gleba.id, { prioridade: !gleba.prioridade });
+  };
 
   return (
     <Card className="p-4 space-y-3 hover:shadow-md transition-shadow cursor-pointer relative">
@@ -66,6 +75,33 @@ export function GlebaCard({ gleba }: GlebaCardProps) {
             {STATUS_LABELS[gleba.status] || gleba.status}
           </Badge>
         </div>
+
+        {/* Estrela de prioridade */}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={handlePriorityToggle}
+                className={`flex-shrink-0 transition-colors ${
+                  isAdmin ? "cursor-pointer hover:scale-110" : "cursor-default"
+                }`}
+                disabled={!isAdmin}
+              >
+                <Star
+                  className={`h-5 w-5 transition-colors ${
+                    gleba.prioridade
+                      ? "fill-yellow-400 text-yellow-400"
+                      : "text-muted-foreground/40"
+                  }`}
+                />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              {gleba.prioridade ? "Gleba prioritária" : "Sem prioridade"}
+              {isAdmin && " (clique para alterar)"}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {gleba.proprietario_nome && (
@@ -76,14 +112,12 @@ export function GlebaCard({ gleba }: GlebaCardProps) {
       )}
 
       <div className="flex gap-4 text-sm">
-        {gleba.tamanho_m2 && (
-          <div className="flex items-center gap-1">
-            <MapPin className="h-4 w-4 text-muted-foreground" />
-            <span className="text-muted-foreground">
-              {gleba.tamanho_m2.toLocaleString()} m²
-            </span>
-          </div>
-        )}
+        <div className="flex items-center gap-1">
+          <MapPin className="h-4 w-4 text-muted-foreground" />
+          <span className="text-muted-foreground">
+            {gleba.tamanho_m2 ? `${gleba.tamanho_m2.toLocaleString()} m²` : "—"}
+          </span>
+        </div>
         {gleba.preco && (
           <div className="flex items-center gap-1">
             <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -98,14 +132,6 @@ export function GlebaCard({ gleba }: GlebaCardProps) {
         <p className="text-sm text-muted-foreground line-clamp-2">
           {gleba.comentarios}
         </p>
-      )}
-
-      {gleba.prioridade && (
-        <div className="pt-2 border-t">
-          <Badge variant="secondary" className="bg-primary/10 text-primary">
-            ⭐ Prioridade
-          </Badge>
-        </div>
       )}
     </Card>
   );
