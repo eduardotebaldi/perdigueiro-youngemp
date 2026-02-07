@@ -29,12 +29,12 @@ type Gleba = Tables<"glebas">;
 type MapType = "street" | "satellite" | "hybrid";
 
 export default function Mapa() {
-  const { glebas, isLoading } = useGlebas();
+  const { glebas, isLoading, createGleba } = useGlebas();
   const [selectedGleba, setSelectedGleba] = useState<Gleba | null>(null);
   const [editingGleba, setEditingGleba] = useState<Gleba | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mapType, setMapType] = useState<MapType>("street");
-  const [importedGeoJson, setImportedGeoJson] = useState<any>(null);
+  const [isImporting, setIsImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -42,25 +42,38 @@ export default function Mapa() {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    setIsImporting(true);
+
     try {
       const geojson = await parseKmzFile(file);
-      setImportedGeoJson(geojson);
+      
+      // Extrair nome do arquivo como apelido
+      const apelido = file.name.replace(/\.(kmz|kml)$/i, "");
+      
+      // Criar gleba com o polígono importado
+      await createGleba({
+        apelido: apelido,
+        status: "identificada",
+        poligono_geojson: geojson,
+      });
+      
       toast({
-        title: "Arquivo importado!",
-        description: `${file.name} carregado com sucesso`,
+        title: "Gleba importada!",
+        description: `"${apelido}" foi criada com sucesso a partir do arquivo KMZ/KML`,
       });
     } catch (error) {
       console.error("Erro ao importar KMZ:", error);
       toast({
         variant: "destructive",
-        title: "Erro",
-        description: "Não foi possível importar o arquivo",
+        title: "Erro na importação",
+        description: error instanceof Error ? error.message : "Não foi possível importar o arquivo",
       });
-    }
-
-    // Limpar input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+    } finally {
+      setIsImporting(false);
+      // Limpar input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
   };
 
@@ -88,9 +101,10 @@ export default function Mapa() {
             variant="outline"
             size="sm"
             onClick={() => fileInputRef.current?.click()}
+            disabled={isImporting}
           >
             <Upload className="h-4 w-4 mr-2" />
-            Importar KMZ
+            {isImporting ? "Importando..." : "Importar KMZ"}
           </Button>
           <input
             ref={fileInputRef}
@@ -98,6 +112,7 @@ export default function Mapa() {
             accept=".kmz,.kml"
             onChange={handleFileImport}
             className="hidden"
+            disabled={isImporting}
           />
 
           {/* Tipo de Mapa */}
