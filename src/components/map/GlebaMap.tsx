@@ -1,8 +1,9 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Tables } from "@/integrations/supabase/types";
-import { Badge } from "@/components/ui/badge";
+import { kml } from "@tmcw/togeojson";
+import JSZip from "jszip";
 
 type Gleba = Tables<"glebas">;
 
@@ -30,32 +31,106 @@ const STATUS_LABELS: Record<string, string> = {
   standby: "Standby",
 };
 
+// Tipos de camadas de mapa
+const TILE_LAYERS = {
+  street: {
+    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    name: "Ruas",
+  },
+  satellite: {
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    attribution: '&copy; <a href="https://www.esri.com/">Esri</a>',
+    name: "Satélite",
+  },
+  hybrid: {
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    attribution: '&copy; <a href="https://www.esri.com/">Esri</a>',
+    name: "Híbrido",
+  },
+};
+
 interface GlebaMapProps {
   glebas: Gleba[];
   onSelectGleba?: (gleba: Gleba) => void;
   center?: [number, number];
   zoom?: number;
+  isFullscreen?: boolean;
+  mapType?: "street" | "satellite" | "hybrid";
+  onKmzImport?: (geojson: any) => void;
 }
 
 export function GlebaMap({
   glebas,
   onSelectGleba,
-  center = [-15.7942, -47.8822], // Brasília como padrão
+  center = [-15.7942, -47.8822],
   zoom = 10,
+  isFullscreen = false,
+  mapType = "street",
+  onKmzImport,
 }: GlebaMapProps) {
   const mapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
+  const tileLayerRef = useRef<L.TileLayer | null>(null);
+  const kmzLayerRef = useRef<L.GeoJSON | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
+  // Inicializar mapa
   useEffect(() => {
-    // Inicializar mapa
-    if (!mapRef.current) {
-      mapRef.current = L.map("map").setView(center, zoom);
+    if (!containerRef.current) return;
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    if (!mapRef.current) {
+      mapRef.current = L.map(containerRef.current).setView(center, zoom);
+
+      const layer = TILE_LAYERS[mapType];
+      tileLayerRef.current = L.tileLayer(layer.url, {
+        attribution: layer.attribution,
         maxZoom: 19,
       }).addTo(mapRef.current);
     }
+
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
+  }, []);
+
+  // Atualizar tipo de mapa
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    if (tileLayerRef.current) {
+      tileLayerRef.current.remove();
+    }
+
+    const layer = TILE_LAYERS[mapType];
+    tileLayerRef.current = L.tileLayer(layer.url, {
+      attribution: layer.attribution,
+      maxZoom: 19,
+    }).addTo(mapRef.current);
+
+    // Se for híbrido, adicionar labels
+    if (mapType === "hybrid") {
+      L.tileLayer("https://stamen-tiles.a.ssl.fastly.net/toner-labels/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+      }).addTo(mapRef.current);
+    }
+  }, [mapType]);
+
+  // Atualizar tamanho do mapa quando fullscreen muda
+  useEffect(() => {
+    if (mapRef.current) {
+      setTimeout(() => {
+        mapRef.current?.invalidateSize();
+      }, 100);
+    }
+  }, [isFullscreen]);
+
+  // Atualizar marcadores
+  useEffect(() => {
+    if (!mapRef.current) return;
 
     // Limpar marcadores antigos
     markersRef.current.forEach((marker) => marker.remove());
@@ -63,12 +138,10 @@ export function GlebaMap({
 
     // Adicionar marcadores para cada gleba
     glebas.forEach((gleba) => {
-      // Coordenadas padrão (Brasília) + variação aleatória
       const lat = -15.7942 + (Math.random() * 0.2 - 0.1);
       const lng = -47.8822 + (Math.random() * 0.2 - 0.1);
       const color = STATUS_COLORS[gleba.status] || "#64748b";
 
-      // Criar ícone customizado
       const icon = L.divIcon({
         html: `
           <div style="
@@ -92,10 +165,8 @@ export function GlebaMap({
         popupAnchor: [0, -18],
       });
 
-      // Criar marcador
       const marker = L.marker([lat, lng], { icon }).addTo(mapRef.current!);
 
-      // Popup com informações da gleba
       const popupContent = `
         <div style="font-family: system-ui, sans-serif; width: 200px;">
           <h3 style="margin: 0 0 8px 0; font-weight: 600; font-size: 14px;">${gleba.apelido}</h3>
@@ -118,15 +189,42 @@ export function GlebaMap({
       `;
 
       marker.bindPopup(popupContent);
-
-      // Click para selecionar
-      marker.on("click", () => {
-        onSelectGleba?.(gleba);
-      });
-
+      marker.on("click", () => onSelectGleba?.(gleba));
       markersRef.current.push(marker);
     });
-  }, [glebas, center, zoom, onSelectGleba]);
+  }, [glebas, onSelectGleba]);
 
-  return <div id="map" style={{ height: "100%", width: "100%" }} />;
+  return <div ref={containerRef} style={{ height: "100%", width: "100%" }} />;
+}
+
+// Função para importar arquivo KMZ
+export async function parseKmzFile(file: File): Promise<any> {
+  const arrayBuffer = await file.arrayBuffer();
+
+  if (file.name.endsWith(".kmz")) {
+    // KMZ é um arquivo zip contendo um KML
+    const zip = new JSZip();
+    const zipContent = await zip.loadAsync(arrayBuffer);
+    
+    // Procurar arquivo KML dentro do zip
+    const kmlFile = Object.keys(zipContent.files).find(
+      (name) => name.endsWith(".kml")
+    );
+    
+    if (!kmlFile) {
+      throw new Error("Nenhum arquivo KML encontrado no KMZ");
+    }
+    
+    const kmlContent = await zipContent.files[kmlFile].async("string");
+    const parser = new DOMParser();
+    const kmlDoc = parser.parseFromString(kmlContent, "text/xml");
+    return kml(kmlDoc);
+  } else {
+    // Arquivo KML direto
+    const decoder = new TextDecoder();
+    const kmlContent = decoder.decode(arrayBuffer);
+    const parser = new DOMParser();
+    const kmlDoc = parser.parseFromString(kmlContent, "text/xml");
+    return kml(kmlDoc);
+  }
 }
