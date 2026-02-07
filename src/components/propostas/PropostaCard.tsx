@@ -1,26 +1,13 @@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar, ExternalLink, FileText, MapPin, Trash2, Building2, Tag } from "lucide-react";
+import { Calendar, ExternalLink, FileText, MapPin, Building2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { useAuth } from "@/contexts/AuthContext";
-import { usePropostas, PropostaWithGleba } from "@/hooks/usePropostas";
-import { toast } from "sonner";
+import { PropostaWithGleba } from "@/hooks/usePropostas";
 
 interface PropostaCardProps {
   proposta: PropostaWithGleba;
+  onClick?: () => void;
 }
 
 const TIPO_LABELS: Record<string, string> = {
@@ -35,22 +22,12 @@ const TIPO_COLORS: Record<string, string> = {
   mista: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
 };
 
-export function PropostaCard({ proposta }: PropostaCardProps) {
-  const { isAdmin } = useAuth();
-  const { deleteProposta } = usePropostas();
-
-  const handleDelete = async () => {
-    try {
-      await deleteProposta.mutateAsync(proposta.id);
-      toast.success("Proposta excluída com sucesso!");
-    } catch (error) {
-      console.error("Erro ao excluir proposta:", error);
-      toast.error("Erro ao excluir proposta");
-    }
-  };
-
+export function PropostaCard({ proposta, onClick }: PropostaCardProps) {
   return (
-    <Card className="group hover:shadow-md transition-shadow">
+    <Card 
+      className="group hover:shadow-md transition-shadow cursor-pointer"
+      onClick={onClick}
+    >
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex gap-4 flex-1">
@@ -104,53 +81,15 @@ export function PropostaCard({ proposta }: PropostaCardProps) {
                 </p>
               )}
 
-              {/* File attachment */}
+              {/* File attachment indicator */}
               {proposta.arquivo_carta && (
-                <a
-                  href={proposta.arquivo_carta}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 mt-2 text-sm text-primary hover:underline"
-                >
+                <div className="inline-flex items-center gap-1 mt-2 text-sm text-primary">
                   <ExternalLink className="h-3 w-3" />
-                  Ver carta-proposta
-                </a>
+                  Carta-proposta anexada
+                </div>
               )}
             </div>
           </div>
-
-          {/* Actions */}
-          {isAdmin && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Excluir proposta?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Esta ação não pode ser desfeita. A proposta será
-                    permanentemente removida.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleDelete}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
-                    Excluir
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
         </div>
       </CardContent>
     </Card>

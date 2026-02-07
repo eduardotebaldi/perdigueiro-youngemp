@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2, Loader2, X, Minimize2, Maximize2 } from "lucide-react";
+import { useState, useRef } from "react";
+import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2, Loader2, Minimize2, Maximize2, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -36,7 +36,7 @@ interface ParsedProposta {
 }
 
 const COLUMN_MAPPINGS: Record<string, keyof ParsedProposta> = {
-  // Gleba apelido variations - MUST have "gleba" in the name to avoid confusion
+  // Gleba apelido variations
   "gleba": "glebaApelido",
   "apelido": "glebaApelido",
   "apelido da gleba": "glebaApelido",
@@ -46,8 +46,7 @@ const COLUMN_MAPPINGS: Record<string, keyof ParsedProposta> = {
   "area": "glebaApelido",
   "terreno": "glebaApelido",
   
-  // Gleba número/código variations - MUST have "gleba" in the name
-  // "codigo gleba" maps to number, but NOT "codigo" alone (that's the proposal code)
+  // Gleba número/código variations
   "codigo gleba": "glebaNumero",
   "cod gleba": "glebaNumero",
   "numero gleba": "glebaNumero",
@@ -120,13 +119,13 @@ function normalizeHeader(header: string): string {
     .trim()
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // Remove accents
-    .replace(/[^a-z0-9\s]/g, " ") // Replace special chars with space
-    .replace(/\s+/g, " ") // Normalize spaces
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
-function parseSpreadsheetData(text: string): { propostas: ParsedProposta[]; detectedHeaders: string[]; unmappedHeaders: string[] } {
+function parseSpreadsheetData(text: string, logRef: React.MutableRefObject<string[]>): { propostas: ParsedProposta[]; detectedHeaders: string[]; unmappedHeaders: string[] } {
   const lines = text.trim().split("\n");
   if (lines.length < 2) return { propostas: [], detectedHeaders: [], unmappedHeaders: [] };
 
@@ -134,16 +133,15 @@ function parseSpreadsheetData(text: string): { propostas: ParsedProposta[]; dete
   const rawHeaders = lines[0].split(delimiter).map((h) => h.trim());
   const headers = rawHeaders.map(normalizeHeader);
   
-  console.log("Raw headers:", rawHeaders);
-  console.log("Normalized headers:", headers);
-  console.log("Delimiter detected:", delimiter === "\t" ? "TAB" : delimiter);
+  logRef.current.push(`[Parse] Raw headers: ${rawHeaders.join(", ")}`);
+  logRef.current.push(`[Parse] Normalized headers: ${headers.join(", ")}`);
+  logRef.current.push(`[Parse] Delimiter: ${delimiter === "\t" ? "TAB" : delimiter}`);
   
   const columnIndexes: Record<keyof ParsedProposta, number> = {} as any;
   
   const detectedHeaders: string[] = [];
   const unmappedHeaders: string[] = [];
 
-  // Also normalize the mapping keys for comparison
   const normalizedMappings: Record<string, keyof ParsedProposta> = {};
   Object.entries(COLUMN_MAPPINGS).forEach(([key, value]) => {
     normalizedMappings[normalizeHeader(key)] = value;
@@ -159,19 +157,18 @@ function parseSpreadsheetData(text: string): { propostas: ParsedProposta[]; dete
     }
   });
   
-  console.log("Detected headers:", detectedHeaders);
-  console.log("Unmapped headers:", unmappedHeaders);
-  console.log("Column indexes:", columnIndexes);
+  logRef.current.push(`[Parse] Detected headers: ${detectedHeaders.join(", ")}`);
+  logRef.current.push(`[Parse] Unmapped headers: ${unmappedHeaders.join(", ")}`);
+  logRef.current.push(`[Parse] Column indexes: ${JSON.stringify(columnIndexes)}`);
 
-  // Check if at least one required column was found
   if (columnIndexes.glebaApelido === undefined && columnIndexes.glebaNumero === undefined) {
-    console.log("No gleba column found - cannot proceed");
+    logRef.current.push("[Parse] ERROR: No gleba column found");
     return { propostas: [], detectedHeaders, unmappedHeaders };
   }
 
   const propostas: ParsedProposta[] = [];
 
-  console.log("Processing", lines.length - 1, "data rows");
+  logRef.current.push(`[Parse] Processing ${lines.length - 1} data rows`);
 
   for (let i = 1; i < lines.length; i++) {
     const values = lines[i].split(delimiter).map((v) => v.trim());
@@ -185,7 +182,6 @@ function parseSpreadsheetData(text: string): { propostas: ParsedProposta[]; dete
       ? values[columnIndexes.glebaNumero] || ""
       : "";
 
-    // Skip invalid numero values like #REF!, #N/A
     const cleanNumeroStr = glebaNumeroStr.replace(/[^0-9]/g, "");
     
     const dataProposta = columnIndexes.dataProposta !== undefined
@@ -218,32 +214,29 @@ function parseSpreadsheetData(text: string): { propostas: ParsedProposta[]; dete
       propostas.push(parsed);
       
       if (i <= 3) {
-        console.log(`Row ${i} parsed:`, parsed);
+        logRef.current.push(`[Parse] Row ${i}: ${JSON.stringify(parsed)}`);
       }
     } else {
-      console.log(`Row ${i} skipped - no gleba identifier. Values:`, values.slice(0, 10));
+      logRef.current.push(`[Parse] Row ${i} skipped - no gleba identifier`);
     }
   }
 
-  console.log("Total propostas parsed:", propostas.length);
+  logRef.current.push(`[Parse] Total propostas parsed: ${propostas.length}`);
   return { propostas, detectedHeaders, unmappedHeaders };
 }
 
 function parseDate(dateStr: string): string {
-  // Try DD/MM/YYYY
   const brMatch = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (brMatch) {
     const [, day, month, year] = brMatch;
     return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
   }
 
-  // Try YYYY-MM-DD
   const isoMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (isoMatch) {
     return dateStr;
   }
 
-  // Default to today
   return new Date().toISOString().split("T")[0];
 }
 
@@ -257,6 +250,21 @@ export function ImportPropostasDialog() {
   const { glebas, refetch: refetchGlebas } = useGlebas();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const logRef = useRef<string[]>([]);
+
+  const handleExportLog = () => {
+    const logContent = logRef.current.join("\n");
+    const blob = new Blob([logContent], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `import-propostas-log-${new Date().toISOString().slice(0, 19).replace(/:/g, "-")}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success("Log exportado com sucesso!");
+  };
 
   const handleImport = async () => {
     if (!pastedData.trim() || !user) {
@@ -264,7 +272,11 @@ export function ImportPropostasDialog() {
       return;
     }
 
-    const parseResult = parseSpreadsheetData(pastedData);
+    logRef.current = [];
+    logRef.current.push(`[Import] Started at ${new Date().toISOString()}`);
+    logRef.current.push(`[Import] User: ${user.email}`);
+
+    const parseResult = parseSpreadsheetData(pastedData, logRef);
     
     if (parseResult.propostas.length === 0) {
       const headerInfo = parseResult.unmappedHeaders.length > 0 
@@ -282,8 +294,9 @@ export function ImportPropostasDialog() {
 
     const importResults: ImportResult[] = [];
 
-    console.log("Starting import of", parsedPropostas.length, "propostas");
-    console.log("Available glebas:", glebas.length, glebas.slice(0, 5).map(g => ({ numero: g.numero, apelido: g.apelido })));
+    logRef.current.push(`[Import] Starting import of ${parsedPropostas.length} propostas`);
+    logRef.current.push(`[Import] Available glebas: ${glebas.length}`);
+    logRef.current.push(`[Import] Sample glebas: ${glebas.slice(0, 5).map(g => `#${g.numero}: ${g.apelido}`).join(", ")}`);
 
     for (let i = 0; i < parsedPropostas.length; i++) {
       const proposta = parsedPropostas[i];
@@ -291,16 +304,13 @@ export function ImportPropostasDialog() {
       setProgress(progressPercent);
 
       try {
-        // Find gleba by number or apelido
         let gleba = glebas.find((g) => {
           if (proposta.glebaNumero && g.numero === proposta.glebaNumero) return true;
           if (proposta.glebaApelido && g.apelido.toLowerCase() === proposta.glebaApelido.toLowerCase()) return true;
           return false;
         });
 
-        if (i < 3) {
-          console.log(`Proposta ${i}: numero=${proposta.glebaNumero}, apelido="${proposta.glebaApelido}", found=${!!gleba}`);
-        }
+        logRef.current.push(`[Import] Proposta ${i + 1}: numero=${proposta.glebaNumero}, apelido="${proposta.glebaApelido}", found=${!!gleba}`);
 
         if (!gleba) {
           importResults.push({
@@ -312,7 +322,6 @@ export function ImportPropostasDialog() {
           continue;
         }
 
-        // Download file if link provided
         let arquivoCarta: string | null = null;
         if (proposta.arquivoLink) {
           try {
@@ -321,6 +330,7 @@ export function ImportPropostasDialog() {
             });
 
             if (response.error) {
+              logRef.current.push(`[Import] File download error for ${gleba.apelido}: ${response.error.message}`);
               importResults.push({
                 numero: gleba.numero || undefined,
                 gleba: gleba.apelido,
@@ -332,6 +342,7 @@ export function ImportPropostasDialog() {
               arquivoCarta = response.data.filePath;
             }
           } catch (err) {
+            logRef.current.push(`[Import] File download exception for ${gleba.apelido}`);
             importResults.push({
               numero: gleba.numero || undefined,
               gleba: gleba.apelido,
@@ -342,7 +353,6 @@ export function ImportPropostasDialog() {
           }
         }
 
-        // Create proposta
         const { error } = await supabase.from("propostas").insert({
           gleba_id: gleba.id,
           data_proposta: parseDate(proposta.dataProposta),
@@ -354,6 +364,7 @@ export function ImportPropostasDialog() {
 
         if (error) throw error;
 
+        logRef.current.push(`[Import] SUCCESS: ${gleba.apelido}`);
         importResults.push({
           numero: gleba.numero || undefined,
           gleba: gleba.apelido,
@@ -361,6 +372,7 @@ export function ImportPropostasDialog() {
           message: arquivoCarta ? "Importada com arquivo" : "Importada sem arquivo",
         });
       } catch (error: any) {
+        logRef.current.push(`[Import] ERROR: ${proposta.glebaApelido || proposta.glebaNumero} - ${error.message}`);
         importResults.push({
           numero: proposta.glebaNumero,
           gleba: proposta.glebaApelido || `#${proposta.glebaNumero}`,
@@ -377,6 +389,7 @@ export function ImportPropostasDialog() {
 
     const successCount = importResults.filter((r) => r.success).length;
     const warningCount = importResults.filter((r) => r.isWarning).length;
+    logRef.current.push(`[Import] Finished: ${successCount} success, ${warningCount} warnings, ${importResults.length - successCount} errors`);
     toast.success(`Importação concluída: ${successCount} propostas importadas${warningCount > 0 ? `, ${warningCount} avisos` : ""}`);
   };
 
@@ -384,9 +397,9 @@ export function ImportPropostasDialog() {
     setPastedData("");
     setResults([]);
     setProgress(0);
+    logRef.current = [];
   };
 
-  // Minimized floating bar
   if (minimized && isProcessing) {
     return (
       <div className="fixed bottom-4 right-4 z-50 bg-background border rounded-lg shadow-lg p-3 w-80">
@@ -494,25 +507,35 @@ export function ImportPropostasDialog() {
           )}
 
           {/* Actions */}
-          <div className="flex justify-end gap-3">
-            {results.length > 0 && !isProcessing && (
-              <Button variant="outline" onClick={handleReset}>
-                Limpar
-              </Button>
-            )}
-            <Button onClick={handleImport} disabled={isProcessing || !pastedData.trim()}>
-              {isProcessing ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Importando...
-                </>
-              ) : (
-                <>
-                  <Upload className="mr-2 h-4 w-4" />
-                  Importar
-                </>
+          <div className="flex justify-between gap-3">
+            <div>
+              {results.length > 0 && !isProcessing && (
+                <Button variant="outline" size="sm" onClick={handleExportLog} className="gap-2">
+                  <Download className="h-4 w-4" />
+                  Exportar Log
+                </Button>
               )}
-            </Button>
+            </div>
+            <div className="flex gap-3">
+              {results.length > 0 && !isProcessing && (
+                <Button variant="outline" onClick={handleReset}>
+                  Limpar
+                </Button>
+              )}
+              <Button onClick={handleImport} disabled={isProcessing || !pastedData.trim()}>
+                {isProcessing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Importando...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Importar
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>

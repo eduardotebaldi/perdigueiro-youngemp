@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
-import { format, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
-import { FileText, Search } from "lucide-react";
+import { format, startOfMonth, endOfMonth, isWithinInterval, startOfDay, endOfDay } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { FileText, Search, CalendarIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -10,26 +11,36 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { usePropostas } from "@/hooks/usePropostas";
-import { useGlebas } from "@/hooks/useGlebas";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { usePropostas, PropostaWithGleba } from "@/hooks/usePropostas";
 import { useCidades } from "@/hooks/useCidades";
 import { useAuth } from "@/contexts/AuthContext";
 import { CreatePropostaDialog } from "@/components/propostas/CreatePropostaDialog";
 import { ImportPropostasDialog } from "@/components/propostas/ImportPropostasDialog";
 import { PropostaCard } from "@/components/propostas/PropostaCard";
+import { PropostaDetailsDialog } from "@/components/propostas/PropostaDetailsDialog";
+import { cn } from "@/lib/utils";
+import { DateRange } from "react-day-picker";
 
-type PeriodFilter = "all" | "month";
+type PeriodFilter = "all" | "month" | "custom";
 type TipoFilter = "all" | "compra" | "parceria" | "mista";
 
 export default function Propostas() {
   const { propostas, isLoading } = usePropostas();
-  const { glebas } = useGlebas();
   const { cidades } = useCidades();
   const { isAdmin } = useAuth();
   const [search, setSearch] = useState("");
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>("all");
   const [cidadeFilter, setCidadeFilter] = useState<string>("all");
   const [tipoFilter, setTipoFilter] = useState<TipoFilter>("all");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [selectedProposta, setSelectedProposta] = useState<PropostaWithGleba | null>(null);
 
   const filteredPropostas = useMemo(() => {
     return propostas.filter((proposta) => {
@@ -56,19 +67,26 @@ export default function Propostas() {
       }
 
       // Period filter
+      const propostaDate = new Date(proposta.data_proposta + "T00:00:00");
+      
       if (periodFilter === "month") {
-        const propostaDate = new Date(proposta.data_proposta + "T00:00:00");
         const now = new Date();
         const monthStart = startOfMonth(now);
         const monthEnd = endOfMonth(now);
         if (!isWithinInterval(propostaDate, { start: monthStart, end: monthEnd })) {
           return false;
         }
+      } else if (periodFilter === "custom" && dateRange?.from) {
+        const from = startOfDay(dateRange.from);
+        const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
+        if (!isWithinInterval(propostaDate, { start: from, end: to })) {
+          return false;
+        }
       }
 
       return true;
     });
-  }, [propostas, search, periodFilter, cidadeFilter, tipoFilter]);
+  }, [propostas, search, periodFilter, cidadeFilter, tipoFilter, dateRange]);
 
   // Group by month for display
   const groupedByMonth = useMemo(() => {
@@ -127,8 +145,45 @@ export default function Propostas() {
           <SelectContent>
             <SelectItem value="all">Todos</SelectItem>
             <SelectItem value="month">Este Mês</SelectItem>
+            <SelectItem value="custom">Período Personalizado</SelectItem>
           </SelectContent>
         </Select>
+
+        {periodFilter === "custom" && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full sm:w-auto justify-start text-left font-normal",
+                  !dateRange && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {dateRange?.from ? (
+                  dateRange.to ? (
+                    <>
+                      {format(dateRange.from, "dd/MM/yyyy")} - {format(dateRange.to, "dd/MM/yyyy")}
+                    </>
+                  ) : (
+                    format(dateRange.from, "dd/MM/yyyy")
+                  )
+                ) : (
+                  <span>Selecionar datas</span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="range"
+                selected={dateRange}
+                onSelect={setDateRange}
+                numberOfMonths={2}
+                locale={ptBR}
+              />
+            </PopoverContent>
+          </Popover>
+        )}
 
         <Select value={tipoFilter} onValueChange={(v) => setTipoFilter(v as TipoFilter)}>
           <SelectTrigger className="w-full sm:w-40">
@@ -180,17 +235,28 @@ export default function Propostas() {
           {groupedByMonth.map(([monthKey, monthPropostas]) => (
             <div key={monthKey}>
               <h3 className="text-lg font-semibold mb-3 capitalize">
-                {format(new Date(monthKey + "-01"), "MMMM yyyy", { locale: { localize: { month: (n: number) => ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'][n] } } as any })}
+                {format(new Date(monthKey + "-01"), "MMMM yyyy", { locale: ptBR })}
               </h3>
               <div className="space-y-3">
                 {monthPropostas.map((proposta) => (
-                  <PropostaCard key={proposta.id} proposta={proposta} />
+                  <PropostaCard 
+                    key={proposta.id} 
+                    proposta={proposta}
+                    onClick={() => setSelectedProposta(proposta)}
+                  />
                 ))}
               </div>
             </div>
           ))}
         </div>
       )}
+
+      {/* Proposta Details Dialog */}
+      <PropostaDetailsDialog
+        proposta={selectedProposta}
+        open={!!selectedProposta}
+        onOpenChange={(open) => !open && setSelectedProposta(null)}
+      />
     </div>
   );
 }

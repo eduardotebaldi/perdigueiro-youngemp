@@ -102,8 +102,23 @@ export function usePropostas() {
 
     if (error) throw error;
 
-    const { data } = supabase.storage.from("propostas").getPublicUrl(filePath);
-    return data.publicUrl;
+    // Return the storage path, not public URL (bucket is private)
+    return filePath;
+  };
+
+  const getCartaPropostaUrl = async (filePath: string): Promise<string | null> => {
+    if (!filePath) return null;
+    
+    const { data, error } = await supabase.storage
+      .from("propostas")
+      .createSignedUrl(filePath, 3600); // 1 hour expiry
+
+    if (error) {
+      console.error("Error creating signed URL:", error);
+      return null;
+    }
+    
+    return data.signedUrl;
   };
 
   return {
@@ -113,6 +128,7 @@ export function usePropostas() {
     updateProposta,
     deleteProposta,
     uploadCartaProposta,
+    getCartaPropostaUrl,
   };
 }
 
