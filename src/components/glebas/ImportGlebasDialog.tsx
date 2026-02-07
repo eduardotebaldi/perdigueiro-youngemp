@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2, Loader2, Building2, MapPin, Minimize2, Maximize2 } from "lucide-react";
+import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2, Loader2, Building2, MapPin, Minimize2, Maximize2, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useGlebas, STATUS_LABELS } from "@/hooks/useGlebas";
@@ -82,6 +82,7 @@ export function ImportGlebasDialog() {
   const [results, setResults] = useState<ImportResult[]>([]);
   const [createdEntities, setCreatedEntities] = useState<CreatedEntity[]>([]);
   const [step, setStep] = useState<"paste" | "preview" | "importing" | "done">("paste");
+  const logRef = useRef<string[]>([]);
 
   const queryClient = useQueryClient();
   const { refetch } = useGlebas();
@@ -91,6 +92,21 @@ export function ImportGlebasDialog() {
   // Cache for created entities during import
   const [cidadesCache, setCidadesCache] = useState<Map<string, string>>(new Map());
   const [imobiliariasCache, setImobiliariasCache] = useState<Map<string, string>>(new Map());
+
+  const handleExportLog = () => {
+    const logContent = logRef.current.join("\n");
+    const blob = new Blob([logContent], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `import-glebas-log-${new Date().toISOString().slice(0, 19).replace(/:/g, "-")}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success("Log exportado com sucesso!");
+  };
+
 
   const parseData = () => {
     if (!pastedData.trim()) {
@@ -267,6 +283,8 @@ export function ImportGlebasDialog() {
     setCreatedEntities([]);
     setCidadesCache(new Map());
     setImobiliariasCache(new Map());
+    logRef.current = [];
+    logRef.current.push(`[Import] Started at ${new Date().toISOString()}`);
 
     const importResults: ImportResult[] = [];
 
@@ -375,6 +393,7 @@ export function ImportGlebasDialog() {
     ]);
 
     const successCount = importResults.filter((r) => r.success).length;
+    logRef.current.push(`[Import] Finished: ${successCount}/${parsedRows.length} glebas imported`);
     toast.success(`Importação concluída: ${successCount}/${parsedRows.length} glebas`);
   };
 
@@ -634,7 +653,11 @@ export function ImportGlebasDialog() {
               </div>
             </ScrollArea>
 
-            <div className="flex justify-end">
+            <div className="flex justify-between gap-2">
+              <Button variant="outline" size="sm" onClick={handleExportLog} className="gap-2">
+                <Download className="h-4 w-4" />
+                Exportar Log
+              </Button>
               <Button onClick={() => { reset(); setOpen(false); }}>
                 Fechar
               </Button>

@@ -37,9 +37,9 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { usePropostas } from "@/hooks/usePropostas";
-import { useGlebas } from "@/hooks/useGlebas";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { GlebaAutocomplete } from "./GlebaAutocomplete";
 
 const formSchema = z.object({
   gleba_id: z.string().min(1, "Selecione uma gleba"),
@@ -55,7 +55,6 @@ export function CreatePropostaDialog() {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const { createProposta, uploadCartaProposta } = usePropostas();
-  const { glebas } = useGlebas();
   const { user } = useAuth();
 
   const form = useForm<FormData>({
@@ -135,20 +134,12 @@ export function CreatePropostaDialog() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Gleba *</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione uma gleba" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {glebas.map((gleba) => (
-                        <SelectItem key={gleba.id} value={gleba.id}>
-                          {gleba.apelido}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <GlebaAutocomplete
+                      value={field.value}
+                      onSelect={field.onChange}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
