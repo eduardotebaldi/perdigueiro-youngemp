@@ -57,10 +57,11 @@ serve(async (req) => {
       /docs\.google\.com\/.*\/d\/([a-zA-Z0-9_-]+)/,
     ];
     
+    let fileId: string | null = null;
     for (const pattern of drivePatterns) {
       const match = kmzUrl.match(pattern);
       if (match) {
-        const fileId = match[1];
+        fileId = match[1];
         downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
         console.log(`Converted to direct download: ${downloadUrl}`);
         break;
@@ -68,7 +69,7 @@ serve(async (req) => {
     }
 
     // Download the KMZ file
-    const kmzResponse = await fetch(downloadUrl, {
+    let kmzResponse = await fetch(downloadUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
       },
@@ -79,8 +80,50 @@ serve(async (req) => {
       throw new Error(`Failed to download KMZ: ${kmzResponse.status} - ${kmzResponse.statusText}`);
     }
 
-    const kmzBuffer = await kmzResponse.arrayBuffer();
-    const kmzBytes = new Uint8Array(kmzBuffer);
+    let kmzBuffer = await kmzResponse.arrayBuffer();
+    let kmzBytes = new Uint8Array(kmzBuffer);
+
+    // Check if we got an HTML page instead of a file (Google Drive confirmation page)
+    const textDecoder = new TextDecoder();
+    const firstBytes = textDecoder.decode(kmzBytes.slice(0, 500));
+    
+    if (firstBytes.includes("<!DOCTYPE") || firstBytes.includes("<html")) {
+      console.log("Got HTML confirmation page, trying alternative download method...");
+      
+      if (fileId) {
+        // Try the confirm=1 parameter to bypass confirmation
+        const confirmUrl = `https://drive.google.com/uc?export=download&confirm=1&id=${fileId}`;
+        console.log(`Trying confirm URL: ${confirmUrl}`);
+        
+        kmzResponse = await fetch(confirmUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          },
+          redirect: 'follow',
+        });
+        
+        if (!kmzResponse.ok) {
+          throw new Error(`Failed to download KMZ with confirm: ${kmzResponse.status}`);
+        }
+        
+        kmzBuffer = await kmzResponse.arrayBuffer();
+        kmzBytes = new Uint8Array(kmzBuffer);
+        
+        // Check again
+        const checkBytes = textDecoder.decode(kmzBytes.slice(0, 500));
+        if (checkBytes.includes("<!DOCTYPE") || checkBytes.includes("<html")) {
+          throw new Error("Google Drive requires manual confirmation for this file. Please make sure the file is shared with 'Anyone with the link' and is small enough for direct download.");
+        }
+      } else {
+        throw new Error("Received HTML instead of KMZ file. The URL may not be a valid direct download link.");
+      }
+    }
+
+    // Validate it's a ZIP file (KMZ starts with PK)
+    if (kmzBytes[0] !== 0x50 || kmzBytes[1] !== 0x4B) {
+      console.error("File does not start with PK signature. First bytes:", kmzBytes.slice(0, 20));
+      throw new Error("Downloaded file is not a valid KMZ/ZIP file. Check if the Google Drive file is shared publicly.");
+    }
 
     // Unzip the KMZ to get KML
     const zip = new JSZip();
