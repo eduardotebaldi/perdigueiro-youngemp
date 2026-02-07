@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.process-kmz]
 verify_jwt = false
+
+[functions.download-proposta-file]
+verify_jwt = false

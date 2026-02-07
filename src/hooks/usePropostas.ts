@@ -6,7 +6,13 @@ type Proposta = Tables<"propostas">;
 type PropostaInsert = TablesInsert<"propostas">;
 
 export interface PropostaWithGleba extends Proposta {
-  gleba: { id: string; apelido: string } | null;
+  gleba: { 
+    id: string; 
+    apelido: string; 
+    numero: number | null;
+    cidade_id: string | null;
+  } | null;
+  cidade?: { id: string; nome: string } | null;
 }
 
 export function usePropostas() {
@@ -19,12 +25,36 @@ export function usePropostas() {
         .from("propostas")
         .select(`
           *,
-          gleba:glebas(id, apelido)
+          gleba:glebas(id, apelido, numero, cidade_id)
         `)
         .order("data_proposta", { ascending: false });
 
       if (error) throw error;
-      return data as PropostaWithGleba[];
+      
+      // Fetch cities for glebas that have cidade_id
+      const cidadeIds = [...new Set(
+        data
+          ?.map((p: any) => p.gleba?.cidade_id)
+          .filter(Boolean) || []
+      )];
+      
+      let cidadesMap: Record<string, { id: string; nome: string }> = {};
+      if (cidadeIds.length > 0) {
+        const { data: cidades } = await supabase
+          .from("cidades")
+          .select("id, nome")
+          .in("id", cidadeIds);
+        
+        cidadesMap = (cidades || []).reduce((acc, c) => {
+          acc[c.id] = c;
+          return acc;
+        }, {} as Record<string, { id: string; nome: string }>);
+      }
+      
+      return data?.map((p: any) => ({
+        ...p,
+        cidade: p.gleba?.cidade_id ? cidadesMap[p.gleba.cidade_id] : null,
+      })) as PropostaWithGleba[];
     },
   });
 
