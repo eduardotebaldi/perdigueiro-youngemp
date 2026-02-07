@@ -50,6 +50,12 @@ const TILE_LAYERS = {
   },
 };
 
+// Camada de labels para sobrepor no satélite
+const LABELS_LAYER = {
+  url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png",
+  attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+};
+
 interface GlebaMapProps {
   glebas: Gleba[];
   onSelectGleba?: (gleba: Gleba) => void;
@@ -72,6 +78,7 @@ export function GlebaMap({
   const mapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
+  const labelsLayerRef = useRef<L.TileLayer | null>(null);
   const kmzLayerRef = useRef<L.GeoJSON | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -101,20 +108,28 @@ export function GlebaMap({
   useEffect(() => {
     if (!mapRef.current) return;
 
+    // Remover camadas anteriores
     if (tileLayerRef.current) {
       tileLayerRef.current.remove();
     }
+    if (labelsLayerRef.current) {
+      labelsLayerRef.current.remove();
+      labelsLayerRef.current = null;
+    }
 
+    // Adicionar camada base
     const layer = TILE_LAYERS[mapType];
     tileLayerRef.current = L.tileLayer(layer.url, {
       attribution: layer.attribution,
       maxZoom: 19,
     }).addTo(mapRef.current);
 
-    // Se for híbrido, adicionar labels
-    if (mapType === "hybrid") {
-      L.tileLayer("https://stamen-tiles.a.ssl.fastly.net/toner-labels/{z}/{x}/{y}.png", {
+    // Adicionar labels para satélite e híbrido
+    if (mapType === "satellite" || mapType === "hybrid") {
+      labelsLayerRef.current = L.tileLayer(LABELS_LAYER.url, {
+        attribution: LABELS_LAYER.attribution,
         maxZoom: 19,
+        pane: "overlayPane",
       }).addTo(mapRef.current);
     }
   }, [mapType]);
