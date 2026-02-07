@@ -33,6 +33,18 @@ serve(async (req) => {
       );
     }
 
+    // Validate that it's actually a URL, not just a filename
+    if (!kmzUrl.startsWith("http://") && !kmzUrl.startsWith("https://")) {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: "not_a_url",
+          message: `'${kmzUrl}' is a filename, not a URL. Skipping.` 
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     console.log(`Processing KMZ from: ${kmzUrl}`);
 
     // Convert Google Drive links to direct download URLs
