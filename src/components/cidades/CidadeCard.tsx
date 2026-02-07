@@ -18,12 +18,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Building, FileText, MoreVertical, Pencil, Trash2, MapPin } from "lucide-react";
+import { Building, FileText, MoreVertical, Pencil, Trash2, MapPin, Users } from "lucide-react";
 import { Cidade, useCidadeGlebas, useCidadePropostas } from "@/hooks/useCidades";
 import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-
+import { formatarPopulacao } from "@/lib/ibgeApi";
 interface CidadeCardProps {
   cidade: Cidade;
   onEdit: (cidade: Cidade) => void;
@@ -80,7 +80,13 @@ export function CidadeCard({ cidade, onEdit, onDelete }: CidadeCardProps) {
         </CardHeader>
         <CardContent>
           {/* Stats */}
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap">
+            {cidade.populacao && (
+              <Badge variant="secondary" className="font-normal">
+                <Users className="h-3 w-3 mr-1" />
+                {formatarPopulacao(cidade.populacao)}
+              </Badge>
+            )}
             <Badge variant="secondary" className="font-normal">
               <MapPin className="h-3 w-3 mr-1" />
               {glebasCount} gleba{glebasCount !== 1 ? "s" : ""}

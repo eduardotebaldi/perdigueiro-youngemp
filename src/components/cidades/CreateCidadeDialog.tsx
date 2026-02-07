@@ -14,7 +14,7 @@ import { useCidades } from "@/hooks/useCidades";
 import { CidadeBrasil } from "@/hooks/useCidadesBrasil";
 import { Loader2, X, FileText, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-
+import { buscarPopulacaoMunicipio } from "@/lib/ibgeApi";
 interface CreateCidadeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -59,10 +59,20 @@ export function CreateCidadeDialog({ open, onOpenChange }: CreateCidadeDialogPro
     setError(null);
 
     try {
-      // Criar a cidade
+      // Buscar população da cidade
+      let populacao: number | null = null;
+      try {
+        populacao = await buscarPopulacaoMunicipio(selectedCidade.id);
+      } catch (err) {
+        console.warn("Não foi possível buscar população:", err);
+      }
+
+      // Criar a cidade com formato padronizado "Cidade/UF"
       const result = await createCidade.mutateAsync({
-        nome: selectedCidade.nomeCompleto,
+        nome: selectedCidade.nomeCompleto, // Já está no formato "Cidade/UF"
         planos_diretores: [],
+        populacao: populacao,
+        codigo_ibge: selectedCidade.id,
       });
 
       // Upload de arquivos se houver

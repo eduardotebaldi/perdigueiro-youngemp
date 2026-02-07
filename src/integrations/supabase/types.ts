@@ -51,24 +51,30 @@ export type Database = {
       }
       cidades: {
         Row: {
+          codigo_ibge: number | null
           created_at: string
           id: string
           nome: string
           planos_diretores: string[] | null
+          populacao: number | null
           updated_at: string
         }
         Insert: {
+          codigo_ibge?: number | null
           created_at?: string
           id?: string
           nome: string
           planos_diretores?: string[] | null
+          populacao?: number | null
           updated_at?: string
         }
         Update: {
+          codigo_ibge?: number | null
           created_at?: string
           id?: string
           nome?: string
           planos_diretores?: string[] | null
+          populacao?: number | null
           updated_at?: string
         }
         Relationships: []
