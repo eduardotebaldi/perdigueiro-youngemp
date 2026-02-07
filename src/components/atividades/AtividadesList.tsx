@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Search, Filter } from "lucide-react";
+import { Search, MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { useAtividades } from "@/hooks/useAtividades";
 import { useGlebas } from "@/hooks/useGlebas";
+import { useCidades } from "@/hooks/useCidades";
 import { AtividadeCard } from "./AtividadeCard";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -20,10 +21,19 @@ type PeriodFilter = "all" | "today" | "week" | "month";
 export function AtividadesList() {
   const { atividades, isLoading } = useAtividades();
   const { glebas } = useGlebas();
+  const { cidades } = useCidades();
   const [search, setSearch] = useState("");
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>("all");
-  const [glebaFilter, setGlebaFilter] = useState<string>("all");
+  const [cidadeFilter, setCidadeFilter] = useState<string>("all");
 
+  // Build a map of gleba_id -> cidade_id for quick lookup
+  const glebaCidadeMap = useMemo(() => {
+    const map = new Map<string, string | null>();
+    glebas.forEach((g) => {
+      map.set(g.id, g.cidade_id);
+    });
+    return map;
+  }, [glebas]);
   const filteredAtividades = useMemo(() => {
     return atividades.filter((atividade) => {
       // Text search
@@ -39,9 +49,11 @@ export function AtividadesList() {
         if (!matchesDescricao && !matchesGleba) return false;
       }
 
-      // Gleba filter
-      if (glebaFilter !== "all") {
-        if (atividade.gleba_id !== glebaFilter) return false;
+      // City filter - filter by the city of the associated gleba
+      if (cidadeFilter !== "all") {
+        if (!atividade.gleba_id) return false;
+        const glebaCidadeId = glebaCidadeMap.get(atividade.gleba_id);
+        if (glebaCidadeId !== cidadeFilter) return false;
       }
 
       // Period filter
@@ -84,7 +96,7 @@ export function AtividadesList() {
 
       return true;
     });
-  }, [atividades, search, periodFilter, glebaFilter]);
+  }, [atividades, search, periodFilter, cidadeFilter, glebaCidadeMap]);
 
   // Group activities by date
   const groupedAtividades = useMemo(() => {
@@ -137,15 +149,18 @@ export function AtividadesList() {
           </SelectContent>
         </Select>
 
-        <Select value={glebaFilter} onValueChange={setGlebaFilter}>
+        <Select value={cidadeFilter} onValueChange={setCidadeFilter}>
           <SelectTrigger className="w-full sm:w-48">
-            <SelectValue placeholder="Filtrar por gleba" />
+            <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4" />
+              <SelectValue placeholder="Filtrar por cidade" />
+            </div>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todas as glebas</SelectItem>
-            {glebas.map((gleba) => (
-              <SelectItem key={gleba.id} value={gleba.id}>
-                {gleba.apelido}
+            <SelectItem value="all">Todas as cidades</SelectItem>
+            {cidades?.map((cidade) => (
+              <SelectItem key={cidade.id} value={cidade.id}>
+                {cidade.nome}
               </SelectItem>
             ))}
           </SelectContent>
