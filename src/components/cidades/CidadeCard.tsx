@@ -18,8 +18,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Building, FileText, MoreVertical, Pencil, Trash2, ExternalLink } from "lucide-react";
-import { Cidade, useCidadeGlebas } from "@/hooks/useCidades";
+import { Building, FileText, MoreVertical, Pencil, Trash2, MapPin } from "lucide-react";
+import { Cidade, useCidadeGlebas, useCidadePropostas } from "@/hooks/useCidades";
 import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -34,8 +34,8 @@ export function CidadeCard({ cidade, onEdit, onDelete }: CidadeCardProps) {
   const { isAdmin } = useAuth();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { data: glebas } = useCidadeGlebas(cidade.id);
+  const { data: propostasCount } = useCidadePropostas(cidade.id);
 
-  const planosCount = cidade.planos_diretores?.length || 0;
   const glebasCount = glebas?.length || 0;
 
   return (
@@ -78,70 +78,18 @@ export function CidadeCard({ cidade, onEdit, onDelete }: CidadeCardProps) {
             </DropdownMenu>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent>
           {/* Stats */}
-          <div className="flex gap-4">
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="font-normal">
-                {glebasCount} gleba{glebasCount !== 1 ? "s" : ""}
-              </Badge>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="font-normal">
-                <FileText className="h-3 w-3 mr-1" />
-                {planosCount} plano{planosCount !== 1 ? "s" : ""} diretor{planosCount !== 1 ? "es" : ""}
-              </Badge>
-            </div>
+          <div className="flex gap-3">
+            <Badge variant="secondary" className="font-normal">
+              <MapPin className="h-3 w-3 mr-1" />
+              {glebasCount} gleba{glebasCount !== 1 ? "s" : ""}
+            </Badge>
+            <Badge variant="outline" className="font-normal">
+              <FileText className="h-3 w-3 mr-1" />
+              {propostasCount || 0} proposta{propostasCount !== 1 ? "s" : ""}
+            </Badge>
           </div>
-
-          {/* Planos Diretores */}
-          {planosCount > 0 && (
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-muted-foreground">Planos Diretores:</p>
-              <div className="flex flex-wrap gap-2">
-                {cidade.planos_diretores?.slice(0, 3).map((url, index) => {
-                  const fileName = url.split("/").pop() || `Plano ${index + 1}`;
-                  return (
-                    <a
-                      key={index}
-                      href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-                    >
-                      <FileText className="h-3 w-3" />
-                      {fileName.length > 20 ? `${fileName.slice(0, 17)}...` : fileName}
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
-                  );
-                })}
-                {planosCount > 3 && (
-                  <span className="text-xs text-muted-foreground">
-                    +{planosCount - 3} mais
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Glebas Associadas */}
-          {glebasCount > 0 && (
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-muted-foreground">Glebas Associadas:</p>
-              <div className="flex flex-wrap gap-1">
-                {glebas?.slice(0, 5).map((gleba) => (
-                  <Badge key={gleba.id} variant="outline" className="text-xs font-normal">
-                    {gleba.apelido}
-                  </Badge>
-                ))}
-                {glebasCount > 5 && (
-                  <Badge variant="outline" className="text-xs font-normal">
-                    +{glebasCount - 5}
-                  </Badge>
-                )}
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
 

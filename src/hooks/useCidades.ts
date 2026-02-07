@@ -137,3 +137,33 @@ export function useCidadeGlebas(cidadeId: string | null) {
     enabled: !!cidadeId,
   });
 }
+
+export function useCidadePropostas(cidadeId: string | null) {
+  return useQuery({
+    queryKey: ["cidades", cidadeId, "propostas"],
+    queryFn: async () => {
+      if (!cidadeId) return 0;
+      
+      // First get all glebas for this city
+      const { data: glebas, error: glebasError } = await supabase
+        .from("glebas")
+        .select("id")
+        .eq("cidade_id", cidadeId);
+
+      if (glebasError) throw glebasError;
+      if (!glebas || glebas.length === 0) return 0;
+
+      const glebaIds = glebas.map(g => g.id);
+
+      // Then count propostas for these glebas
+      const { count, error: propostasError } = await supabase
+        .from("propostas")
+        .select("id", { count: "exact", head: true })
+        .in("gleba_id", glebaIds);
+
+      if (propostasError) throw propostasError;
+      return count || 0;
+    },
+    enabled: !!cidadeId,
+  });
+}
