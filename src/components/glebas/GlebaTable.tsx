@@ -211,6 +211,7 @@ export function GlebaTable({ onEditGleba }: GlebaTableProps) {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
+              <TableHead className="w-[60px]">Nº</TableHead>
               <TableHead className="w-[50px]"></TableHead>
               <TableHead>Apelido</TableHead>
               <TableHead>Status</TableHead>
@@ -226,7 +227,7 @@ export function GlebaTable({ onEditGleba }: GlebaTableProps) {
           <TableBody>
             {filteredGlebas.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={10} className="h-32 text-center">
+                <TableCell colSpan={11} className="h-32 text-center">
                   <p className="text-muted-foreground">
                     {hasActiveFilters
                       ? "Nenhuma gleba encontrada com os filtros aplicados"
@@ -241,6 +242,9 @@ export function GlebaTable({ onEditGleba }: GlebaTableProps) {
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => onEditGleba(gleba)}
                 >
+                  <TableCell className="font-mono text-sm font-bold text-muted-foreground">
+                    #{gleba.numero}
+                  </TableCell>
                   <TableCell>
                     {gleba.prioridade && (
                       <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
