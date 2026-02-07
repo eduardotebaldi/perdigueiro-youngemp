@@ -25,9 +25,11 @@ import {
   Ruler,
   Percent,
   MessageSquare,
+  ClipboardList,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { GlebaAtividades } from "./GlebaAtividades";
 
 type Gleba = Tables<"glebas">;
 
@@ -394,6 +396,15 @@ export function GlebaDetailsDialog({
             </div>
           </div>
         )}
+
+        {/* Atividades */}
+        <div className="mt-6">
+          <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+            <ClipboardList className="h-5 w-5 text-primary" />
+            Atividades
+          </h3>
+          <GlebaAtividades glebaId={gleba.id} />
+        </div>
       </DialogContent>
     </Dialog>
   );
