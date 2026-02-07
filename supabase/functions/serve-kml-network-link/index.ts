@@ -56,26 +56,45 @@ function formatArea(value: number | null): string {
   return new Intl.NumberFormat("pt-BR").format(value) + " m²";
 }
 
-function geoJsonToKmlCoordinates(geojson: any): string | null {
+function geoJsonToKmlCoordinates(geojson: any): { coordinates: string; type: string } | null {
   if (!geojson) return null;
 
   try {
-    let coordinates: number[][] = [];
-
-    if (geojson.type === "Polygon" && geojson.coordinates?.[0]) {
-      coordinates = geojson.coordinates[0];
-    } else if (geojson.type === "Point" && geojson.coordinates) {
-      return `${geojson.coordinates[0]},${geojson.coordinates[1]},0`;
-    } else if (geojson.type === "Feature" && geojson.geometry) {
+    // Handle FeatureCollection - get first feature's geometry
+    if (geojson.type === "FeatureCollection" && geojson.features?.length > 0) {
+      return geoJsonToKmlCoordinates(geojson.features[0]);
+    }
+    
+    // Handle Feature - extract geometry
+    if (geojson.type === "Feature" && geojson.geometry) {
       return geoJsonToKmlCoordinates(geojson.geometry);
-    } else {
-      return null;
     }
 
-    // KML expects: longitude,latitude,altitude
-    return coordinates
-      .map((coord) => `${coord[0]},${coord[1]},0`)
-      .join(" ");
+    // Handle Polygon
+    if (geojson.type === "Polygon" && geojson.coordinates?.[0]) {
+      const coords = geojson.coordinates[0]
+        .map((coord: number[]) => `${coord[0]},${coord[1]},0`)
+        .join(" ");
+      return { coordinates: coords, type: "Polygon" };
+    }
+    
+    // Handle Point
+    if (geojson.type === "Point" && geojson.coordinates) {
+      return { 
+        coordinates: `${geojson.coordinates[0]},${geojson.coordinates[1]},0`,
+        type: "Point"
+      };
+    }
+    
+    // Handle MultiPolygon - use first polygon
+    if (geojson.type === "MultiPolygon" && geojson.coordinates?.[0]?.[0]) {
+      const coords = geojson.coordinates[0][0]
+        .map((coord: number[]) => `${coord[0]},${coord[1]},0`)
+        .join(" ");
+      return { coordinates: coords, type: "Polygon" };
+    }
+
+    return null;
   } catch {
     return null;
   }
@@ -138,14 +157,13 @@ function generateKml(glebas: Gleba[], appUrl: string): string {
   const placemarks = glebas
     .filter((g) => g.poligono_geojson)
     .map((gleba) => {
-      const coordinates = geoJsonToKmlCoordinates(gleba.poligono_geojson);
-      if (!coordinates) return "";
+      const result = geoJsonToKmlCoordinates(gleba.poligono_geojson);
+      if (!result) return "";
 
+      const { coordinates, type } = result;
       const color = STATUS_COLORS[gleba.status] || "ffffffff";
-      const isPolygon = gleba.poligono_geojson?.type === "Polygon" || 
-                        gleba.poligono_geojson?.geometry?.type === "Polygon";
 
-      const geometry = isPolygon
+      const geometry = type === "Polygon"
         ? `<Polygon>
             <outerBoundaryIs>
               <LinearRing>
