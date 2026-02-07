@@ -200,7 +200,7 @@ export default function Mapa() {
                 Google Earth
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-lg">
+            <DialogContent className="max-w-lg z-50">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <Globe className="h-5 w-5" />
