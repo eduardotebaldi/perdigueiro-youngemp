@@ -50,10 +50,16 @@ const TILE_LAYERS = {
   },
 };
 
-// Camada de labels para sobrepor no satélite
+// Camada de labels para sobrepor no satélite (inclui nomes e fronteiras)
 const LABELS_LAYER = {
-  url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png",
+  url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png",
   attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+};
+
+// Camada de fronteiras administrativas
+const BOUNDARIES_LAYER = {
+  url: "https://stamen-tiles-{s}.a.ssl.fastly.net/toner-lines/{z}/{x}/{y}{r}.png",
+  attribution: '&copy; <a href="https://stamen.com/">Stamen</a>',
 };
 
 interface GlebaMapProps {
@@ -79,6 +85,7 @@ export function GlebaMap({
   const markersRef = useRef<L.Marker[]>([]);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
   const labelsLayerRef = useRef<L.TileLayer | null>(null);
+  const boundariesLayerRef = useRef<L.TileLayer | null>(null);
   const kmzLayerRef = useRef<L.GeoJSON | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -116,6 +123,10 @@ export function GlebaMap({
       labelsLayerRef.current.remove();
       labelsLayerRef.current = null;
     }
+    if (boundariesLayerRef.current) {
+      boundariesLayerRef.current.remove();
+      boundariesLayerRef.current = null;
+    }
 
     // Adicionar camada base
     const layer = TILE_LAYERS[mapType];
@@ -124,8 +135,19 @@ export function GlebaMap({
       maxZoom: 19,
     }).addTo(mapRef.current);
 
-    // Adicionar labels para satélite e híbrido
+    // Adicionar fronteiras e labels para satélite e híbrido
     if (mapType === "satellite" || mapType === "hybrid") {
+      // Camada de fronteiras (linhas de estados, países, etc)
+      boundariesLayerRef.current = L.tileLayer(
+        "https://stamen-tiles-{s}.a.ssl.fastly.net/toner-lines/{z}/{x}/{y}{r}.png",
+        {
+          maxZoom: 19,
+          opacity: 0.4,
+          subdomains: "abcd",
+        }
+      ).addTo(mapRef.current);
+
+      // Camada de labels (nomes de cidades, estados, etc)
       labelsLayerRef.current = L.tileLayer(LABELS_LAYER.url, {
         attribution: LABELS_LAYER.attribution,
         maxZoom: 19,
