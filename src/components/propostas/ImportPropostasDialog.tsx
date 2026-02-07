@@ -44,24 +44,16 @@ const COLUMN_MAPPINGS: Record<string, keyof ParsedProposta> = {
   "nome da gleba": "glebaApelido",
   "nome gleba": "glebaApelido",
   "area": "glebaApelido",
-  "área": "glebaApelido",
   "terreno": "glebaApelido",
   
   // Gleba número/código variations
   "numero": "glebaNumero",
-  "número": "glebaNumero",
   "numero da gleba": "glebaNumero",
-  "número da gleba": "glebaNumero",
   "codigo gleba": "glebaNumero",
-  "código gleba": "glebaNumero",
   "cod gleba": "glebaNumero",
-  "n°": "glebaNumero",
-  "nº": "glebaNumero",
   "n": "glebaNumero",
-  "#": "glebaNumero",
   "id": "glebaNumero",
   "cod": "glebaNumero",
-  "código": "glebaNumero",
   "codigo": "glebaNumero",
   
   // Data variations
@@ -81,15 +73,11 @@ const COLUMN_MAPPINGS: Record<string, keyof ParsedProposta> = {
   
   // Descrição variations
   "descricao": "descricao",
-  "descrição": "descricao",
   "observacao": "descricao",
-  "observação": "descricao",
   "obs": "descricao",
   "notas": "descricao",
   "comentario": "descricao",
-  "comentário": "descricao",
   "detalhes": "descricao",
-  "responsável": "descricao",
   "responsavel": "descricao",
   
   // Arquivo variations
@@ -98,7 +86,6 @@ const COLUMN_MAPPINGS: Record<string, keyof ParsedProposta> = {
   "link arquivo": "arquivoLink",
   "carta": "arquivoLink",
   "carta proposta": "arquivoLink",
-  "carta-proposta": "arquivoLink",
   "url": "arquivoLink",
   "anexo": "arquivoLink",
   "documento": "arquivoLink",
@@ -131,26 +118,53 @@ function detectDelimiter(text: string): string {
   return "\t";
 }
 
+function normalizeHeader(header: string): string {
+  return header
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // Remove accents
+    .replace(/[^a-z0-9\s]/g, " ") // Replace special chars with space
+    .replace(/\s+/g, " ") // Normalize spaces
+    .trim();
+}
+
 function parseSpreadsheetData(text: string): { propostas: ParsedProposta[]; detectedHeaders: string[]; unmappedHeaders: string[] } {
   const lines = text.trim().split("\n");
   if (lines.length < 2) return { propostas: [], detectedHeaders: [], unmappedHeaders: [] };
 
   const delimiter = detectDelimiter(text);
-  const headers = lines[0].split(delimiter).map((h) => h.trim().toLowerCase());
+  const rawHeaders = lines[0].split(delimiter).map((h) => h.trim());
+  const headers = rawHeaders.map(normalizeHeader);
+  
+  console.log("Raw headers:", rawHeaders);
+  console.log("Normalized headers:", headers);
+  console.log("Delimiter detected:", delimiter === "\t" ? "TAB" : delimiter);
+  
   const columnIndexes: Record<keyof ParsedProposta, number> = {} as any;
   
   const detectedHeaders: string[] = [];
   const unmappedHeaders: string[] = [];
 
+  // Also normalize the mapping keys for comparison
+  const normalizedMappings: Record<string, keyof ParsedProposta> = {};
+  Object.entries(COLUMN_MAPPINGS).forEach(([key, value]) => {
+    normalizedMappings[normalizeHeader(key)] = value;
+  });
+
   headers.forEach((header, index) => {
-    const mappedKey = COLUMN_MAPPINGS[header];
+    const mappedKey = normalizedMappings[header];
     if (mappedKey) {
       columnIndexes[mappedKey] = index;
-      detectedHeaders.push(header);
+      detectedHeaders.push(rawHeaders[index]);
     } else if (header) {
-      unmappedHeaders.push(header);
+      unmappedHeaders.push(rawHeaders[index]);
     }
   });
+  
+  console.log("Detected headers:", detectedHeaders);
+  console.log("Unmapped headers:", unmappedHeaders);
+  console.log("Column indexes:", columnIndexes);
 
   // Check if at least one required column was found
   if (columnIndexes.glebaApelido === undefined && columnIndexes.glebaNumero === undefined) {
