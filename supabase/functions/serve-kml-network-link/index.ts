@@ -6,6 +6,30 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+// Simple token-based authentication for Network Link access
+async function validateAccessToken(req: Request, supabase: any): Promise<boolean> {
+  const url = new URL(req.url);
+  const token = url.searchParams.get("token");
+  
+  if (!token) {
+    return false;
+  }
+  
+  // Get stored token from system_config
+  const { data } = await supabase
+    .from("system_config")
+    .select("value")
+    .eq("key", "kml_access_token")
+    .single();
+  
+  if (!data?.value) {
+    // If no token configured, deny access
+    return false;
+  }
+  
+  return token === data.value;
+}
+
 // Status colors for Google Earth (AABBGGRR format - Alpha, Blue, Green, Red)
 const STATUS_STYLES: Record<string, { fill: string; line: string; label: string }> = {
   identificada: { fill: "800000ff", line: "ff0000ff", label: "Identificada" }, // Red
@@ -257,6 +281,22 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Validate access token
+    const isAuthorized = await validateAccessToken(req, supabase);
+    if (!isAuthorized) {
+      console.error("Unauthorized access attempt to KML endpoint");
+      return new Response(
+        JSON.stringify({ 
+          error: "Unauthorized", 
+          message: "Token de acesso inválido ou não configurado. Configure o token nas configurações do sistema." 
+        }),
+        {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
 
     // Fetch all glebas with geometry
     const { data: glebas, error } = await supabase
