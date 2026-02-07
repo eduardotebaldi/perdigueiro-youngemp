@@ -73,11 +73,24 @@ const TIPO_MAPPINGS: Record<string, "compra" | "parceria" | "mista"> = {
   "hibrida": "mista",
 };
 
+function detectDelimiter(text: string): string {
+  const firstLine = text.split("\n")[0];
+  const delimiters = ["\t", ";", ","];
+  
+  for (const delimiter of delimiters) {
+    if (firstLine.includes(delimiter)) {
+      return delimiter;
+    }
+  }
+  return "\t";
+}
+
 function parseSpreadsheetData(text: string): ParsedProposta[] {
   const lines = text.trim().split("\n");
   if (lines.length < 2) return [];
 
-  const headers = lines[0].split("\t").map((h) => h.trim().toLowerCase());
+  const delimiter = detectDelimiter(text);
+  const headers = lines[0].split(delimiter).map((h) => h.trim().toLowerCase());
   const columnIndexes: Record<keyof ParsedProposta, number> = {} as any;
 
   headers.forEach((header, index) => {
@@ -87,10 +100,15 @@ function parseSpreadsheetData(text: string): ParsedProposta[] {
     }
   });
 
+  // Check if at least one required column was found
+  if (columnIndexes.glebaApelido === undefined && columnIndexes.glebaNumero === undefined) {
+    return [];
+  }
+
   const propostas: ParsedProposta[] = [];
 
   for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split("\t").map((v) => v.trim());
+    const values = lines[i].split(delimiter).map((v) => v.trim());
     if (values.every((v) => !v)) continue;
 
     const glebaApelido = columnIndexes.glebaApelido !== undefined
@@ -171,7 +189,7 @@ export function ImportPropostasDialog() {
 
     const parsedPropostas = parseSpreadsheetData(pastedData);
     if (parsedPropostas.length === 0) {
-      toast.error("Nenhum dado válido encontrado");
+      toast.error("Nenhum dado válido encontrado. Verifique se os cabeçalhos incluem 'Gleba' ou 'Número' e se os dados estão separados por TAB, vírgula ou ponto-e-vírgula.");
       return;
     }
 
