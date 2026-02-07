@@ -74,7 +74,7 @@ export function PropostaCard({ proposta, onClick }: PropostaCardProps) {
                 </span>
               </div>
 
-              {/* Description */}
+              {/* Responsável */}
               {proposta.descricao && (
                 <p className="text-sm text-muted-foreground line-clamp-2">
                   {proposta.descricao}

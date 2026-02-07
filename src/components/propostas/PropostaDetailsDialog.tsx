@@ -142,12 +142,12 @@ export function PropostaDetailsDialog({ proposta, open, onOpenChange }: Proposta
             </div>
           </div>
 
-          {/* Descrição */}
+          {/* Responsável */}
           {proposta.descricao && (
             <>
               <Separator />
               <div>
-                <h4 className="font-medium mb-2">Descrição</h4>
+                <h4 className="font-medium mb-2">Responsável</h4>
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                   {proposta.descricao}
                 </p>
