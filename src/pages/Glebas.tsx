@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { CreateGlebaDialog } from "@/components/glebas/CreateGlebaDialog";
 import { EditGlebaDialog } from "@/components/glebas/EditGlebaDialog";
+import { ImportGlebasDialog } from "@/components/glebas/ImportGlebasDialog";
 import { GlebaKanban } from "@/components/glebas/GlebaKanban";
 import { GlebaTable } from "@/components/glebas/GlebaTable";
 import { GoogleDriveSyncConfig } from "@/components/glebas/GoogleDriveSyncConfig";
@@ -73,6 +74,7 @@ export default function Glebas() {
             </TabsList>
           </Tabs>
 
+          {isAdmin && <ImportGlebasDialog />}
           <CreateGlebaDialog />
         </div>
       </div>
