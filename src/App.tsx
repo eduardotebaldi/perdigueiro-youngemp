@@ -14,6 +14,7 @@ import Mapa from "./pages/Mapa";
 import Atividades from "./pages/Atividades";
 import Imobiliarias from "./pages/Imobiliarias";
 import Propostas from "./pages/Propostas";
+import Configuracoes from "./pages/Configuracoes";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -106,10 +107,7 @@ const App = () => (
               element={
                 <ProtectedRoute requireAdmin>
                   <AppLayout>
-                    <div className="text-center py-12">
-                      <h1 className="text-2xl font-bold">Configurações</h1>
-                      <p className="text-muted-foreground">Área restrita a administradores</p>
-                    </div>
+                    <Configuracoes />
                   </AppLayout>
                 </ProtectedRoute>
               }
