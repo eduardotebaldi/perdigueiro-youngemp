@@ -9,6 +9,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Glebas from "./pages/Glebas";
+import Cidades from "./pages/Cidades";
 import Mapa from "./pages/Mapa";
 import NotFound from "./pages/NotFound";
 
@@ -75,10 +76,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <AppLayout>
-                    <div className="text-center py-12">
-                      <h1 className="text-2xl font-bold">Cidades</h1>
-                      <p className="text-muted-foreground">Em desenvolvimento...</p>
-                    </div>
+                    <Cidades />
                   </AppLayout>
                 </ProtectedRoute>
               }
