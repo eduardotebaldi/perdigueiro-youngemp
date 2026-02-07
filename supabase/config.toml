@@ -2,3 +2,6 @@ project_id = "vvtympzatclvjaqucebr"
 
 [functions.serve-kml-network-link]
 verify_jwt = false
+
+[functions.sync-drive-glebas]
+verify_jwt = false
