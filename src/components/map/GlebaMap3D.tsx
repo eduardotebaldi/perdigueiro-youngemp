@@ -17,10 +17,10 @@ import { Tables } from "@/integrations/supabase/types";
 
 type Gleba = Tables<"glebas">;
 
-// ⚠️ IMPORTANTE: Insira sua API Key do Google Maps aqui
+// ⚠️ IMPORTANTE: Sua Google Maps API Key
 // Para obter: https://console.cloud.google.com/apis/credentials
 // Habilite a API "Map Tiles API"
-const GOOGLE_MAPS_API_KEY = "YOUR_GOOGLE_MAPS_API_KEY";
+const GOOGLE_MAPS_API_KEY = "AIzaSyDqTgpc8FdUMf622yGI7IFHDcS_e9JncBI";
 
 // Cores por status (formato Cesium RGBA 0-1)
 const STATUS_COLORS: Record<string, Color> = {
@@ -134,13 +134,11 @@ export function GlebaMap3D({
 
     // Carregar Google Photorealistic 3D Tiles
     try {
-      if (GOOGLE_MAPS_API_KEY !== "YOUR_GOOGLE_MAPS_API_KEY") {
-        const tileset = await createGooglePhotorealistic3DTileset(GOOGLE_MAPS_API_KEY);
-        viewer.scene.primitives.add(tileset);
-        tilesetRef.current = tileset;
-      } else {
-        console.warn("Google Maps API Key não configurada. Configure a constante GOOGLE_MAPS_API_KEY.");
-      }
+      const tileset = await createGooglePhotorealistic3DTileset({
+        key: GOOGLE_MAPS_API_KEY
+      });
+      viewer.scene.primitives.add(tileset);
+      tilesetRef.current = tileset;
     } catch (error) {
       console.error("Erro ao carregar Google 3D Tiles:", error);
     }
@@ -248,16 +246,7 @@ export function GlebaMap3D({
         {glebaEntities}
       </Viewer>
 
-      {/* Aviso se API Key não configurada */}
-      {GOOGLE_MAPS_API_KEY === "YOUR_GOOGLE_MAPS_API_KEY" && (
-        <div className="absolute top-4 left-4 bg-warning/20 border border-warning text-warning-foreground px-4 py-2 rounded-lg text-sm max-w-md z-10">
-          <strong>⚠️ API Key não configurada</strong>
-          <p className="mt-1">
-            Configure a constante <code className="bg-muted px-1 rounded">GOOGLE_MAPS_API_KEY</code> em{" "}
-            <code className="bg-muted px-1 rounded">src/components/map/GlebaMap3D.tsx</code> para habilitar os Google 3D Tiles.
-          </p>
-        </div>
-      )}
+      {/* Aviso se API Key não configurada - removido já que está configurada */}
     </div>
   );
 }
