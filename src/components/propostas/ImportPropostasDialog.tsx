@@ -36,29 +36,69 @@ interface ParsedProposta {
 }
 
 const COLUMN_MAPPINGS: Record<string, keyof ParsedProposta> = {
+  // Gleba apelido variations
   "gleba": "glebaApelido",
   "apelido": "glebaApelido",
   "apelido da gleba": "glebaApelido",
+  "nome da gleba": "glebaApelido",
+  "nome gleba": "glebaApelido",
+  "area": "glebaApelido",
+  "área": "glebaApelido",
+  "terreno": "glebaApelido",
+  
+  // Gleba número variations
   "numero": "glebaNumero",
   "número": "glebaNumero",
   "numero da gleba": "glebaNumero",
   "número da gleba": "glebaNumero",
+  "n°": "glebaNumero",
+  "nº": "glebaNumero",
+  "n": "glebaNumero",
+  "#": "glebaNumero",
+  "id": "glebaNumero",
+  "cod": "glebaNumero",
+  "código": "glebaNumero",
+  "codigo": "glebaNumero",
+  
+  // Data variations
   "data": "dataProposta",
   "data proposta": "dataProposta",
   "data da proposta": "dataProposta",
+  "dt": "dataProposta",
+  "dt proposta": "dataProposta",
+  "date": "dataProposta",
+  
+  // Tipo variations
   "tipo": "tipo",
   "tipo proposta": "tipo",
   "tipo da proposta": "tipo",
+  "modalidade": "tipo",
+  "type": "tipo",
+  
+  // Descrição variations
   "descricao": "descricao",
   "descrição": "descricao",
   "observacao": "descricao",
   "observação": "descricao",
+  "obs": "descricao",
+  "notas": "descricao",
+  "comentario": "descricao",
+  "comentário": "descricao",
+  "detalhes": "descricao",
+  
+  // Arquivo variations
   "arquivo": "arquivoLink",
   "link": "arquivoLink",
   "link arquivo": "arquivoLink",
   "carta": "arquivoLink",
   "carta proposta": "arquivoLink",
   "carta-proposta": "arquivoLink",
+  "url": "arquivoLink",
+  "anexo": "arquivoLink",
+  "documento": "arquivoLink",
+  "doc": "arquivoLink",
+  "pdf": "arquivoLink",
+  "file": "arquivoLink",
 };
 
 const TIPO_MAPPINGS: Record<string, "compra" | "parceria" | "mista"> = {
@@ -85,24 +125,30 @@ function detectDelimiter(text: string): string {
   return "\t";
 }
 
-function parseSpreadsheetData(text: string): ParsedProposta[] {
+function parseSpreadsheetData(text: string): { propostas: ParsedProposta[]; detectedHeaders: string[]; unmappedHeaders: string[] } {
   const lines = text.trim().split("\n");
-  if (lines.length < 2) return [];
+  if (lines.length < 2) return { propostas: [], detectedHeaders: [], unmappedHeaders: [] };
 
   const delimiter = detectDelimiter(text);
   const headers = lines[0].split(delimiter).map((h) => h.trim().toLowerCase());
   const columnIndexes: Record<keyof ParsedProposta, number> = {} as any;
+  
+  const detectedHeaders: string[] = [];
+  const unmappedHeaders: string[] = [];
 
   headers.forEach((header, index) => {
     const mappedKey = COLUMN_MAPPINGS[header];
     if (mappedKey) {
       columnIndexes[mappedKey] = index;
+      detectedHeaders.push(header);
+    } else if (header) {
+      unmappedHeaders.push(header);
     }
   });
 
   // Check if at least one required column was found
   if (columnIndexes.glebaApelido === undefined && columnIndexes.glebaNumero === undefined) {
-    return [];
+    return { propostas: [], detectedHeaders, unmappedHeaders };
   }
 
   const propostas: ParsedProposta[] = [];
@@ -149,7 +195,7 @@ function parseSpreadsheetData(text: string): ParsedProposta[] {
     }
   }
 
-  return propostas;
+  return { propostas, detectedHeaders, unmappedHeaders };
 }
 
 function parseDate(dateStr: string): string {
@@ -187,12 +233,18 @@ export function ImportPropostasDialog() {
       return;
     }
 
-    const parsedPropostas = parseSpreadsheetData(pastedData);
-    if (parsedPropostas.length === 0) {
-      toast.error("Nenhum dado válido encontrado. Verifique se os cabeçalhos incluem 'Gleba' ou 'Número' e se os dados estão separados por TAB, vírgula ou ponto-e-vírgula.");
+    const parseResult = parseSpreadsheetData(pastedData);
+    
+    if (parseResult.propostas.length === 0) {
+      const headerInfo = parseResult.unmappedHeaders.length > 0 
+        ? `Cabeçalhos não reconhecidos: ${parseResult.unmappedHeaders.join(", ")}` 
+        : "Nenhum cabeçalho reconhecido.";
+      toast.error(`Nenhum dado válido encontrado. ${headerInfo} Use 'Gleba', 'Número', 'Data', 'Tipo' ou 'Link'.`);
       return;
     }
 
+    const parsedPropostas = parseResult.propostas;
+    
     setIsProcessing(true);
     setResults([]);
     setProgress(0);
