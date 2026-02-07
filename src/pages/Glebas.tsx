@@ -3,9 +3,12 @@ import { CreateGlebaDialog } from "@/components/glebas/CreateGlebaDialog";
 import { EditGlebaDialog } from "@/components/glebas/EditGlebaDialog";
 import { GlebaKanban } from "@/components/glebas/GlebaKanban";
 import { GlebaTable } from "@/components/glebas/GlebaTable";
+import { GoogleDriveSyncConfig } from "@/components/glebas/GoogleDriveSyncConfig";
 import { Tables } from "@/integrations/supabase/types";
-import { Kanban, Table2, Zap } from "lucide-react";
+import { Kanban, Table2, Zap, Settings } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Button } from "@/components/ui/button";
 
 type Gleba = Tables<"glebas">;
 type ViewMode = "kanban" | "table";
@@ -13,9 +16,22 @@ type ViewMode = "kanban" | "table";
 export default function Glebas() {
   const [editingGleba, setEditingGleba] = useState<Gleba | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("kanban");
+  const [showConfig, setShowConfig] = useState(false);
 
   return (
     <div className="space-y-6">
+      {/* Config Section */}
+      <Collapsible open={showConfig} onOpenChange={setShowConfig}>
+        <CollapsibleTrigger asChild>
+          <Button variant="outline" size="sm" className="gap-2">
+            <Settings className="h-4 w-4" />
+            {showConfig ? "Ocultar Configurações" : "Configurações de Sync"}
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="mt-4">
+          <GoogleDriveSyncConfig />
+        </CollapsibleContent>
+      </Collapsible>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
