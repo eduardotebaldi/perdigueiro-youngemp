@@ -4,19 +4,21 @@ import { GlebaMap, parseKmzFile } from "@/components/map/GlebaMap";
 import { GlebaCard } from "@/components/glebas/GlebaCard";
 import { EditGlebaDialog } from "@/components/glebas/EditGlebaDialog";
 import { Tables } from "@/integrations/supabase/types";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   Map, 
   Maximize2, 
   Minimize2, 
   Upload, 
   Layers, 
-  X,
   MapPin,
   Satellite,
   Globe,
   Copy,
   Check,
-  ExternalLink
+  ExternalLink,
+  RefreshCw,
+  CloudDownload
 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -35,6 +37,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -42,16 +45,19 @@ type Gleba = Tables<"glebas">;
 type MapType = "street" | "satellite" | "hybrid";
 
 const NETWORK_LINK_URL = "https://vvtympzatclvjaqucebr.supabase.co/functions/v1/serve-kml-network-link";
+const SYNC_FUNCTION_URL = "https://vvtympzatclvjaqucebr.supabase.co/functions/v1/sync-drive-glebas";
 
 export default function Mapa() {
-  const { glebas, isLoading, createGleba } = useGlebas();
+  const { glebas, isLoading, createGleba, refetch } = useGlebas();
   const [selectedGleba, setSelectedGleba] = useState<Gleba | null>(null);
   const [editingGleba, setEditingGleba] = useState<Gleba | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mapType, setMapType] = useState<MapType>("street");
   const [isImporting, setIsImporting] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [copied, setCopied] = useState(false);
   const [googleEarthDialogOpen, setGoogleEarthDialogOpen] = useState(false);
+  const [driveFileId, setDriveFileId] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -112,6 +118,61 @@ export default function Mapa() {
     }
   };
 
+  const handleSyncFromDrive = async () => {
+    if (!driveFileId.trim()) {
+      toast({
+        variant: "destructive",
+        title: "ID do arquivo obrigatório",
+        description: "Cole o ID do arquivo KML do Google Drive",
+      });
+      return;
+    }
+
+    setIsSyncing(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          variant: "destructive",
+          title: "Não autenticado",
+          description: "Você precisa estar logado para sincronizar",
+        });
+        return;
+      }
+
+      const response = await fetch(SYNC_FUNCTION_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ fileId: driveFileId.trim() }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Erro na sincronização");
+      }
+
+      await refetch();
+
+      toast({
+        title: "Sincronização concluída!",
+        description: `${result.imported} importadas, ${result.updated} atualizadas`,
+      });
+    } catch (error) {
+      console.error("Erro na sincronização:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro na sincronização",
+        description: error instanceof Error ? error.message : "Não foi possível sincronizar",
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   const mapTypeLabels: Record<MapType, { label: string; icon: React.ReactNode }> = {
     street: { label: "Ruas", icon: <MapPin className="h-4 w-4" /> },
     satellite: { label: "Satélite", icon: <Satellite className="h-4 w-4" /> },
@@ -151,10 +212,15 @@ export default function Mapa() {
               </DialogHeader>
 
               <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">
-                    Link de Integração (Network Link)
-                  </label>
+                {/* Exportação - Network Link */}
+                <div className="border rounded-lg p-4 space-y-3">
+                  <h4 className="font-medium text-sm flex items-center gap-2">
+                    <ExternalLink className="h-4 w-4" />
+                    Exportação (Sistema → Earth)
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    Use este link no Google Earth para visualizar suas glebas em tempo real
+                  </p>
                   <div className="flex gap-2">
                     <Input
                       value={NETWORK_LINK_URL}
@@ -175,14 +241,49 @@ export default function Mapa() {
                   </div>
                 </div>
 
+                {/* Importação - Drive Sync */}
+                <div className="border rounded-lg p-4 space-y-3">
+                  <h4 className="font-medium text-sm flex items-center gap-2">
+                    <CloudDownload className="h-4 w-4" />
+                    Importação (Drive → Sistema)
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    Sincronize glebas de um arquivo KML no Google Drive
+                  </p>
+                  <div className="space-y-2">
+                    <Label htmlFor="driveFileId">ID do Arquivo no Drive</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="driveFileId"
+                        value={driveFileId}
+                        onChange={(e) => setDriveFileId(e.target.value)}
+                        placeholder="Ex: 1abc123def456..."
+                        className="font-mono text-xs"
+                      />
+                      <Button
+                        onClick={handleSyncFromDrive}
+                        disabled={isSyncing}
+                      >
+                        {isSyncing ? (
+                          <RefreshCw className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <RefreshCw className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      O ID está na URL do arquivo: drive.google.com/file/d/<strong>[ID]</strong>/view
+                    </p>
+                  </div>
+                </div>
+
+                {/* Instruções */}
                 <div className="bg-muted/50 rounded-lg p-4 space-y-3">
-                  <h4 className="font-medium text-sm">Como usar no Google Earth:</h4>
+                  <h4 className="font-medium text-sm">Como usar:</h4>
                   <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
-                    <li>Acesse <a href="https://earth.google.com/web" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">earth.google.com/web</a></li>
-                    <li>Clique em <strong>Projetos</strong> no menu lateral</li>
-                    <li>Clique em <strong>Novo projeto</strong> → <strong>Importar arquivo KML</strong></li>
-                    <li>Cole o link acima ou baixe o arquivo KML primeiro</li>
-                    <li>As glebas aparecerão coloridas por status</li>
+                    <li><strong>Exportar:</strong> Copie o link acima e importe no Google Earth Web</li>
+                    <li><strong>Importar:</strong> Compartilhe seu KML com a conta de serviço e cole o ID acima</li>
+                    <li>A sincronização preserva status, preço e outros dados editados no sistema</li>
                   </ol>
                 </div>
 

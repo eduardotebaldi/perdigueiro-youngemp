@@ -86,6 +86,7 @@ export function useGlebas() {
   return {
     glebas,
     isLoading,
+    refetch,
     updateGlebaStatus,
     createGleba,
     updateGleba,

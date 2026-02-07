@@ -85,8 +85,11 @@ export type Database = {
           created_at: string
           data_visita: string | null
           descricao_descarte: string | null
+          google_drive_file_id: string | null
           id: string
           imobiliaria_id: string | null
+          kml_id: string | null
+          last_sync_at: string | null
           motivo_descarte_id: string | null
           percentual_permuta: number | null
           poligono_geojson: Json | null
@@ -113,8 +116,11 @@ export type Database = {
           created_at?: string
           data_visita?: string | null
           descricao_descarte?: string | null
+          google_drive_file_id?: string | null
           id?: string
           imobiliaria_id?: string | null
+          kml_id?: string | null
+          last_sync_at?: string | null
           motivo_descarte_id?: string | null
           percentual_permuta?: number | null
           poligono_geojson?: Json | null
@@ -141,8 +147,11 @@ export type Database = {
           created_at?: string
           data_visita?: string | null
           descricao_descarte?: string | null
+          google_drive_file_id?: string | null
           id?: string
           imobiliaria_id?: string | null
+          kml_id?: string | null
+          last_sync_at?: string | null
           motivo_descarte_id?: string | null
           percentual_permuta?: number | null
           poligono_geojson?: Json | null
