@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useGlebas } from "@/hooks/useGlebas";
-import { GlebaMap, parseKmzFile } from "@/components/map/GlebaMap";
+import { GlebaMap3D, parseKmzFile } from "@/components/map/GlebaMap3D";
 import { GlebaCard } from "@/components/glebas/GlebaCard";
 import { EditGlebaDialog } from "@/components/glebas/EditGlebaDialog";
 import { Tables } from "@/integrations/supabase/types";
@@ -11,8 +11,6 @@ import {
   Minimize2, 
   Upload, 
   Layers, 
-  MapPin,
-  Satellite,
   Globe,
   Copy,
   Check,
@@ -22,12 +20,6 @@ import {
 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -42,7 +34,6 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 type Gleba = Tables<"glebas">;
-type MapType = "street" | "satellite" | "hybrid";
 
 const NETWORK_LINK_URL = "https://vvtympzatclvjaqucebr.supabase.co/functions/v1/serve-kml-network-link";
 const SYNC_FUNCTION_URL = "https://vvtympzatclvjaqucebr.supabase.co/functions/v1/sync-drive-glebas";
@@ -52,7 +43,6 @@ export default function Mapa() {
   const [selectedGleba, setSelectedGleba] = useState<Gleba | null>(null);
   const [editingGleba, setEditingGleba] = useState<Gleba | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [mapType, setMapType] = useState<MapType>("street");
   const [isImporting, setIsImporting] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -171,12 +161,6 @@ export default function Mapa() {
     } finally {
       setIsSyncing(false);
     }
-  };
-
-  const mapTypeLabels: Record<MapType, { label: string; icon: React.ReactNode }> = {
-    street: { label: "Ruas", icon: <MapPin className="h-4 w-4" /> },
-    satellite: { label: "Satélite", icon: <Satellite className="h-4 w-4" /> },
-    hybrid: { label: "Híbrido", icon: <Layers className="h-4 w-4" /> },
   };
 
   return (
@@ -327,30 +311,6 @@ export default function Mapa() {
             disabled={isImporting}
           />
 
-          {/* Tipo de Mapa */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                {mapTypeLabels[mapType].icon}
-                <span className="ml-2">{mapTypeLabels[mapType].label}</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setMapType("street")}>
-                <MapPin className="h-4 w-4 mr-2" />
-                Ruas
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setMapType("satellite")}>
-                <Satellite className="h-4 w-4 mr-2" />
-                Satélite
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setMapType("hybrid")}>
-                <Layers className="h-4 w-4 mr-2" />
-                Híbrido
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
           {/* Fullscreen */}
           <Button
             variant="outline"
@@ -380,15 +340,15 @@ export default function Mapa() {
           : "grid-cols-1 lg:grid-cols-4 h-[600px]"
       )}>
         <div className={cn(
-          "rounded-lg overflow-hidden border",
+          "rounded-lg overflow-hidden border relative",
           isFullscreen ? "h-full" : "lg:col-span-3"
         )}>
           {!isLoading && (
-            <GlebaMap 
+            <GlebaMap3D 
               glebas={glebas} 
               onSelectGleba={setSelectedGleba}
+              selectedGlebaId={selectedGleba?.id}
               isFullscreen={isFullscreen}
-              mapType={mapType}
             />
           )}
         </div>
