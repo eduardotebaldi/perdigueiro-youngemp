@@ -36,7 +36,7 @@ interface ParsedProposta {
 }
 
 const COLUMN_MAPPINGS: Record<string, keyof ParsedProposta> = {
-  // Gleba apelido variations
+  // Gleba apelido variations - MUST have "gleba" in the name to avoid confusion
   "gleba": "glebaApelido",
   "apelido": "glebaApelido",
   "apelido da gleba": "glebaApelido",
@@ -46,15 +46,14 @@ const COLUMN_MAPPINGS: Record<string, keyof ParsedProposta> = {
   "area": "glebaApelido",
   "terreno": "glebaApelido",
   
-  // Gleba número/código variations
-  "numero": "glebaNumero",
-  "numero da gleba": "glebaNumero",
+  // Gleba número/código variations - MUST have "gleba" in the name
+  // "codigo gleba" maps to number, but NOT "codigo" alone (that's the proposal code)
   "codigo gleba": "glebaNumero",
   "cod gleba": "glebaNumero",
-  "n": "glebaNumero",
-  "id": "glebaNumero",
-  "cod": "glebaNumero",
-  "codigo": "glebaNumero",
+  "numero gleba": "glebaNumero",
+  "numero da gleba": "glebaNumero",
+  "n gleba": "glebaNumero",
+  "id gleba": "glebaNumero",
   
   // Data variations
   "data": "dataProposta",
@@ -81,10 +80,8 @@ const COLUMN_MAPPINGS: Record<string, keyof ParsedProposta> = {
   "responsavel": "descricao",
   
   // Arquivo variations
-  "arquivo": "arquivoLink",
   "link": "arquivoLink",
   "link arquivo": "arquivoLink",
-  "carta": "arquivoLink",
   "carta proposta": "arquivoLink",
   "url": "arquivoLink",
   "anexo": "arquivoLink",
