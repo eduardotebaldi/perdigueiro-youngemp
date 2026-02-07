@@ -210,43 +210,72 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Verificar autenticação
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Criar cliente Supabase
+    // Criar cliente Supabase com service role para cron jobs
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    // Verificar usuário
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } =
-      await supabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    
+    // Verificar se é chamada de cron (sem auth) ou de usuário
+    const authHeader = req.headers.get("Authorization");
+    const isCronCall = !authHeader || authHeader === `Bearer ${supabaseAnonKey}`;
+    
+    let supabase;
+    if (isCronCall) {
+      // Cron job: usar service role
+      supabase = createClient(supabaseUrl, supabaseServiceKey);
+    } else {
+      // Usuário: verificar autenticação
+      if (!authHeader?.startsWith("Bearer ")) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      supabase = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: authHeader } },
       });
+      
+      // Verificar usuário
+      const token = authHeader.replace("Bearer ", "");
+      const { data: userData, error: userError } = await supabase.auth.getUser(token);
+      if (userError || !userData?.user) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
-    // Obter parâmetros
-    const { fileId } = await req.json();
+    // Obter fileId: do body ou da configuração do sistema
+    let fileId: string | null = null;
+    
+    try {
+      const body = await req.json();
+      fileId = body?.fileId || null;
+    } catch {
+      // Body vazio ou inválido, buscar da config
+    }
+    
+    // Se não veio fileId, buscar da tabela system_config
     if (!fileId) {
-      return new Response(
-        JSON.stringify({ error: "fileId is required" }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+      const { data: configData, error: configError } = await supabase
+        .from("system_config")
+        .select("value")
+        .eq("key", "google_drive_kml_file_id")
+        .single();
+      
+      if (configError || !configData?.value) {
+        return new Response(
+          JSON.stringify({ 
+            error: "File ID não configurado. Configure em system_config com key 'google_drive_kml_file_id'" 
+          }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+      fileId = configData.value;
     }
 
     // Carregar credenciais do Google
