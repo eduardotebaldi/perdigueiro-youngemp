@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Glebas from "./pages/Glebas";
 import Cidades from "./pages/Cidades";
 import Mapa from "./pages/Mapa";
+import Atividades from "./pages/Atividades";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -99,10 +100,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <AppLayout>
-                    <div className="text-center py-12">
-                      <h1 className="text-2xl font-bold">Atividades</h1>
-                      <p className="text-muted-foreground">Em desenvolvimento...</p>
-                    </div>
+                    <Atividades />
                   </AppLayout>
                 </ProtectedRoute>
               }
