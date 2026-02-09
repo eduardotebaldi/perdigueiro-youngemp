@@ -41,13 +41,13 @@
 
     --radius: 0.5rem;
 
-    --sidebar-background: 216 79% 12%;
-    --sidebar-foreground: 0 0% 100%;
+    --sidebar-background: 0 0% 92%;
+    --sidebar-foreground: 0 0% 15%;
     --sidebar-primary: 17 99% 52%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 216 70% 18%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 216 70% 20%;
+    --sidebar-accent: 0 0% 85%;
+    --sidebar-accent-foreground: 0 0% 15%;
+    --sidebar-border: 0 0% 82%;
     --sidebar-ring: 17 99% 52%;
 
     /* Status colors para Kanban */
