@@ -2,15 +2,16 @@ import { useCallback, useState, useMemo } from "react";
 import {
   DndContext,
   DragEndEvent,
+  DragOverEvent,
+  DragOverlay,
+  DragStartEvent,
   closestCorners,
   PointerSensor,
   useSensor,
   useSensors,
+  useDroppable,
+  useDraggable,
 } from "@dnd-kit/core";
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
 import { useGlebas, STATUS_ORDER, STATUS_LABELS } from "@/hooks/useGlebas";
 import { GlebaCard } from "./GlebaCard";
 import { useToast } from "@/hooks/use-toast";
@@ -54,7 +55,31 @@ const BADGE_COLORS: Record<string, string> = {
   standby: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
 };
 
+function DraggableGlebaCard({ gleba, onViewGleba }: { gleba: Gleba; onViewGleba?: (gleba: Gleba) => void }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: gleba.id,
+    data: { gleba },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      className={cn("touch-none", isDragging && "opacity-30")}
+      onClick={() => onViewGleba?.(gleba)}
+    >
+      <GlebaCard gleba={gleba} />
+    </div>
+  );
+}
+
 function KanbanColumn({ status, glebas, onViewGleba, isCollapsed, onToggleCollapse }: KanbanColumnProps) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `column-${status}`,
+    data: { status },
+  });
+
   if (isCollapsed) {
     return (
       <div
@@ -84,9 +109,11 @@ function KanbanColumn({ status, glebas, onViewGleba, isCollapsed, onToggleCollap
 
   return (
     <div
+      ref={setNodeRef}
       className={cn(
         "flex flex-col bg-muted/30 rounded-lg p-4 border-2 min-h-[600px] flex-shrink-0 transition-all duration-300",
         STATUS_COLORS[status],
+        isOver && "ring-2 ring-primary bg-primary/5",
         "w-80"
       )}
     >
@@ -104,23 +131,16 @@ function KanbanColumn({ status, glebas, onViewGleba, isCollapsed, onToggleCollap
         </Badge>
       </div>
 
-      <SortableContext
-        items={glebas.map((g) => g.id)}
-        strategy={verticalListSortingStrategy}
-      >
-        <div className="space-y-3 flex-1">
-          {glebas.map((gleba) => (
-            <div key={gleba.id} draggable onClick={() => onViewGleba?.(gleba)}>
-              <GlebaCard gleba={gleba} />
-            </div>
-          ))}
-          {glebas.length === 0 && (
-            <div className="flex items-center justify-center h-20 text-muted-foreground">
-              <p className="text-sm text-center">Nenhuma gleba neste status</p>
-            </div>
-          )}
-        </div>
-      </SortableContext>
+      <div className="space-y-3 flex-1">
+        {glebas.map((gleba) => (
+          <DraggableGlebaCard key={gleba.id} gleba={gleba} onViewGleba={onViewGleba} />
+        ))}
+        {glebas.length === 0 && (
+          <div className="flex items-center justify-center h-20 text-muted-foreground">
+            <p className="text-sm text-center">Nenhuma gleba neste status</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -130,13 +150,12 @@ interface GlebaKanbanProps {
 }
 
 export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
-  const { glebas, isLoading, getGlebasByStatus } = useGlebas();
+  const { glebas, isLoading, updateGlebaStatus } = useGlebas();
   const { toast } = useToast();
   
-  // Estado para pesquisa
+  const [activeGleba, setActiveGleba] = useState<Gleba | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   
-  // Estado para colunas colapsadas
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
 
   // Filtrar glebas por número ou apelido
@@ -169,21 +188,44 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
   };
 
   const sensors = useSensors(
-    useSensor(PointerSensor)
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const gleba = glebas.find((g) => g.id === event.active.id);
+    setActiveGleba(gleba || null);
+  };
 
   const handleDragEnd = useCallback(
     async (event: DragEndEvent) => {
+      setActiveGleba(null);
       const { active, over } = event;
+      if (!over) return;
 
-      if (!over || active.id === over.id) return;
+      const glebaId = active.id as string;
+      // The droppable id is "column-{status}"
+      const overId = over.id as string;
+      const newStatus = overId.startsWith("column-") ? overId.replace("column-", "") : null;
+      if (!newStatus) return;
 
-      toast({
-        title: "Aviso",
-        description: "Drag and drop será implementado em breve com interatividade completa.",
-      });
+      const gleba = glebas.find((g) => g.id === glebaId);
+      if (!gleba || gleba.status === newStatus) return;
+
+      try {
+        await updateGlebaStatus(glebaId, newStatus);
+        toast({
+          title: "Status atualizado",
+          description: `"${gleba.apelido}" movida para ${STATUS_LABELS[newStatus]}`,
+        });
+      } catch (error) {
+        toast({
+          title: "Erro ao atualizar status",
+          description: "Não foi possível mover a gleba.",
+          variant: "destructive",
+        });
+      }
     },
-    [toast]
+    [glebas, updateGlebaStatus, toast]
   );
 
   if (isLoading) {
@@ -215,6 +257,7 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
+        onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
         <div className="overflow-x-auto pb-4">
@@ -231,6 +274,13 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
             ))}
           </div>
         </div>
+        <DragOverlay>
+          {activeGleba ? (
+            <div className="w-80 opacity-80">
+              <GlebaCard gleba={activeGleba} />
+            </div>
+          ) : null}
+        </DragOverlay>
       </DndContext>
     </div>
   );

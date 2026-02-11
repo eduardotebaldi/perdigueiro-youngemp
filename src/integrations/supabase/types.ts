@@ -79,6 +79,321 @@ export type Database = {
         }
         Relationships: []
       }
+      esquadro_comentarios: {
+        Row: {
+          conteudo: string
+          created_at: string
+          demanda_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          conteudo: string
+          created_at?: string
+          demanda_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          conteudo?: string
+          created_at?: string
+          demanda_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "esquadro_comentarios_demanda_id_fkey"
+            columns: ["demanda_id"]
+            isOneToOne: false
+            referencedRelation: "esquadro_demandas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      esquadro_custo_hora_historico: {
+        Row: {
+          created_at: string
+          custo_hora: number
+          id: string
+          user_id: string
+          vigencia_fim: string | null
+          vigencia_inicio: string
+        }
+        Insert: {
+          created_at?: string
+          custo_hora: number
+          id?: string
+          user_id: string
+          vigencia_fim?: string | null
+          vigencia_inicio: string
+        }
+        Update: {
+          created_at?: string
+          custo_hora?: number
+          id?: string
+          user_id?: string
+          vigencia_fim?: string | null
+          vigencia_inicio?: string
+        }
+        Relationships: []
+      }
+      esquadro_demandas: {
+        Row: {
+          arquiteta_id: string | null
+          created_at: string
+          data_solicitacao: string
+          empreendimento_id: string
+          horas_estimadas: number | null
+          id: string
+          instrucoes: string | null
+          ordem_kanban: number
+          prazo_estimado: string | null
+          prioridade: number
+          status_id: string
+          tipo_projeto_id: string
+          updated_at: string
+        }
+        Insert: {
+          arquiteta_id?: string | null
+          created_at?: string
+          data_solicitacao?: string
+          empreendimento_id: string
+          horas_estimadas?: number | null
+          id?: string
+          instrucoes?: string | null
+          ordem_kanban?: number
+          prazo_estimado?: string | null
+          prioridade?: number
+          status_id: string
+          tipo_projeto_id: string
+          updated_at?: string
+        }
+        Update: {
+          arquiteta_id?: string | null
+          created_at?: string
+          data_solicitacao?: string
+          empreendimento_id?: string
+          horas_estimadas?: number | null
+          id?: string
+          instrucoes?: string | null
+          ordem_kanban?: number
+          prazo_estimado?: string | null
+          prioridade?: number
+          status_id?: string
+          tipo_projeto_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "esquadro_demandas_empreendimento_id_fkey"
+            columns: ["empreendimento_id"]
+            isOneToOne: false
+            referencedRelation: "esquadro_empreendimentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "esquadro_demandas_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "esquadro_status"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "esquadro_demandas_tipo_projeto_id_fkey"
+            columns: ["tipo_projeto_id"]
+            isOneToOne: false
+            referencedRelation: "esquadro_tipos_projeto"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      esquadro_empreendimentos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          nome: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
+      esquadro_motivos_nao_trabalho: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          nome: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
+      esquadro_profiles: {
+        Row: {
+          ativo: boolean
+          avatar_url: string | null
+          created_at: string
+          email: string
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          avatar_url?: string | null
+          created_at?: string
+          email?: string
+          id: string
+          nome?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          avatar_url?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      esquadro_registro_horas: {
+        Row: {
+          created_at: string
+          data: string
+          demanda_id: string | null
+          horas: number
+          id: string
+          motivo_nao_trabalho_id: string | null
+          observacao: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data: string
+          demanda_id?: string | null
+          horas?: number
+          id?: string
+          motivo_nao_trabalho_id?: string | null
+          observacao?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          demanda_id?: string | null
+          horas?: number
+          id?: string
+          motivo_nao_trabalho_id?: string | null
+          observacao?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "esquadro_registro_horas_demanda_id_fkey"
+            columns: ["demanda_id"]
+            isOneToOne: false
+            referencedRelation: "esquadro_demandas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "esquadro_registro_horas_motivo_nao_trabalho_id_fkey"
+            columns: ["motivo_nao_trabalho_id"]
+            isOneToOne: false
+            referencedRelation: "esquadro_motivos_nao_trabalho"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      esquadro_status: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          ordem: number
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          ordem?: number
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          ordem?: number
+        }
+        Relationships: []
+      }
+      esquadro_tipos_projeto: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          nome: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
+      esquadro_user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["esquadro_app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["esquadro_app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["esquadro_app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       glebas: {
         Row: {
           aceita_permuta: Database["public"]["Enums"]["permuta_status"] | null
@@ -354,6 +669,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      esquadro_has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["esquadro_app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       get_all_users_with_roles: {
         Args: never
         Returns: {
@@ -373,6 +695,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      esquadro_app_role: "admin" | "arquiteta"
       gleba_status:
         | "identificada"
         | "informacoes_recebidas"
@@ -513,6 +836,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      esquadro_app_role: ["admin", "arquiteta"],
       gleba_status: [
         "identificada",
         "informacoes_recebidas",
