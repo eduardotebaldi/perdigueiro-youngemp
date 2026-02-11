@@ -203,9 +203,21 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
       if (!over) return;
 
       const glebaId = active.id as string;
-      // The droppable id is "column-{status}"
       const overId = over.id as string;
-      const newStatus = overId.startsWith("column-") ? overId.replace("column-", "") : null;
+
+      // Determine the target status:
+      // 1. Dropped on a column -> id is "column-{status}"
+      // 2. Dropped on another card -> find that card's status from glebas
+      let newStatus: string | null = null;
+      if (overId.startsWith("column-")) {
+        newStatus = overId.replace("column-", "");
+      } else {
+        // Dropped over another gleba card - find its status
+        const targetGleba = glebas.find((g) => g.id === overId);
+        if (targetGleba) {
+          newStatus = targetGleba.status;
+        }
+      }
       if (!newStatus) return;
 
       const gleba = glebas.find((g) => g.id === glebaId);
