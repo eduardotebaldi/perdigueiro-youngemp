@@ -682,6 +682,7 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          nome: string
           role: Database["public"]["Enums"]["app_role"]
         }[]
       }
@@ -690,6 +691,7 @@ export type Database = {
         Returns: {
           email: string
           id: string
+          nome: string
         }[]
       }
       has_role: {
