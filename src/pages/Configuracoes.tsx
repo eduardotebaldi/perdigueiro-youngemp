@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Settings, Users, Plus, Trash2, Shield, ShieldCheck, Loader2 } from "lucide-react";
+import { Settings, Users, Plus, Trash2, Shield, ShieldCheck, Loader2, Pencil, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,6 +56,7 @@ interface UserWithRole {
   email: string;
   role: "admin" | "user";
   created_at: string;
+  nome: string;
 }
 
 export default function Configuracoes() {
@@ -128,6 +129,26 @@ export default function Configuracoes() {
     },
   });
 
+  // Update user name mutation
+  const updateName = useMutation({
+    mutationFn: async ({ userId, nome }: { userId: string; nome: string }) => {
+      const { error } = await supabase
+        .from("user_profiles" as any)
+        .update({ nome })
+        .eq("user_id", userId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      toast.success("Nome atualizado!");
+    },
+    onError: (error) => {
+      console.error("Erro ao atualizar nome:", error);
+      toast.error("Erro ao atualizar nome");
+    },
+  });
+
   // Delete user mutation
   const deleteUser = useMutation({
     mutationFn: async (userId: string) => {
@@ -149,6 +170,9 @@ export default function Configuracoes() {
       toast.error(error.message || "Erro ao excluir usuário");
     },
   });
+
+  const [editingNameId, setEditingNameId] = useState<string | null>(null);
+  const [editingNameValue, setEditingNameValue] = useState("");
 
   const handleCreateUser = async () => {
     if (!newUserEmail || !newUserPassword) {
@@ -291,6 +315,7 @@ export default function Configuracoes() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Email</TableHead>
+                  <TableHead>Nome</TableHead>
                   <TableHead>Permissão</TableHead>
                   <TableHead>Criado em</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
@@ -300,6 +325,50 @@ export default function Configuracoes() {
                 {users.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell className="font-medium">{user.email}</TableCell>
+                    <TableCell>
+                      {editingNameId === user.id ? (
+                        <div className="flex items-center gap-1">
+                          <Input
+                            value={editingNameValue}
+                            onChange={(e) => setEditingNameValue(e.target.value)}
+                            className="h-8 w-40"
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                updateName.mutate({ userId: user.id, nome: editingNameValue });
+                                setEditingNameId(null);
+                              }
+                              if (e.key === "Escape") setEditingNameId(null);
+                            }}
+                          />
+                          <Button
+                            variant="ghost" size="icon" className="h-7 w-7"
+                            onClick={() => {
+                              updateName.mutate({ userId: user.id, nome: editingNameValue });
+                              setEditingNameId(null);
+                            }}
+                          >
+                            <Check className="h-3 w-3" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingNameId(null)}>
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1">
+                          <span className="text-muted-foreground">{user.nome || "—"}</span>
+                          <Button
+                            variant="ghost" size="icon" className="h-7 w-7"
+                            onClick={() => {
+                              setEditingNameId(user.id);
+                              setEditingNameValue(user.nome || "");
+                            }}
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <Select
                         value={user.role}

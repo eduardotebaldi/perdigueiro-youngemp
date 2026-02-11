@@ -57,7 +57,7 @@ export function GlebaAtividades({ glebaId }: GlebaAtividadesProps) {
         user_ids: userIds,
       });
       if (error) throw error;
-      return data as { id: string; email: string }[];
+      return data as { id: string; email: string; nome: string }[];
     },
     enabled: userIds.length > 0,
   });
@@ -65,7 +65,7 @@ export function GlebaAtividades({ glebaId }: GlebaAtividadesProps) {
   const userEmailMap = useMemo(() => {
     const map: Record<string, string> = {};
     userEmails.forEach((u) => {
-      map[u.id] = u.email;
+      map[u.id] = u.nome || u.email;
     });
     return map;
   }, [userEmails]);
