@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Send, MessageCircle, Trash2 } from "lucide-react";
+import { Loader2, Send, MessageCircle, Trash2, User } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -42,6 +42,33 @@ export function GlebaAtividades({ glebaId }: GlebaAtividadesProps) {
     },
     enabled: !!glebaId,
   });
+
+  // Fetch user emails for all responsavel_ids
+  const userIds = useMemo(() => {
+    const ids = atividades.map((a) => a.responsavel_id).filter(Boolean);
+    return [...new Set(ids)];
+  }, [atividades]);
+
+  const { data: userEmails = [] } = useQuery({
+    queryKey: ["user_emails", userIds],
+    queryFn: async () => {
+      if (userIds.length === 0) return [];
+      const { data, error } = await supabase.rpc("get_user_emails", {
+        user_ids: userIds,
+      });
+      if (error) throw error;
+      return data as { id: string; email: string }[];
+    },
+    enabled: userIds.length > 0,
+  });
+
+  const userEmailMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    userEmails.forEach((u) => {
+      map[u.id] = u.email;
+    });
+    return map;
+  }, [userEmails]);
 
   const createMutation = useMutation({
     mutationFn: async (descricao: string) => {
@@ -136,8 +163,11 @@ export function GlebaAtividades({ glebaId }: GlebaAtividadesProps) {
                     <p className="text-sm whitespace-pre-wrap break-words">
                       {atividade.descricao}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {formatDateTime(atividade.created_at)}
+                    <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                      <User className="h-3 w-3" />
+                      <span>{userEmailMap[atividade.responsavel_id] || "Usuário"}</span>
+                      <span className="mx-1">·</span>
+                      <span>{formatDateTime(atividade.created_at)}</span>
                     </p>
                   </div>
                   {canDelete(atividade) && (
