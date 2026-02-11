@@ -83,9 +83,9 @@ export function GlebaCard({ gleba }: GlebaCardProps) {
               <button
                 onClick={handlePriorityToggle}
                 className={`flex-shrink-0 transition-colors ${
-                  isAdmin ? "cursor-pointer hover:scale-110" : "cursor-default"
+                  isAdmin ? "cursor-pointer hover:scale-110" : "cursor-default pointer-events-none"
                 }`}
-                disabled={!isAdmin}
+                type="button"
               >
                 <Star
                   className={`h-5 w-5 transition-colors ${
