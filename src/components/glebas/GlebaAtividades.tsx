@@ -43,32 +43,33 @@ export function GlebaAtividades({ glebaId }: GlebaAtividadesProps) {
     enabled: !!glebaId,
   });
 
-  // Fetch user emails for all responsavel_ids
+  // Fetch user names from user_profiles table (accessible to all authenticated users)
   const userIds = useMemo(() => {
     const ids = atividades.map((a) => a.responsavel_id).filter(Boolean);
     return [...new Set(ids)];
   }, [atividades]);
 
-  const { data: userEmails = [] } = useQuery({
-    queryKey: ["user_emails", userIds],
+  const { data: userProfiles = [] } = useQuery({
+    queryKey: ["user_profiles", userIds],
     queryFn: async () => {
       if (userIds.length === 0) return [];
-      const { data, error } = await supabase.rpc("get_user_emails", {
-        user_ids: userIds,
-      });
+      const { data, error } = await supabase
+        .from("user_profiles" as any)
+        .select("user_id, nome")
+        .in("user_id", userIds);
       if (error) throw error;
-      return data as { id: string; email: string; nome: string }[];
+      return data as unknown as { user_id: string; nome: string }[];
     },
     enabled: userIds.length > 0,
   });
 
-  const userEmailMap = useMemo(() => {
+  const userNameMap = useMemo(() => {
     const map: Record<string, string> = {};
-    userEmails.forEach((u) => {
-      map[u.id] = u.nome || u.email;
+    userProfiles.forEach((u) => {
+      map[u.user_id] = u.nome || "Usuário";
     });
     return map;
-  }, [userEmails]);
+  }, [userProfiles]);
 
   const createMutation = useMutation({
     mutationFn: async (descricao: string) => {
@@ -165,7 +166,7 @@ export function GlebaAtividades({ glebaId }: GlebaAtividadesProps) {
                     </p>
                     <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                       <User className="h-3 w-3" />
-                      <span>{userEmailMap[atividade.responsavel_id] || "Usuário"}</span>
+                      <span>{userNameMap[atividade.responsavel_id] || "Usuário"}</span>
                       <span className="mx-1">·</span>
                       <span>{formatDateTime(atividade.created_at)}</span>
                     </p>
