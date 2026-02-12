@@ -79,6 +79,36 @@ export type Database = {
         }
         Relationships: []
       }
+      comercial_tabela_precos: {
+        Row: {
+          created_at: string | null
+          data_preco: string | null
+          empreendimento: string | null
+          id: number
+          juros: number | null
+          num_lote: string | null
+          preco_av: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          data_preco?: string | null
+          empreendimento?: string | null
+          id: number
+          juros?: number | null
+          num_lote?: string | null
+          preco_av?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          data_preco?: string | null
+          empreendimento?: string | null
+          id?: number
+          juros?: number | null
+          num_lote?: string | null
+          preco_av?: number | null
+        }
+        Relationships: []
+      }
       esquadro_comentarios: {
         Row: {
           conteudo: string
