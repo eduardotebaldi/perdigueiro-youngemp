@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar, FileText, MapPin, Building2, Tag, ExternalLink, Clock, Loader2, DollarSign, Percent, Pencil, Save, X } from "lucide-react";
+import { Calendar, FileText, MapPin, Building2, Tag, ExternalLink, Clock, Loader2, DollarSign, Percent, Pencil, Save, X, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +13,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { PropostaWithGleba, usePropostas } from "@/hooks/usePropostas";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 interface PropostaDetailsDialogProps {
@@ -39,7 +51,18 @@ export function PropostaDetailsDialog({ proposta, open, onOpenChange }: Proposta
   const [isEditing, setIsEditing] = useState(false);
   const [precoHa, setPrecoHa] = useState<string>("");
   const [percentualProposto, setPercentualProposto] = useState<string>("");
-  const { getCartaPropostaUrl, updateProposta } = usePropostas();
+  const { getCartaPropostaUrl, updateProposta, deleteProposta } = usePropostas();
+  const { isAdmin, user } = useAuth();
+
+  const canEditOrDelete = (() => {
+    if (!proposta) return false;
+    if (isAdmin) return true;
+    if (proposta.created_by !== user?.id) return false;
+    const createdAt = new Date(proposta.created_at);
+    const fifteenDaysAgo = new Date();
+    fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - 15);
+    return createdAt > fifteenDaysAgo;
+  })();
 
   // Reset form when proposta changes
   useEffect(() => {
@@ -113,21 +136,58 @@ export function PropostaDetailsDialog({ proposta, open, onOpenChange }: Proposta
               <FileText className="h-5 w-5 text-primary" />
               Detalhes da Proposta
             </DialogTitle>
-            {!isEditing ? (
-              <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)} className="mr-6">
-                <Pencil className="h-4 w-4 mr-1" />
-                Editar
-              </Button>
-            ) : (
-              <div className="flex gap-1 mr-6">
-                <Button variant="ghost" size="sm" onClick={handleCancel}>
-                  <X className="h-4 w-4" />
-                </Button>
-                <Button variant="default" size="sm" onClick={handleSave} disabled={updateProposta.isPending}>
-                  {updateProposta.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                </Button>
-              </div>
-            )}
+            <div className="flex gap-1 mr-6">
+              {canEditOrDelete && !isEditing && (
+                <>
+                  <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)}>
+                    <Pencil className="h-4 w-4 mr-1" />
+                    Editar
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Excluir proposta?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Esta ação não pode ser desfeita. A proposta será permanentemente removida.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={async () => {
+                            try {
+                              await deleteProposta.mutateAsync(proposta!.id);
+                              toast.success("Proposta excluída!");
+                              onOpenChange(false);
+                            } catch {
+                              toast.error("Erro ao excluir proposta");
+                            }
+                          }}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Excluir
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </>
+              )}
+              {isEditing && (
+                <>
+                  <Button variant="ghost" size="sm" onClick={handleCancel}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                  <Button variant="default" size="sm" onClick={handleSave} disabled={updateProposta.isPending}>
+                    {updateProposta.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
         </DialogHeader>
 

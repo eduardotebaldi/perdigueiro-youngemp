@@ -33,6 +33,7 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { GlebaAtividades } from "./GlebaAtividades";
+import { GlebaAnexosSection } from "./GlebaAnexosSection";
 import { toast } from "sonner";
 
 type Gleba = Tables<"glebas">;
@@ -527,6 +528,17 @@ export function GlebaDetailsDialog({
             </div>
           </div>
         )}
+
+        {/* Anexos */}
+        <div className="mt-6">
+          <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+            <FileText className="h-5 w-5 text-primary" />
+            Documentos Anexos
+          </h3>
+          <div className="bg-muted/30 rounded-lg p-4">
+            <GlebaAnexosSection glebaId={gleba.id} />
+          </div>
+        </div>
 
         {/* Atividades */}
         <div className="mt-6">
