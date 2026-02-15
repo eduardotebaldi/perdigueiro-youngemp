@@ -23,14 +23,24 @@ interface AtividadeCardProps {
     id: string;
     descricao: string;
     data: string;
+    created_at: string;
     responsavel_id: string;
     gleba?: { id: string; apelido: string } | null;
   };
 }
 
 export function AtividadeCard({ atividade }: AtividadeCardProps) {
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const { deleteAtividade } = useAtividades();
+
+  const canDelete = (() => {
+    if (isAdmin) return true;
+    if (user?.id !== atividade.responsavel_id) return false;
+    const createdAt = new Date(atividade.created_at || "");
+    const fifteenDaysAgo = new Date();
+    fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - 15);
+    return createdAt > fifteenDaysAgo;
+  })();
 
   const handleDelete = async () => {
     try {
@@ -78,8 +88,8 @@ export function AtividadeCard({ atividade }: AtividadeCardProps) {
                 )}
               </div>
 
-              {/* Delete button (admin only) */}
-              {isAdmin && (
+              {/* Delete button (admin or owner within 15 days) */}
+              {canDelete && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button

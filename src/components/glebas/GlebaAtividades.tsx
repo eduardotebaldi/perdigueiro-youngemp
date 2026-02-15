@@ -135,8 +135,15 @@ export function GlebaAtividades({ glebaId }: GlebaAtividadesProps) {
     }
   };
 
+  const { isAdmin } = useAuth();
+
   const canDelete = (atividade: Atividade) => {
-    return user?.id === atividade.responsavel_id;
+    if (isAdmin) return true;
+    if (user?.id !== atividade.responsavel_id) return false;
+    const createdAt = new Date(atividade.created_at);
+    const fifteenDaysAgo = new Date();
+    fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - 15);
+    return createdAt > fifteenDaysAgo;
   };
 
   return (
