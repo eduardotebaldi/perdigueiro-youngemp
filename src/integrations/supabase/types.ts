@@ -79,6 +79,99 @@ export type Database = {
         }
         Relationships: []
       }
+      comercial_corretores: {
+        Row: {
+          bairro: string
+          cep: string
+          cidade: string
+          cnpj: string | null
+          cpf: string | null
+          creci: string
+          email: string
+          endereco: string
+          id: string
+          nome: string
+          telefone: string
+          tipo: string
+          uf: string
+        }
+        Insert: {
+          bairro: string
+          cep: string
+          cidade: string
+          cnpj?: string | null
+          cpf?: string | null
+          creci: string
+          email: string
+          endereco: string
+          id?: string
+          nome: string
+          telefone: string
+          tipo: string
+          uf: string
+        }
+        Update: {
+          bairro?: string
+          cep?: string
+          cidade?: string
+          cnpj?: string | null
+          cpf?: string | null
+          creci?: string
+          email?: string
+          endereco?: string
+          id?: string
+          nome?: string
+          telefone?: string
+          tipo?: string
+          uf?: string
+        }
+        Relationships: []
+      }
+      comercial_dados_bancarios: {
+        Row: {
+          dados_bancarios: string
+          empreendimento: string
+          id: string
+        }
+        Insert: {
+          dados_bancarios: string
+          empreendimento: string
+          id?: string
+        }
+        Update: {
+          dados_bancarios?: string
+          empreendimento?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      comercial_lotes_detalhes: {
+        Row: {
+          area: number
+          empreendimento: string
+          id: string
+          matricula: number
+          num_lote: string
+          onus: string
+        }
+        Insert: {
+          area: number
+          empreendimento: string
+          id?: string
+          matricula: number
+          num_lote: string
+          onus?: string
+        }
+        Update: {
+          area?: number
+          empreendimento?: string
+          id?: string
+          matricula?: number
+          num_lote?: string
+          onus?: string
+        }
+        Relationships: []
+      }
       comercial_tabela_precos: {
         Row: {
           created_at: string | null
@@ -106,6 +199,27 @@ export type Database = {
           juros?: number | null
           num_lote?: string | null
           preco_av?: number | null
+        }
+        Relationships: []
+      }
+      comercial_templates_contratos: {
+        Row: {
+          empreendimento: string
+          id: string
+          id_doc_aprazo: string
+          id_doc_avista: string
+        }
+        Insert: {
+          empreendimento: string
+          id?: string
+          id_doc_aprazo: string
+          id_doc_avista: string
+        }
+        Update: {
+          empreendimento?: string
+          id?: string
+          id_doc_aprazo?: string
+          id_doc_avista?: string
         }
         Relationships: []
       }
@@ -178,6 +292,7 @@ export type Database = {
           id: string
           instrucoes: string | null
           ordem_kanban: number
+          prazo: string | null
           prazo_estimado: string | null
           prioridade: number
           status_id: string
@@ -193,6 +308,7 @@ export type Database = {
           id?: string
           instrucoes?: string | null
           ordem_kanban?: number
+          prazo?: string | null
           prazo_estimado?: string | null
           prioridade?: number
           status_id: string
@@ -208,6 +324,7 @@ export type Database = {
           id?: string
           instrucoes?: string | null
           ordem_kanban?: number
+          prazo?: string | null
           prazo_estimado?: string | null
           prioridade?: number
           status_id?: string
@@ -285,27 +402,33 @@ export type Database = {
           ativo: boolean
           avatar_url: string | null
           created_at: string
+          custo_hora: number | null
           email: string
           id: string
           nome: string
+          role: string
           updated_at: string
         }
         Insert: {
           ativo?: boolean
           avatar_url?: string | null
           created_at?: string
+          custo_hora?: number | null
           email?: string
           id: string
           nome?: string
+          role?: string
           updated_at?: string
         }
         Update: {
           ativo?: boolean
           avatar_url?: string | null
           created_at?: string
+          custo_hora?: number | null
           email?: string
           id?: string
           nome?: string
+          role?: string
           updated_at?: string
         }
         Relationships: []
