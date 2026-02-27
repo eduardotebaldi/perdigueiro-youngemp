@@ -142,7 +142,6 @@ export function GlebaCard({ gleba, showInactiveIcon }: GlebaCardProps) {
           </div>
           {gleba.preco && (
             <div className="flex items-center gap-1">
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
               <span className="text-muted-foreground">
                 R$ {gleba.preco.toLocaleString()}
               </span>
