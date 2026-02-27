@@ -115,7 +115,7 @@ export function GlebaCard({ gleba }: GlebaCardProps) {
         <div className="flex items-center gap-1">
           <MapPin className="h-4 w-4 text-muted-foreground" />
           <span className="text-muted-foreground">
-            {gleba.tamanho_m2 ? `${gleba.tamanho_m2.toLocaleString()} m²` : "—"}
+            {gleba.tamanho_m2 ? `${gleba.tamanho_m2.toLocaleString()} ha` : "—"}
           </span>
         </div>
         {gleba.preco && (
