@@ -599,6 +599,7 @@ export type Database = {
           descricao_descarte: string | null
           google_drive_file_id: string | null
           id: string
+          imagem_capa: string | null
           imobiliaria_id: string | null
           kml_id: string | null
           last_sync_at: string | null
@@ -631,6 +632,7 @@ export type Database = {
           descricao_descarte?: string | null
           google_drive_file_id?: string | null
           id?: string
+          imagem_capa?: string | null
           imobiliaria_id?: string | null
           kml_id?: string | null
           last_sync_at?: string | null
@@ -663,6 +665,7 @@ export type Database = {
           descricao_descarte?: string | null
           google_drive_file_id?: string | null
           id?: string
+          imagem_capa?: string | null
           imobiliaria_id?: string | null
           kml_id?: string | null
           last_sync_at?: string | null

@@ -56,9 +56,29 @@ export function useGlebaAnexos(glebaId: string | null) {
     },
   });
 
+  const addDriveLink = useMutation({
+    mutationFn: async ({ link, tipo, glebaId: gId, nome }: { link: string; tipo: TipoAnexo; glebaId: string; nome: string }) => {
+      const { error } = await supabase
+        .from("gleba_anexos")
+        .insert({
+          gleba_id: gId,
+          tipo: tipo as any,
+          arquivo: link,
+          nome_arquivo: nome,
+        });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["gleba_anexos", glebaId] });
+    },
+  });
+
   const deleteAnexo = useMutation({
     mutationFn: async (anexo: GlebaAnexo) => {
-      await supabase.storage.from("gleba-anexos").remove([anexo.arquivo]);
+      // Only delete from storage if it's not a URL
+      if (!anexo.arquivo.startsWith("http")) {
+        await supabase.storage.from("gleba-anexos").remove([anexo.arquivo]);
+      }
       const { error } = await supabase.from("gleba_anexos").delete().eq("id", anexo.id);
       if (error) throw error;
     },
@@ -68,6 +88,8 @@ export function useGlebaAnexos(glebaId: string | null) {
   });
 
   const getSignedUrl = async (filePath: string): Promise<string | null> => {
+    // If it's already a URL (Drive link), return as-is
+    if (filePath.startsWith("http")) return filePath;
     const { data, error } = await supabase.storage
       .from("gleba-anexos")
       .createSignedUrl(filePath, 3600);
@@ -77,13 +99,17 @@ export function useGlebaAnexos(glebaId: string | null) {
 
   const getAnexosByTipo = (tipo: TipoAnexo) => anexos.filter((a) => a.tipo === tipo);
 
+  const isGoogleDriveLink = (path: string) => path.startsWith("http");
+
   return {
     anexos,
     isLoading,
     uploadAnexo,
+    addDriveLink,
     deleteAnexo,
     getSignedUrl,
     getAnexosByTipo,
+    isGoogleDriveLink,
   };
 }
 

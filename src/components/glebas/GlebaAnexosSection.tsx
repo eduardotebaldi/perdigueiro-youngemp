@@ -2,7 +2,8 @@ import { useState, useRef } from "react";
 import { useGlebaAnexos, TIPO_ANEXO_LABELS, TIPO_ANEXO_ACCEPT } from "@/hooks/useGlebaAnexos";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Loader2, Upload, ExternalLink, Trash2, FileText, FileSpreadsheet, Image } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Loader2, Upload, ExternalLink, Trash2, FileText, FileSpreadsheet, Image, Link2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -15,12 +16,18 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface GlebaAnexosSectionProps {
   glebaId: string;
 }
 
 const TIPOS = ["pesquisa_mercado", "planilha_viabilidade", "matricula_imovel"] as const;
+const TIPOS_COM_DRIVE = ["pesquisa_mercado", "planilha_viabilidade"] as const;
 
 const TIPO_ICONS: Record<string, any> = {
   pesquisa_mercado: FileText,
@@ -29,11 +36,14 @@ const TIPO_ICONS: Record<string, any> = {
 };
 
 export function GlebaAnexosSection({ glebaId }: GlebaAnexosSectionProps) {
-  const { getAnexosByTipo, uploadAnexo, deleteAnexo, getSignedUrl, isLoading } = useGlebaAnexos(glebaId);
+  const { getAnexosByTipo, uploadAnexo, addDriveLink, deleteAnexo, getSignedUrl, isGoogleDriveLink, isLoading } = useGlebaAnexos(glebaId);
   const { isAdmin } = useAuth();
   const [loadingFile, setLoadingFile] = useState<string | null>(null);
   const [uploadingTipo, setUploadingTipo] = useState<string | null>(null);
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const [driveLinkOpen, setDriveLinkOpen] = useState<string | null>(null);
+  const [driveUrl, setDriveUrl] = useState("");
+  const [driveName, setDriveName] = useState("");
 
   const handleUpload = async (files: FileList | null, tipo: string) => {
     if (!files || files.length === 0) return;
@@ -57,7 +67,28 @@ export function GlebaAnexosSection({ glebaId }: GlebaAnexosSectionProps) {
     }
   };
 
+  const handleAddDriveLink = async (tipo: string) => {
+    if (!driveUrl.trim()) {
+      toast.error("Informe o link");
+      return;
+    }
+    try {
+      const name = driveName.trim() || "Link Google Drive";
+      await addDriveLink.mutateAsync({ link: driveUrl.trim(), tipo: tipo as any, glebaId, nome: name });
+      toast.success("Link adicionado!");
+      setDriveUrl("");
+      setDriveName("");
+      setDriveLinkOpen(null);
+    } catch {
+      toast.error("Erro ao adicionar link");
+    }
+  };
+
   const handleOpen = async (filePath: string, anexoId: string) => {
+    if (isGoogleDriveLink(filePath)) {
+      window.open(filePath, "_blank");
+      return;
+    }
     setLoadingFile(anexoId);
     try {
       const url = await getSignedUrl(filePath);
@@ -87,6 +118,8 @@ export function GlebaAnexosSection({ glebaId }: GlebaAnexosSectionProps) {
     );
   }
 
+  const allowsDrive = (tipo: string) => (TIPOS_COM_DRIVE as readonly string[]).includes(tipo);
+
   return (
     <div className="space-y-6">
       {TIPOS.map((tipo) => {
@@ -102,7 +135,42 @@ export function GlebaAnexosSection({ glebaId }: GlebaAnexosSectionProps) {
                   <span className="text-xs text-muted-foreground">({anexos.length})</span>
                 )}
               </h4>
-              <div>
+              <div className="flex gap-1">
+                {allowsDrive(tipo) && (
+                  <Popover open={driveLinkOpen === tipo} onOpenChange={(open) => {
+                    setDriveLinkOpen(open ? tipo : null);
+                    if (!open) { setDriveUrl(""); setDriveName(""); }
+                  }}>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className="gap-1">
+                        <Link2 className="h-3 w-3" />
+                        Link
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80 space-y-3" align="end">
+                      <p className="text-sm font-medium">Adicionar link do Google Drive</p>
+                      <Input
+                        placeholder="Nome do documento"
+                        value={driveName}
+                        onChange={(e) => setDriveName(e.target.value)}
+                      />
+                      <Input
+                        placeholder="https://drive.google.com/..."
+                        value={driveUrl}
+                        onChange={(e) => setDriveUrl(e.target.value)}
+                      />
+                      <Button
+                        size="sm"
+                        className="w-full"
+                        onClick={() => handleAddDriveLink(tipo)}
+                        disabled={addDriveLink.isPending}
+                      >
+                        {addDriveLink.isPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Plus className="h-3 w-3 mr-1" />}
+                        Adicionar
+                      </Button>
+                    </PopoverContent>
+                  </Popover>
+                )}
                 <input
                   ref={(el) => { inputRefs.current[tipo] = el; }}
                   type="file"
@@ -144,6 +212,8 @@ export function GlebaAnexosSection({ glebaId }: GlebaAnexosSectionProps) {
                     >
                       {loadingFile === anexo.id ? (
                         <Loader2 className="h-3 w-3 animate-spin flex-shrink-0" />
+                      ) : isGoogleDriveLink(anexo.arquivo) ? (
+                        <Link2 className="h-3 w-3 flex-shrink-0 text-primary" />
                       ) : (
                         <ExternalLink className="h-3 w-3 flex-shrink-0" />
                       )}
