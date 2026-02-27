@@ -2,7 +2,6 @@ import { useCallback, useState, useMemo } from "react";
 import {
   DndContext,
   DragEndEvent,
-  DragOverEvent,
   DragOverlay,
   DragStartEvent,
   closestCorners,
@@ -18,8 +17,12 @@ import { useToast } from "@/hooks/use-toast";
 import { Tables } from "@/integrations/supabase/types";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Loader2, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Loader2, ChevronLeft, ChevronRight, Search, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 type Gleba = Tables<"glebas">;
 
@@ -29,6 +32,7 @@ interface KanbanColumnProps {
   onViewGleba?: (gleba: Gleba) => void;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
+  inactiveGlebaIds: Set<string>;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -55,7 +59,7 @@ const BADGE_COLORS: Record<string, string> = {
   standby: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
 };
 
-function DraggableGlebaCard({ gleba, onViewGleba }: { gleba: Gleba; onViewGleba?: (gleba: Gleba) => void }) {
+function DraggableGlebaCard({ gleba, onViewGleba, showInactiveIcon }: { gleba: Gleba; onViewGleba?: (gleba: Gleba) => void; showInactiveIcon: boolean }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: gleba.id,
     data: { gleba },
@@ -69,12 +73,12 @@ function DraggableGlebaCard({ gleba, onViewGleba }: { gleba: Gleba; onViewGleba?
       className={cn("touch-none", isDragging && "opacity-30")}
       onClick={() => onViewGleba?.(gleba)}
     >
-      <GlebaCard gleba={gleba} />
+      <GlebaCard gleba={gleba} showInactiveIcon={showInactiveIcon} />
     </div>
   );
 }
 
-function KanbanColumn({ status, glebas, onViewGleba, isCollapsed, onToggleCollapse }: KanbanColumnProps) {
+function KanbanColumn({ status, glebas, onViewGleba, isCollapsed, onToggleCollapse, inactiveGlebaIds }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: `column-${status}`,
     data: { status },
@@ -133,7 +137,12 @@ function KanbanColumn({ status, glebas, onViewGleba, isCollapsed, onToggleCollap
 
       <div className="space-y-3 flex-1">
         {glebas.map((gleba) => (
-          <DraggableGlebaCard key={gleba.id} gleba={gleba} onViewGleba={onViewGleba} />
+          <DraggableGlebaCard
+            key={gleba.id}
+            gleba={gleba}
+            onViewGleba={onViewGleba}
+            showInactiveIcon={inactiveGlebaIds.has(gleba.id)}
+          />
         ))}
         {glebas.length === 0 && (
           <div className="flex items-center justify-center h-20 text-muted-foreground">
@@ -155,22 +164,54 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
   
   const [activeGleba, setActiveGleba] = useState<Gleba | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  
+  const [filterPriority, setFilterPriority] = useState(false);
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
 
-  // Filtrar glebas por número ou apelido
-  const filteredGlebas = useMemo(() => {
-    if (!searchTerm.trim()) return glebas;
-    
-    const term = searchTerm.toLowerCase().trim();
-    return glebas.filter((gleba) => {
-      const matchesApelido = gleba.apelido.toLowerCase().includes(term);
-      const matchesNumero = gleba.numero?.toString().includes(term);
-      return matchesApelido || matchesNumero;
-    });
-  }, [glebas, searchTerm]);
+  // Fetch atividades to detect inactive glebas (no comments in last 10 days)
+  const { data: recentAtividades } = useQuery({
+    queryKey: ["atividades_recent_10d"],
+    queryFn: async () => {
+      const tenDaysAgo = new Date();
+      tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
+      const { data, error } = await supabase
+        .from("atividades")
+        .select("gleba_id")
+        .gte("created_at", tenDaysAgo.toISOString());
+      if (error) throw error;
+      return data;
+    },
+  });
 
-  // Função para obter glebas filtradas por status
+  const activeGlebaIds = useMemo(() => {
+    if (!recentAtividades) return new Set<string>();
+    return new Set(recentAtividades.map((a) => a.gleba_id).filter(Boolean) as string[]);
+  }, [recentAtividades]);
+
+  const inactiveGlebaIds = useMemo(() => {
+    const excludedStatuses = ["descartada", "negocio_fechado"];
+    return new Set(
+      glebas
+        .filter((g) => !excludedStatuses.includes(g.status) && !activeGlebaIds.has(g.id))
+        .map((g) => g.id)
+    );
+  }, [glebas, activeGlebaIds]);
+
+  const filteredGlebas = useMemo(() => {
+    let result = glebas;
+    if (filterPriority) {
+      result = result.filter((g) => g.prioridade);
+    }
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase().trim();
+      result = result.filter((gleba) => {
+        const matchesApelido = gleba.apelido.toLowerCase().includes(term);
+        const matchesNumero = gleba.numero?.toString().includes(term);
+        return matchesApelido || matchesNumero;
+      });
+    }
+    return result;
+  }, [glebas, searchTerm, filterPriority]);
+
   const getFilteredGlebasByStatus = useCallback((status: string) => {
     return filteredGlebas.filter((g) => g.status === status);
   }, [filteredGlebas]);
@@ -178,11 +219,8 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
   const toggleColumnCollapse = (status: string) => {
     setCollapsedColumns((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(status)) {
-        newSet.delete(status);
-      } else {
-        newSet.add(status);
-      }
+      if (newSet.has(status)) newSet.delete(status);
+      else newSet.add(status);
       return newSet;
     });
   };
@@ -205,18 +243,12 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
       const glebaId = active.id as string;
       const overId = over.id as string;
 
-      // Determine the target status:
-      // 1. Dropped on a column -> id is "column-{status}"
-      // 2. Dropped on another card -> find that card's status from glebas
       let newStatus: string | null = null;
       if (overId.startsWith("column-")) {
         newStatus = overId.replace("column-", "");
       } else {
-        // Dropped over another gleba card - find its status
         const targetGleba = glebas.find((g) => g.id === overId);
-        if (targetGleba) {
-          newStatus = targetGleba.status;
-        }
+        if (targetGleba) newStatus = targetGleba.status;
       }
       if (!newStatus) return;
 
@@ -229,7 +261,7 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
           title: "Status atualizado",
           description: `"${gleba.apelido}" movida para ${STATUS_LABELS[newStatus]}`,
         });
-      } catch (error) {
+      } catch {
         toast({
           title: "Erro ao atualizar status",
           description: "Não foi possível mover a gleba.",
@@ -250,20 +282,33 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
 
   return (
     <div className="space-y-4">
-      {/* Campo de pesquisa */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Pesquisar por número ou apelido..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10"
-        />
-        {searchTerm && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-            {filteredGlebas.length} resultado{filteredGlebas.length !== 1 ? "s" : ""}
-          </span>
-        )}
+      {/* Filtros */}
+      <div className="flex items-center gap-4 flex-wrap">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Pesquisar por número ou apelido..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+          {searchTerm && (
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+              {filteredGlebas.length} resultado{filteredGlebas.length !== 1 ? "s" : ""}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <Switch
+            id="filter-priority"
+            checked={filterPriority}
+            onCheckedChange={setFilterPriority}
+          />
+          <Label htmlFor="filter-priority" className="flex items-center gap-1 cursor-pointer text-sm">
+            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+            Prioritárias
+          </Label>
+        </div>
       </div>
 
       <DndContext
@@ -282,6 +327,7 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
                 onViewGleba={onViewGleba}
                 isCollapsed={collapsedColumns.has(status)}
                 onToggleCollapse={() => toggleColumnCollapse(status)}
+                inactiveGlebaIds={inactiveGlebaIds}
               />
             ))}
           </div>
