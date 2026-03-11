@@ -202,7 +202,7 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
   }, [recentAtividades]);
 
   const inactiveGlebaIds = useMemo(() => {
-    const excludedStatuses = ["descartada", "negocio_fechado"];
+    const excludedStatuses = ["descartada", "negocio_fechado", "proposta_recusada", "standby"];
     return new Set(
       glebas
         .filter((g) => !excludedStatuses.includes(g.status) && !activeGlebaIds.has(g.id))
