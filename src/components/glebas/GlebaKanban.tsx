@@ -381,54 +381,54 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
 
   return (
     <div className="space-y-3">
-      {/* Filtros - compact layout */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <div className="relative flex-1 min-w-[180px] max-w-xs">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+      {/* Filtros - single row, no wrap */}
+      <div className="flex items-center gap-2 overflow-x-auto">
+        <div className="relative min-w-[140px] max-w-[180px]">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
           <Input
             placeholder="Pesquisar..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-8 h-8 text-sm"
+            className="pl-7 h-7 text-xs"
           />
           {searchTerm && (
-            <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
               {filteredGlebas.length}
             </span>
           )}
         </div>
 
-        <div className="flex items-center gap-1.5 border rounded-md px-2 py-1">
-          <Switch id="filter-priority" checked={filterPriority} onCheckedChange={setFilterPriority} className="scale-75" />
-          <Label htmlFor="filter-priority" className="flex items-center gap-1 cursor-pointer text-xs whitespace-nowrap">
-            <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+        <div className="flex items-center gap-1 border rounded px-1.5 py-0.5 shrink-0">
+          <Switch id="filter-priority" checked={filterPriority} onCheckedChange={setFilterPriority} className="scale-[0.65]" />
+          <Label htmlFor="filter-priority" className="flex items-center gap-0.5 cursor-pointer text-[11px] whitespace-nowrap">
+            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
             Prioritárias
           </Label>
         </div>
 
-        <div className="flex items-center gap-1.5 border rounded-md px-2 py-1">
-          <Switch id="filter-inactive" checked={filterInactive} onCheckedChange={setFilterInactive} className="scale-75" />
-          <Label htmlFor="filter-inactive" className="flex items-center gap-1 cursor-pointer text-xs whitespace-nowrap">
-            <MessageSquareOff className="h-3.5 w-3.5 text-orange-500" />
-            Sem atualização
+        <div className="flex items-center gap-1 border rounded px-1.5 py-0.5 shrink-0">
+          <Switch id="filter-inactive" checked={filterInactive} onCheckedChange={setFilterInactive} className="scale-[0.65]" />
+          <Label htmlFor="filter-inactive" className="flex items-center gap-0.5 cursor-pointer text-[11px] whitespace-nowrap">
+            <MessageSquareOff className="h-3 w-3 text-orange-500" />
+            S/ atualização
           </Label>
         </div>
 
-        <div className="flex items-center gap-1.5 border rounded-md px-2 py-1">
-          <Switch id="filter-stale" checked={filterStale} onCheckedChange={setFilterStale} className="scale-75" />
-          <Label htmlFor="filter-stale" className="flex items-center gap-1 cursor-pointer text-xs whitespace-nowrap">
-            <Clock className="h-3.5 w-3.5 text-red-500" />
-            Paradas 60d+
+        <div className="flex items-center gap-1 border rounded px-1.5 py-0.5 shrink-0">
+          <Switch id="filter-stale" checked={filterStale} onCheckedChange={setFilterStale} className="scale-[0.65]" />
+          <Label htmlFor="filter-stale" className="flex items-center gap-0.5 cursor-pointer text-[11px] whitespace-nowrap">
+            <Clock className="h-3 w-3 text-red-500" />
+            60d+
           </Label>
         </div>
 
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-1 h-8 text-xs">
-              <MapPin className="h-3.5 w-3.5" />
+            <Button variant="outline" size="sm" className="gap-0.5 h-7 text-[11px] shrink-0">
+              <MapPin className="h-3 w-3" />
               Cidades
               {selectedCidades.size > 0 && (
-                <Badge variant="secondary" className="ml-0.5 h-4 px-1 text-[10px]">
+                <Badge variant="secondary" className="ml-0.5 h-3.5 px-1 text-[9px]">
                   {selectedCidades.size}
                 </Badge>
               )}
@@ -478,16 +478,16 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
           variant="outline"
           size="sm"
           onClick={toggleCollapseAll}
-          className="gap-1 h-8 text-xs"
+          className="gap-0.5 h-7 text-[11px] shrink-0"
         >
           {allCollapsed ? (
             <>
-              <ChevronsRight className="h-3.5 w-3.5" />
+              <ChevronsRight className="h-3 w-3" />
               Expandir
             </>
           ) : (
             <>
-              <ChevronsLeft className="h-3.5 w-3.5" />
+              <ChevronsLeft className="h-3 w-3" />
               Colapsar
             </>
           )}
