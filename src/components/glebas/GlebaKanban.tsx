@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Loader2, ChevronLeft, ChevronRight, Search, Star, ChevronsLeft, ChevronsRight, MapPin, X, MessageSquareOff } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, Search, Star, ChevronsLeft, ChevronsRight, MapPin, X, MessageSquareOff, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
