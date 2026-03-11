@@ -25,6 +25,7 @@ import { Loader2, ChevronLeft, ChevronRight, Search, Star, ChevronsLeft, Chevron
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import confetti from "canvas-confetti";
 import {
   Popover,
   PopoverContent,
