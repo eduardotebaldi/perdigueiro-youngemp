@@ -91,6 +91,13 @@ export function GlebaTable({ onViewGleba }: GlebaTableProps) {
   const [cidadeFilter, setCidadeFilter] = useState<string>("all");
   const [imobiliariaFilter, setImobiliariaFilter] = useState<string>("all");
   const [showPendingOnly, setShowPendingOnly] = useState(false);
+  const [showStaleOnly, setShowStaleOnly] = useState(false);
+
+  const sixtyDaysAgo = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 60);
+    return d;
+  }, []);
 
   // Contagem de pendentes
   const pendingCount = useMemo(() => {
