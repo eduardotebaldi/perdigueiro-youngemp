@@ -432,6 +432,124 @@ export default function Configuracoes() {
           )}
         </CardContent>
       </Card>
+
+      {/* Reprocessar KMZs */}
+      <ReprocessKmzCard />
     </div>
+  );
+}
+
+function ReprocessKmzCard() {
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [progress, setProgress] = useState({ current: 0, total: 0 });
+  const [results, setResults] = useState<{ apelido: string; success: boolean; message: string }[]>([]);
+  const queryClient = useQueryClient();
+
+  const { data: pendingGlebas, isLoading } = useQuery({
+    queryKey: ["glebas-sem-poligono"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("glebas")
+        .select("id, apelido, arquivo_kmz")
+        .not("arquivo_kmz", "is", null)
+        .is("poligono_geojson", null);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const handleReprocess = useCallback(async () => {
+    if (!pendingGlebas || pendingGlebas.length === 0) return;
+    setIsProcessing(true);
+    setResults([]);
+    setProgress({ current: 0, total: pendingGlebas.length });
+
+    const newResults: typeof results = [];
+
+    for (let i = 0; i < pendingGlebas.length; i++) {
+      const gleba = pendingGlebas[i];
+      setProgress({ current: i + 1, total: pendingGlebas.length });
+
+      try {
+        const { data, error } = await supabase.functions.invoke("process-kmz", {
+          body: { kmzUrl: gleba.arquivo_kmz, glebaApelido: gleba.apelido },
+        });
+
+        if (error) throw error;
+
+        if (data?.success && data.geojson) {
+          const { error: updateError } = await supabase
+            .from("glebas")
+            .update({ poligono_geojson: data.geojson } as any)
+            .eq("id", gleba.id);
+
+          if (updateError) throw updateError;
+          newResults.push({ apelido: gleba.apelido, success: true, message: "Polígono extraído" });
+        } else {
+          newResults.push({ apelido: gleba.apelido, success: false, message: data?.warning || "Sem polígono no arquivo" });
+        }
+      } catch (err: any) {
+        newResults.push({ apelido: gleba.apelido, success: false, message: err.message || "Erro" });
+      }
+
+      setResults([...newResults]);
+    }
+
+    setIsProcessing(false);
+    queryClient.invalidateQueries({ queryKey: ["glebas"] });
+    queryClient.invalidateQueries({ queryKey: ["glebas-sem-poligono"] });
+
+    const successCount = newResults.filter((r) => r.success).length;
+    toast.success(`Reprocessamento concluído: ${successCount}/${pendingGlebas.length} polígonos extraídos`);
+  }, [pendingGlebas, queryClient]);
+
+  const pendingCount = pendingGlebas?.length || 0;
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5" />
+              Reprocessar KMZs
+            </CardTitle>
+            <CardDescription>
+              Extrair polígonos de glebas que possuem KMZ mas não têm polígono salvo
+            </CardDescription>
+          </div>
+          <Button
+            onClick={handleReprocess}
+            disabled={isProcessing || isLoading || pendingCount === 0}
+          >
+            {isProcessing ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="mr-2 h-4 w-4" />
+            )}
+            {isProcessing
+              ? `${progress.current}/${progress.total}`
+              : `Reprocessar (${pendingCount})`}
+          </Button>
+        </div>
+      </CardHeader>
+      {results.length > 0 && (
+        <CardContent>
+          <div className="space-y-1 max-h-48 overflow-y-auto text-sm">
+            {results.map((r, i) => (
+              <div key={i} className="flex items-center gap-2">
+                {r.success ? (
+                  <Check className="h-3.5 w-3.5 text-green-500 shrink-0" />
+                ) : (
+                  <X className="h-3.5 w-3.5 text-destructive shrink-0" />
+                )}
+                <span className="font-medium truncate">{r.apelido}</span>
+                <span className="text-muted-foreground text-xs truncate ml-auto">{r.message}</span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      )}
+    </Card>
   );
 }
