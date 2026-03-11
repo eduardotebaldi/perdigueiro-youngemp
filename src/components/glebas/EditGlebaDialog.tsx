@@ -612,7 +612,7 @@ export function EditGlebaDialog({ gleba, open, onOpenChange }: EditGlebaDialogPr
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting || isProcessingKmz}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Salvar
               </Button>
