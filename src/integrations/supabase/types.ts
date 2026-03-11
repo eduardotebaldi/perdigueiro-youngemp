@@ -1052,6 +1052,45 @@ export type Database = {
           },
         ]
       }
+      report_configs: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string
+          destinatarios: string[]
+          id: string
+          nome: string
+          report_key: string
+          ultimo_envio: string | null
+          ultimo_relatorio_html: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string
+          destinatarios?: string[]
+          id?: string
+          nome: string
+          report_key: string
+          ultimo_envio?: string | null
+          ultimo_relatorio_html?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string
+          destinatarios?: string[]
+          id?: string
+          nome?: string
+          report_key?: string
+          ultimo_envio?: string | null
+          ultimo_relatorio_html?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       system_config: {
         Row: {
           created_at: string
