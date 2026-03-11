@@ -31,12 +31,20 @@ function getSemesterLabel() {
 export default function Dashboard() {
   const { user } = useAuth();
   const { data: stats, isLoading } = useDashboardStats();
+  const { cidades } = useCidades();
+  const [metaDialogOpen, setMetaDialogOpen] = useState(false);
 
   const firstName = user?.user_metadata?.full_name?.split(" ")[0] || "Usuário";
   const negociosSemestre = stats?.negociosFechadosSemestre || 0;
+  const negociosList = stats?.negociosFechadosSemestreList || [];
   const glebasInativas = stats?.glebasInativas || [];
   const progressPercent = Math.min((negociosSemestre / META_SEMESTRAL) * 100, 100);
   const metaAtingida = negociosSemestre >= META_SEMESTRAL;
+
+  const getCidadeName = (cidadeId: string | null) => {
+    if (!cidadeId || !cidades) return "—";
+    return cidades.find((c) => c.id === cidadeId)?.nome || "—";
+  };
 
   return (
     <div className="space-y-8">
