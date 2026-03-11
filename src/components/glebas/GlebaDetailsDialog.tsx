@@ -217,9 +217,9 @@ export function GlebaDetailsDialog({
     }).format(value);
   };
 
-  const formatArea = (value: number | null) => {
+  const formatArea = (value: number | null, unit: string = "ha") => {
     if (!value) return null;
-    return `${value.toLocaleString("pt-BR")} m²`;
+    return `${value.toLocaleString("pt-BR")} ${unit}`;
   };
 
   const formatDate = (dateStr: string | null) => {
