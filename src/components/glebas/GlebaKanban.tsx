@@ -176,6 +176,7 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterPriority, setFilterPriority] = useState(false);
   const [filterInactive, setFilterInactive] = useState(false);
+  const [filterStale, setFilterStale] = useState(false);
   const [selectedCidades, setSelectedCidades] = useState<Set<string>>(new Set());
   const [cidadeSearchTerm, setCidadeSearchTerm] = useState("");
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
