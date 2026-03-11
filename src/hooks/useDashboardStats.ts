@@ -86,6 +86,15 @@ export function useDashboardStats() {
       const glebasEmStandby = glebasPorStatus["standby"] || 0;
       const glebasPrioritarias = glebas.filter((g) => g.prioridade).length;
 
+      // Glebas inativas (sem atividade nos últimos 10 dias, excluindo descartada/negocio_fechado)
+      const excludedStatuses = ["descartada", "negocio_fechado"];
+      const activeGlebaIds = new Set(
+        (recentAtividadesResult.data || []).map((a) => a.gleba_id).filter(Boolean)
+      );
+      const glebasInativas: InactiveGleba[] = glebas
+        .filter((g) => !excludedStatuses.includes(g.status) && !activeGlebaIds.has(g.id))
+        .map((g) => ({ id: g.id, numero: g.numero, apelido: g.apelido, status: g.status }));
+
       // Propostas por mês (últimos 6 meses)
       const sixMonthsAgo = subMonths(now, 5);
       const months = eachMonthOfInterval({ start: startOfMonth(sixMonthsAgo), end: endOfMonth(now) });
