@@ -91,6 +91,9 @@ export function useDashboardStats() {
 
       const negociosFechados = glebasPorStatus["negocio_fechado"] || 0;
       const negociosFechadosSemestre = negociosSemestreResult.data?.length || 0;
+      const negociosFechadosSemestreList: NegocioFechado[] = (negociosSemestreResult.data || []).map((g: any) => ({
+        id: g.id, numero: g.numero, apelido: g.apelido, cidade_id: g.cidade_id,
+      }));
       const glebasEmStandby = glebasPorStatus["standby"] || 0;
       const glebasPrioritarias = glebas.filter((g) => g.prioridade).length;
 
