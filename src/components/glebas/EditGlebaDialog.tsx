@@ -54,6 +54,7 @@ const glebaSchema = z.object({
   cidade_id: z.string().optional().nullable(),
   imobiliaria_id: z.string().optional().nullable(),
   data_visita: z.string().optional().nullable(),
+  data_fechamento: z.string().optional().nullable(),
   motivo_descarte_id: z.string().optional().nullable(),
   descricao_descarte: z.string().optional(),
   standby_motivo: z.string().optional(),
