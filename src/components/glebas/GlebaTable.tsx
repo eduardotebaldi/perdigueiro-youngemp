@@ -255,6 +255,18 @@ export function GlebaTable({ onViewGleba }: GlebaTableProps) {
           Pendentes ({pendingCount})
         </Toggle>
 
+        {/* Filtro de Paradas 60+ dias */}
+        <Toggle
+          pressed={showStaleOnly}
+          onPressedChange={setShowStaleOnly}
+          variant="outline"
+          className="gap-2 data-[state=on]:bg-red-500/10 data-[state=on]:text-red-600 data-[state=on]:border-red-500/50"
+          aria-label="Filtrar paradas"
+        >
+          <Clock className="h-4 w-4" />
+          Paradas 60d+ ({staleCount})
+        </Toggle>
+
         {/* Seletor de Colunas */}
         <ColumnSelector
           visibleColumns={visibleColumns}
