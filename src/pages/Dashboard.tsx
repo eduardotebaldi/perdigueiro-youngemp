@@ -60,7 +60,10 @@ export default function Dashboard() {
       {isLoading ? (
         <Skeleton className="h-28 rounded-lg" />
       ) : (
-        <Card className={metaAtingida ? "border-green-500/50 bg-green-500/5" : ""}>
+        <Card
+          className={`${metaAtingida ? "border-green-500/50 bg-green-500/5" : ""} cursor-pointer hover:shadow-md transition-shadow`}
+          onClick={() => setMetaDialogOpen(true)}
+        >
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               {metaAtingida ? (
@@ -89,6 +92,47 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       )}
+
+      {/* Modal de detalhes da meta */}
+      <Dialog open={metaDialogOpen} onOpenChange={setMetaDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Trophy className="h-5 w-5 text-primary" />
+              Negócios Fechados — {getSemesterLabel()}
+            </DialogTitle>
+          </DialogHeader>
+          {negociosList.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">
+              Nenhum negócio fechado neste semestre ainda.
+            </p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[60px]">Nº</TableHead>
+                  <TableHead>Apelido</TableHead>
+                  <TableHead>Cidade</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {negociosList.map((g) => (
+                  <TableRow key={g.id}>
+                    <TableCell className="font-mono text-sm font-bold text-muted-foreground">
+                      #{g.numero || "?"}
+                    </TableCell>
+                    <TableCell className="font-medium">{g.apelido}</TableCell>
+                    <TableCell className="text-muted-foreground">{getCidadeName(g.cidade_id)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+          <p className="text-xs text-muted-foreground text-center">
+            Meta: {negociosSemestre} / {META_SEMESTRAL}
+          </p>
+        </DialogContent>
+      </Dialog>
 
       {/* KPI Cards */}
       <StatsCards

@@ -153,6 +153,7 @@ export function useDashboardStats() {
         totalCidades,
         negociosFechados,
         negociosFechadosSemestre,
+        negociosFechadosSemestreList,
         propostasPorMes,
         atividadesPorDia,
         atividadesEstaSemana,
