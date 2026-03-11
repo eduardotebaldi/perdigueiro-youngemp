@@ -5,12 +5,27 @@ import { PropostasChart } from "@/components/dashboard/PropostasChart";
 import { AtividadesChart } from "@/components/dashboard/AtividadesChart";
 import { StatusPieChart } from "@/components/dashboard/StatusPieChart";
 import { QuickAccess } from "@/components/dashboard/QuickAccess";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Target, Trophy } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const META_SEMESTRAL = 5;
+
+function getSemesterLabel() {
+  const month = new Date().getMonth();
+  const year = new Date().getFullYear();
+  return month < 6 ? `1º Semestre ${year}` : `2º Semestre ${year}`;
+}
 
 export default function Dashboard() {
   const { user } = useAuth();
   const { data: stats, isLoading } = useDashboardStats();
 
   const firstName = user?.user_metadata?.full_name?.split(" ")[0] || "Usuário";
+  const negociosSemestre = stats?.negociosFechadosSemestre || 0;
+  const progressPercent = Math.min((negociosSemestre / META_SEMESTRAL) * 100, 100);
+  const metaAtingida = negociosSemestre >= META_SEMESTRAL;
 
   return (
     <div className="space-y-8">
@@ -21,6 +36,40 @@ export default function Dashboard() {
           Bem-vindo ao Perdigueiro
         </p>
       </div>
+
+      {/* Meta Semestral */}
+      {isLoading ? (
+        <Skeleton className="h-28 rounded-lg" />
+      ) : (
+        <Card className={metaAtingida ? "border-green-500/50 bg-green-500/5" : ""}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              {metaAtingida ? (
+                <Trophy className="h-5 w-5 text-green-500" />
+              ) : (
+                <Target className="h-5 w-5 text-primary" />
+              )}
+              Meta de Negócios Fechados — <span className="text-muted-foreground font-normal text-sm">{getSemesterLabel()}</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-end gap-4">
+              <div className="flex-1">
+                <div className="flex items-baseline gap-1 mb-2">
+                  <span className="text-3xl font-bold">{negociosSemestre}</span>
+                  <span className="text-lg text-muted-foreground">/ {META_SEMESTRAL}</span>
+                </div>
+                <Progress value={progressPercent} className="h-3" />
+              </div>
+              {metaAtingida && (
+                <span className="text-sm font-medium text-green-600 whitespace-nowrap pb-1">
+                  🎉 Meta atingida!
+                </span>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* KPI Cards */}
       <StatsCards
