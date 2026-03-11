@@ -424,11 +424,11 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
 
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-1 h-8 text-xs">
-              <MapPin className="h-3.5 w-3.5" />
+            <Button variant="outline" size="sm" className="gap-0.5 h-7 text-[11px] shrink-0">
+              <MapPin className="h-3 w-3" />
               Cidades
               {selectedCidades.size > 0 && (
-                <Badge variant="secondary" className="ml-0.5 h-4 px-1 text-[10px]">
+                <Badge variant="secondary" className="ml-0.5 h-3.5 px-1 text-[9px]">
                   {selectedCidades.size}
                 </Badge>
               )}
