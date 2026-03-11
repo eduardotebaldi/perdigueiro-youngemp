@@ -219,7 +219,7 @@ export function GlebaDetailsDialog({
 
   const formatArea = (value: number | null) => {
     if (!value) return null;
-    return `${value.toLocaleString("pt-BR")} ha`;
+    return `${value.toLocaleString("pt-BR")} m²`;
   };
 
   const formatDate = (dateStr: string | null) => {
