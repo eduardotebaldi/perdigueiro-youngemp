@@ -37,7 +37,7 @@ const TIPO_ICONS: Record<string, any> = {
 
 export function GlebaAnexosSection({ glebaId }: GlebaAnexosSectionProps) {
   const { getAnexosByTipo, uploadAnexo, addDriveLink, deleteAnexo, getSignedUrl, isGoogleDriveLink, isLoading } = useGlebaAnexos(glebaId);
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const [loadingFile, setLoadingFile] = useState<string | null>(null);
   const [uploadingTipo, setUploadingTipo] = useState<string | null>(null);
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -219,36 +219,42 @@ export function GlebaAnexosSection({ glebaId }: GlebaAnexosSectionProps) {
                       )}
                       <span className="truncate">{anexo.nome_arquivo}</span>
                     </button>
-                    {isAdmin && (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Excluir arquivo?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              O arquivo "{anexo.nome_arquivo}" será permanentemente removido.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleDelete(anexo)}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    {(() => {
+                      const isOwner = anexo.created_by === user?.id;
+                      const isRecent = new Date(anexo.created_at) > new Date(Date.now() - 15 * 24 * 60 * 60 * 1000);
+                      const canDelete = isAdmin || (isOwner && isRecent);
+                      if (!canDelete) return null;
+                      return (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                             >
-                              Excluir
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    )}
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Excluir arquivo?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                O arquivo "{anexo.nome_arquivo}" será permanentemente removido.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDelete(anexo)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Excluir
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      );
+                    })()}
                   </div>
                 ))}
               </div>

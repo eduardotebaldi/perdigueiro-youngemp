@@ -12,17 +12,25 @@ import {
   useDraggable,
 } from "@dnd-kit/core";
 import { useGlebas, STATUS_ORDER, STATUS_LABELS } from "@/hooks/useGlebas";
+import { useCidades } from "@/hooks/useCidades";
 import { GlebaCard } from "./GlebaCard";
 import { useToast } from "@/hooks/use-toast";
 import { Tables } from "@/integrations/supabase/types";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Loader2, ChevronLeft, ChevronRight, Search, Star } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, Search, Star, ChevronsLeft, ChevronsRight, MapPin, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type Gleba = Tables<"glebas">;
 
@@ -160,11 +168,13 @@ interface GlebaKanbanProps {
 
 export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
   const { glebas, isLoading, updateGlebaStatus } = useGlebas();
+  const { cidades } = useCidades();
   const { toast } = useToast();
   
   const [activeGleba, setActiveGleba] = useState<Gleba | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterPriority, setFilterPriority] = useState(false);
+  const [selectedCidades, setSelectedCidades] = useState<Set<string>>(new Set());
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
 
   // Fetch atividades to detect inactive glebas (no comments in last 10 days)
@@ -196,10 +206,29 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
     );
   }, [glebas, activeGlebaIds]);
 
+  // Cidades used by glebas for the filter
+  const usedCidades = useMemo(() => {
+    if (!cidades) return [];
+    const cidadeIdsInUse = new Set(glebas.map((g) => g.cidade_id).filter(Boolean));
+    return cidades.filter((c) => cidadeIdsInUse.has(c.id));
+  }, [cidades, glebas]);
+
+  const toggleCidade = (cidadeId: string) => {
+    setSelectedCidades((prev) => {
+      const next = new Set(prev);
+      if (next.has(cidadeId)) next.delete(cidadeId);
+      else next.add(cidadeId);
+      return next;
+    });
+  };
+
   const filteredGlebas = useMemo(() => {
     let result = glebas;
     if (filterPriority) {
       result = result.filter((g) => g.prioridade);
+    }
+    if (selectedCidades.size > 0) {
+      result = result.filter((g) => g.cidade_id && selectedCidades.has(g.cidade_id));
     }
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase().trim();
@@ -210,7 +239,7 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
       });
     }
     return result;
-  }, [glebas, searchTerm, filterPriority]);
+  }, [glebas, searchTerm, filterPriority, selectedCidades]);
 
   const getFilteredGlebasByStatus = useCallback((status: string) => {
     return filteredGlebas.filter((g) => g.status === status);
@@ -223,6 +252,15 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
       else newSet.add(status);
       return newSet;
     });
+  };
+
+  const allCollapsed = collapsedColumns.size === STATUS_ORDER.length;
+  const toggleCollapseAll = () => {
+    if (allCollapsed) {
+      setCollapsedColumns(new Set());
+    } else {
+      setCollapsedColumns(new Set(STATUS_ORDER));
+    }
   };
 
   const sensors = useSensors(
@@ -309,6 +347,69 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
             Prioritárias
           </Label>
         </div>
+
+        {/* Filtro por cidade */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-1">
+              <MapPin className="h-4 w-4" />
+              Cidades
+              {selectedCidades.size > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                  {selectedCidades.size}
+                </Badge>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64 p-3" align="start">
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {usedCidades.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhuma cidade disponível</p>
+              ) : (
+                usedCidades.map((cidade) => (
+                  <label key={cidade.id} className="flex items-center gap-2 cursor-pointer text-sm hover:bg-muted/50 rounded px-1 py-0.5">
+                    <Checkbox
+                      checked={selectedCidades.has(cidade.id)}
+                      onCheckedChange={() => toggleCidade(cidade.id)}
+                    />
+                    {cidade.nome}
+                  </label>
+                ))
+              )}
+            </div>
+            {selectedCidades.size > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full mt-2 text-xs"
+                onClick={() => setSelectedCidades(new Set())}
+              >
+                <X className="h-3 w-3 mr-1" />
+                Limpar filtro
+              </Button>
+            )}
+          </PopoverContent>
+        </Popover>
+
+        {/* Colapsar/expandir todas */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={toggleCollapseAll}
+          className="gap-1"
+        >
+          {allCollapsed ? (
+            <>
+              <ChevronsRight className="h-4 w-4" />
+              Expandir todas
+            </>
+          ) : (
+            <>
+              <ChevronsLeft className="h-4 w-4" />
+              Colapsar todas
+            </>
+          )}
+        </Button>
       </div>
 
       <DndContext
