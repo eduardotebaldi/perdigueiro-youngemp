@@ -54,6 +54,7 @@ const glebaSchema = z.object({
   cidade_id: z.string().optional().nullable(),
   imobiliaria_id: z.string().optional().nullable(),
   data_visita: z.string().optional().nullable(),
+  data_fechamento: z.string().optional().nullable(),
   motivo_descarte_id: z.string().optional().nullable(),
   descricao_descarte: z.string().optional(),
   standby_motivo: z.string().optional(),
@@ -133,6 +134,7 @@ export function EditGlebaDialog({ gleba, open, onOpenChange }: EditGlebaDialogPr
       cidade_id: null,
       imobiliaria_id: null,
       data_visita: null,
+      data_fechamento: null,
       motivo_descarte_id: null,
       descricao_descarte: "",
       standby_motivo: "",
@@ -155,6 +157,7 @@ export function EditGlebaDialog({ gleba, open, onOpenChange }: EditGlebaDialogPr
         cidade_id: gleba.cidade_id || null,
         imobiliaria_id: gleba.imobiliaria_id || null,
         data_visita: gleba.data_visita || null,
+        data_fechamento: gleba.status === "negocio_fechado" ? (gleba.updated_at ? gleba.updated_at.split("T")[0] : null) : null,
         motivo_descarte_id: gleba.motivo_descarte_id || null,
         descricao_descarte: gleba.descricao_descarte || "",
         standby_motivo: gleba.standby_motivo || "",
@@ -208,12 +211,18 @@ export function EditGlebaDialog({ gleba, open, onOpenChange }: EditGlebaDialogPr
     setIsSubmitting(true);
 
     try {
+      const { data_fechamento, ...restData } = data;
       const updateData: any = {
-        ...data,
+        ...restData,
         arquivo_kmz: arquivoKmz,
         arquivo_protocolo: arquivoProtocolo,
         arquivo_contrato: arquivoContrato,
       };
+
+      // If status is negocio_fechado and date was set, update updated_at
+      if (gleba.status === "negocio_fechado" && data_fechamento) {
+        updateData.updated_at = new Date(data_fechamento + "T12:00:00").toISOString();
+      }
 
       // Only update poligono_geojson if KMZ was changed
       if (extractedGeojson !== undefined) {
@@ -507,6 +516,22 @@ export function EditGlebaDialog({ gleba, open, onOpenChange }: EditGlebaDialogPr
                     </FormItem>
                   )}
                 />
+
+                {gleba.status === "negocio_fechado" && (
+                  <FormField
+                    control={form.control}
+                    name="data_fechamento"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Data do Fechamento do Negócio</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} value={field.value || ""} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
 
                 {gleba.status === "descartada" && (
                   <>
