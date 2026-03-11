@@ -18,6 +18,23 @@ Deno.serve(async (req) => {
 
     const now = new Date();
 
+    // Ensure report config exists (auto-seed)
+    const { data: existingConfig } = await supabase
+      .from("report_configs")
+      .select("id")
+      .eq("report_key", "weekly_new_business")
+      .maybeSingle();
+
+    if (!existingConfig) {
+      await supabase.from("report_configs").insert({
+        report_key: "weekly_new_business",
+        nome: "Relatório Semanal - Novos Negócios",
+        descricao:
+          "Enviado toda segunda-feira às 08:00. Inclui: meta vigente e progresso do semestre, áreas sem atualização, tarefas realizadas por usuário na última semana, e distribuição de áreas por etapa do kanban.",
+        ativo: false,
+      });
+    }
+
     // Check if report is active
     const { data: config } = await supabase
       .from("report_configs")
@@ -25,7 +42,12 @@ Deno.serve(async (req) => {
       .eq("report_key", "weekly_new_business")
       .single();
 
-    if (!config?.ativo) {
+    // If called manually (force param), skip the ativo check
+    let body: any = {};
+    try { body = await req.json(); } catch {}
+    const force = body?.force === true;
+
+    if (!config?.ativo && !force) {
       return new Response(
         JSON.stringify({ message: "Relatório desativado" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
