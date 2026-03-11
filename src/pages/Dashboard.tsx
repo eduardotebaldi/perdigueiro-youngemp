@@ -98,18 +98,54 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Status Distribution */}
+      {/* Status Distribution & Inactive Glebas */}
       <div className="grid gap-6 lg:grid-cols-2">
         <StatusPieChart 
           data={stats?.glebasPorStatus || {}} 
           isLoading={isLoading} 
         />
         
-        {/* Quick Access moved to second column */}
-        <div className="lg:self-start">
-          <QuickAccess />
-        </div>
+        {/* Áreas sem atualização */}
+        {isLoading ? (
+          <Skeleton className="h-64 rounded-lg" />
+        ) : (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <MessageSquareOff className="h-5 w-5 text-orange-500" />
+                Áreas sem atualização
+                <Badge variant="secondary" className="ml-auto">{glebasInativas.length}</Badge>
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">Glebas sem atividades nos últimos 10 dias</p>
+            </CardHeader>
+            <CardContent>
+              {glebasInativas.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-6">Todas as glebas estão em dia! 🎉</p>
+              ) : (
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                  {glebasInativas.map((g) => (
+                    <Link
+                      key={g.id}
+                      to="/glebas"
+                      className="flex items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm hover:bg-muted/50 transition-colors"
+                    >
+                      <span className="font-medium truncate">
+                        {g.numero ? `#${g.numero} ` : ""}{g.apelido}
+                      </span>
+                      <Badge variant="outline" className="text-xs shrink-0">
+                        {STATUS_LABELS[g.status] || g.status}
+                      </Badge>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
+
+      {/* Quick Access */}
+      <QuickAccess />
     </div>
   );
 }
