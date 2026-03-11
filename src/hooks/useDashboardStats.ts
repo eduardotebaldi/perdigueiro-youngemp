@@ -10,6 +10,13 @@ interface InactiveGleba {
   status: string;
 }
 
+interface NegocioFechado {
+  id: string;
+  numero: number | null;
+  apelido: string;
+  cidade_id: string | null;
+}
+
 interface DashboardStats {
   totalGlebas: number;
   glebasPorStatus: Record<string, number>;
@@ -17,6 +24,7 @@ interface DashboardStats {
   totalCidades: number;
   negociosFechados: number;
   negociosFechadosSemestre: number;
+  negociosFechadosSemestreList: NegocioFechado[];
   propostasPorMes: { month: string; count: number }[];
   atividadesPorDia: { day: string; count: number }[];
   atividadesEstaSemana: number;
@@ -56,7 +64,7 @@ export function useDashboardStats() {
         supabase.from("propostas").select("id, data_proposta"),
         supabase.from("cidades").select("id"),
         supabase.from("atividades").select("id, data"),
-        supabase.from("glebas").select("id").eq("status", "negocio_fechado").gte("updated_at", semesterStart.toISOString()),
+        supabase.from("glebas").select("id, numero, apelido, cidade_id").eq("status", "negocio_fechado").gte("updated_at", semesterStart.toISOString()),
         supabase.from("atividades").select("gleba_id").gte("created_at", subDays(now, 10).toISOString()),
       ]);
 
@@ -83,6 +91,9 @@ export function useDashboardStats() {
 
       const negociosFechados = glebasPorStatus["negocio_fechado"] || 0;
       const negociosFechadosSemestre = negociosSemestreResult.data?.length || 0;
+      const negociosFechadosSemestreList: NegocioFechado[] = (negociosSemestreResult.data || []).map((g: any) => ({
+        id: g.id, numero: g.numero, apelido: g.apelido, cidade_id: g.cidade_id,
+      }));
       const glebasEmStandby = glebasPorStatus["standby"] || 0;
       const glebasPrioritarias = glebas.filter((g) => g.prioridade).length;
 
@@ -142,6 +153,7 @@ export function useDashboardStats() {
         totalCidades,
         negociosFechados,
         negociosFechadosSemestre,
+        negociosFechadosSemestreList,
         propostasPorMes,
         atividadesPorDia,
         atividadesEstaSemana,

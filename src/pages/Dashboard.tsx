@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDashboardStats, STATUS_LABELS } from "@/hooks/useDashboardStats";
+import { useCidades } from "@/hooks/useCidades";
 import { StatsCards } from "@/components/dashboard/StatsCards";
 import { PropostasChart } from "@/components/dashboard/PropostasChart";
 import { AtividadesChart } from "@/components/dashboard/AtividadesChart";
@@ -8,6 +10,12 @@ import { QuickAccess } from "@/components/dashboard/QuickAccess";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
 import { Target, Trophy, MessageSquareOff } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
@@ -23,12 +31,20 @@ function getSemesterLabel() {
 export default function Dashboard() {
   const { user } = useAuth();
   const { data: stats, isLoading } = useDashboardStats();
+  const { cidades } = useCidades();
+  const [metaDialogOpen, setMetaDialogOpen] = useState(false);
 
   const firstName = user?.user_metadata?.full_name?.split(" ")[0] || "Usuário";
   const negociosSemestre = stats?.negociosFechadosSemestre || 0;
+  const negociosList = stats?.negociosFechadosSemestreList || [];
   const glebasInativas = stats?.glebasInativas || [];
   const progressPercent = Math.min((negociosSemestre / META_SEMESTRAL) * 100, 100);
   const metaAtingida = negociosSemestre >= META_SEMESTRAL;
+
+  const getCidadeName = (cidadeId: string | null) => {
+    if (!cidadeId || !cidades) return "—";
+    return cidades.find((c) => c.id === cidadeId)?.nome || "—";
+  };
 
   return (
     <div className="space-y-8">
@@ -44,7 +60,10 @@ export default function Dashboard() {
       {isLoading ? (
         <Skeleton className="h-28 rounded-lg" />
       ) : (
-        <Card className={metaAtingida ? "border-green-500/50 bg-green-500/5" : ""}>
+        <Card
+          className={`${metaAtingida ? "border-green-500/50 bg-green-500/5" : ""} cursor-pointer hover:shadow-md transition-shadow`}
+          onClick={() => setMetaDialogOpen(true)}
+        >
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               {metaAtingida ? (
@@ -73,6 +92,47 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       )}
+
+      {/* Modal de detalhes da meta */}
+      <Dialog open={metaDialogOpen} onOpenChange={setMetaDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Trophy className="h-5 w-5 text-primary" />
+              Negócios Fechados — {getSemesterLabel()}
+            </DialogTitle>
+          </DialogHeader>
+          {negociosList.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">
+              Nenhum negócio fechado neste semestre ainda.
+            </p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[60px]">Nº</TableHead>
+                  <TableHead>Apelido</TableHead>
+                  <TableHead>Cidade</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {negociosList.map((g) => (
+                  <TableRow key={g.id}>
+                    <TableCell className="font-mono text-sm font-bold text-muted-foreground">
+                      #{g.numero || "?"}
+                    </TableCell>
+                    <TableCell className="font-medium">{g.apelido}</TableCell>
+                    <TableCell className="text-muted-foreground">{getCidadeName(g.cidade_id)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+          <p className="text-xs text-muted-foreground text-center">
+            Meta: {negociosSemestre} / {META_SEMESTRAL}
+          </p>
+        </DialogContent>
+      </Dialog>
 
       {/* KPI Cards */}
       <StatsCards
