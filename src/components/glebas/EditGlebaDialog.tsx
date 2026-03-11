@@ -308,7 +308,7 @@ export function EditGlebaDialog({ gleba, open, onOpenChange }: EditGlebaDialogPr
                     name="tamanho_m2"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Tamanho (m²)</FormLabel>
+                        <FormLabel>Tamanho (ha)</FormLabel>
                         <FormControl>
                           <Input type="number" {...field} value={field.value || ""} />
                         </FormControl>
