@@ -577,9 +577,9 @@ export function EditGlebaDialog({ gleba, open, onOpenChange }: EditGlebaDialogPr
                   path={gleba.id}
                   accept=".kmz,.kml"
                   currentFileUrl={arquivoKmz}
-                  onUpload={setArquivoKmz}
-                  onRemove={() => setArquivoKmz(null)}
-                  label="Arquivo KMZ/KML"
+                  onUpload={handleKmzUpload}
+                  onRemove={handleKmzRemove}
+                  label={isProcessingKmz ? "Arquivo KMZ/KML (processando polígono...)" : "Arquivo KMZ/KML"}
                 />
 
                 <FileUpload
