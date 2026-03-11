@@ -29,6 +29,14 @@ function getSemesterLabel() {
   return month < 6 ? `1º Semestre ${year}` : `2º Semestre ${year}`;
 }
 
+function getWeeksRemaining() {
+  const now = new Date();
+  const month = now.getMonth();
+  const year = now.getFullYear();
+  const semesterEnd = month < 6 ? new Date(year, 5, 30) : new Date(year, 11, 31);
+  return Math.max(0, differenceInWeeks(semesterEnd, now));
+}
+
 export default function Dashboard() {
   const { user } = useAuth();
   const { data: stats, isLoading } = useDashboardStats();
