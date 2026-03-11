@@ -8,7 +8,7 @@ import { GlebaTable } from "@/components/glebas/GlebaTable";
 import { GoogleDriveSyncConfig } from "@/components/glebas/GoogleDriveSyncConfig";
 import { GoogleEarthIntegrationCard } from "@/components/glebas/GoogleEarthIntegrationCard";
 import { Tables } from "@/integrations/supabase/types";
-import { Kanban, Table2, Zap, Settings } from "lucide-react";
+import { Kanban, Table2, Settings } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
