@@ -72,6 +72,8 @@ export function EditGlebaDialog({ gleba, open, onOpenChange }: EditGlebaDialogPr
   const [arquivoKmz, setArquivoKmz] = useState<string | null>(null);
   const [arquivoProtocolo, setArquivoProtocolo] = useState<string | null>(null);
   const [arquivoContrato, setArquivoContrato] = useState<string | null>(null);
+  const [extractedGeojson, setExtractedGeojson] = useState<any>(undefined); // undefined = not changed
+  const [isProcessingKmz, setIsProcessingKmz] = useState(false);
   const { updateGleba } = useGlebas();
   const { toast } = useToast();
 
