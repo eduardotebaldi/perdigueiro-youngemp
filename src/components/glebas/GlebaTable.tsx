@@ -118,10 +118,13 @@ export function GlebaTable({ onViewGleba }: GlebaTableProps) {
         imobiliariaFilter === "all" || gleba.imobiliaria_id === imobiliariaFilter;
       
       const matchesPending = !showPendingOnly || !validateGlebaStatus(gleba).isValid;
+      
+      const excludedStatuses = ["descartada", "negocio_fechado"];
+      const matchesStale = !showStaleOnly || (!excludedStatuses.includes(gleba.status) && new Date(gleba.updated_at) < sixtyDaysAgo);
 
-      return matchesSearch && matchesStatus && matchesCidade && matchesImobiliaria && matchesPending;
+      return matchesSearch && matchesStatus && matchesCidade && matchesImobiliaria && matchesPending && matchesStale;
     });
-  }, [glebas, searchTerm, statusFilter, cidadeFilter, imobiliariaFilter, showPendingOnly]);
+  }, [glebas, searchTerm, statusFilter, cidadeFilter, imobiliariaFilter, showPendingOnly, showStaleOnly, sixtyDaysAgo]);
 
   const clearFilters = () => {
     setSearchTerm("");
