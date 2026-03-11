@@ -428,18 +428,19 @@ export function GlebaDetailsDialog({
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="ghost" className="h-auto p-0 font-medium hover:text-primary">
-                        {formatDate(gleba.updated_at)}
+                        {(gleba as any).data_fechamento ? formatDate((gleba as any).data_fechamento) : "Não definida"}
                         <Pencil className="h-3 w-3 ml-1 text-muted-foreground" />
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
                       <CalendarComponent
                         mode="single"
-                        selected={new Date(gleba.updated_at)}
+                        selected={(gleba as any).data_fechamento ? new Date((gleba as any).data_fechamento + "T12:00:00") : undefined}
                         onSelect={async (date) => {
                           if (!date) return;
                           try {
-                            await updateGleba(gleba.id, { updated_at: date.toISOString() } as any);
+                            const dateStr = date.toISOString().split("T")[0];
+                            await updateGleba(gleba.id, { data_fechamento: dateStr } as any);
                             toast.success("Data de fechamento atualizada!");
                           } catch {
                             toast.error("Erro ao atualizar data");

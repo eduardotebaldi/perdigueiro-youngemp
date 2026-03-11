@@ -211,17 +211,16 @@ export function EditGlebaDialog({ gleba, open, onOpenChange }: EditGlebaDialogPr
     setIsSubmitting(true);
 
     try {
-      const { data_fechamento, ...restData } = data;
       const updateData: any = {
-        ...restData,
+        ...data,
         arquivo_kmz: arquivoKmz,
         arquivo_protocolo: arquivoProtocolo,
         arquivo_contrato: arquivoContrato,
       };
 
-      // If status is negocio_fechado and date was set, update updated_at
-      if (gleba.status === "negocio_fechado" && data_fechamento) {
-        updateData.updated_at = new Date(data_fechamento + "T12:00:00").toISOString();
+      // Clear data_fechamento if not negocio_fechado
+      if (gleba.status !== "negocio_fechado") {
+        delete updateData.data_fechamento;
       }
 
       // Only update poligono_geojson if KMZ was changed
