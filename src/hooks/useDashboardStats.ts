@@ -50,7 +50,7 @@ export function useDashboardStats() {
       if (glebasResult.error) throw glebasResult.error;
       if (propostasResult.error) throw propostasResult.error;
       if (cidadesResult.error) throw cidadesResult.error;
-      if (atividadesResult.error) throw atividadesResult.error;
+      if (negociosSemestreResult.error) throw negociosSemestreResult.error;
 
       const glebas = glebasResult.data || [];
       const propostas = propostasResult.data || [];
