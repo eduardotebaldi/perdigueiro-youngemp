@@ -64,7 +64,7 @@ export function useDashboardStats() {
         supabase.from("propostas").select("id, data_proposta"),
         supabase.from("cidades").select("id"),
         supabase.from("atividades").select("id, data"),
-        supabase.from("glebas").select("id, numero, apelido, cidade_id").eq("status", "negocio_fechado").gte("updated_at", semesterStart.toISOString()),
+        supabase.from("glebas").select("id, numero, apelido, cidade_id, data_fechamento").eq("status", "negocio_fechado").gte("data_fechamento", semesterStart.toISOString().split("T")[0]),
         supabase.from("atividades").select("gleba_id").gte("created_at", subDays(now, 10).toISOString()),
       ]);
 

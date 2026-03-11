@@ -157,7 +157,7 @@ export function EditGlebaDialog({ gleba, open, onOpenChange }: EditGlebaDialogPr
         cidade_id: gleba.cidade_id || null,
         imobiliaria_id: gleba.imobiliaria_id || null,
         data_visita: gleba.data_visita || null,
-        data_fechamento: gleba.status === "negocio_fechado" ? (gleba.updated_at ? gleba.updated_at.split("T")[0] : null) : null,
+        data_fechamento: (gleba as any).data_fechamento || null,
         motivo_descarte_id: gleba.motivo_descarte_id || null,
         descricao_descarte: gleba.descricao_descarte || "",
         standby_motivo: gleba.standby_motivo || "",
@@ -211,17 +211,16 @@ export function EditGlebaDialog({ gleba, open, onOpenChange }: EditGlebaDialogPr
     setIsSubmitting(true);
 
     try {
-      const { data_fechamento, ...restData } = data;
       const updateData: any = {
-        ...restData,
+        ...data,
         arquivo_kmz: arquivoKmz,
         arquivo_protocolo: arquivoProtocolo,
         arquivo_contrato: arquivoContrato,
       };
 
-      // If status is negocio_fechado and date was set, update updated_at
-      if (gleba.status === "negocio_fechado" && data_fechamento) {
-        updateData.updated_at = new Date(data_fechamento + "T12:00:00").toISOString();
+      // Clear data_fechamento if not negocio_fechado
+      if (gleba.status !== "negocio_fechado") {
+        delete updateData.data_fechamento;
       }
 
       // Only update poligono_geojson if KMZ was changed

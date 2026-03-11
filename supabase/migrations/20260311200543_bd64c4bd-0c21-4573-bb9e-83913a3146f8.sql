@@ -1,0 +1,1 @@
+ALTER TABLE public.glebas ADD COLUMN data_fechamento DATE;
