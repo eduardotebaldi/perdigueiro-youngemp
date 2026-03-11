@@ -2,20 +2,38 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Search, Building } from "lucide-react";
+import { Plus, Search, Building, RefreshCw, Loader2 } from "lucide-react";
 import { useCidades, Cidade } from "@/hooks/useCidades";
 import { useAuth } from "@/contexts/AuthContext";
 import { CidadeCard } from "@/components/cidades/CidadeCard";
 import { CreateCidadeDialog } from "@/components/cidades/CreateCidadeDialog";
 import { EditCidadeDialog } from "@/components/cidades/EditCidadeDialog";
 import { NormalizeCidadesDialog } from "@/components/cidades/NormalizeCidadesDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { buscarPopulacaoMunicipio } from "@/lib/ibgeApi";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+
+interface MunicipioIBGE {
+  id: number;
+  nome: string;
+  microrregiao?: {
+    mesorregiao?: {
+      UF?: {
+        sigla: string;
+      };
+    };
+  };
+}
 
 export default function Cidades() {
   const { cidades, isLoading, deleteCidade } = useCidades();
   const { isAdmin } = useAuth();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editingCidade, setEditingCidade] = useState<Cidade | null>(null);
+  const [updatingPopulations, setUpdatingPopulations] = useState(false);
 
   const filteredCidades = cidades?.filter((cidade) =>
     cidade.nome.toLowerCase().includes(searchTerm.toLowerCase())
@@ -23,6 +41,80 @@ export default function Cidades() {
 
   const handleDelete = async (id: string) => {
     await deleteCidade.mutateAsync(id);
+  };
+
+  const handleUpdatePopulations = async () => {
+    if (!cidades) return;
+    const cidadesSemDados = cidades.filter((c) => !c.populacao || !c.codigo_ibge);
+    if (cidadesSemDados.length === 0) {
+      toast.info("Todas as cidades já possuem dados populacionais.");
+      return;
+    }
+
+    setUpdatingPopulations(true);
+    try {
+      // Fetch IBGE municipalities list
+      const response = await fetch(
+        "https://servicodados.ibge.gov.br/api/v1/localidades/municipios?orderBy=nome"
+      );
+      if (!response.ok) throw new Error("Erro ao buscar dados do IBGE");
+      const municipios: MunicipioIBGE[] = await response.json();
+
+      const normalize = (s: string) =>
+        s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+
+      let updated = 0;
+      let errors = 0;
+
+      for (const cidade of cidadesSemDados) {
+        // Parse "Cidade/UF" format
+        const match = cidade.nome.match(/^(.+?)\/([A-Z]{2})$/i);
+        if (!match) continue;
+
+        const cidadeNome = normalize(match[1]);
+        const cidadeUF = match[2].toUpperCase();
+
+        // Find matching IBGE municipality
+        const municipio = municipios.find((m) => {
+          const uf = m.microrregiao?.mesorregiao?.UF?.sigla || "";
+          return normalize(m.nome) === cidadeNome && uf === cidadeUF;
+        });
+
+        if (!municipio) continue;
+
+        // Fetch population
+        const populacao = await buscarPopulacaoMunicipio(municipio.id);
+
+        const updateData: Record<string, any> = {};
+        if (!cidade.codigo_ibge) updateData.codigo_ibge = municipio.id;
+        if (!cidade.populacao && populacao) updateData.populacao = populacao;
+
+        if (Object.keys(updateData).length > 0) {
+          const { error } = await supabase
+            .from("cidades")
+            .update(updateData)
+            .eq("id", cidade.id);
+          if (error) {
+            errors++;
+          } else {
+            updated++;
+          }
+        }
+
+        // Small delay to avoid rate limiting on IBGE API
+        await new Promise((r) => setTimeout(r, 300));
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["cidades"] });
+      if (updated > 0) toast.success(`${updated} cidade(s) atualizada(s)!`);
+      if (errors > 0) toast.error(`${errors} erro(s) ao atualizar`);
+      if (updated === 0 && errors === 0) toast.info("Nenhuma cidade pôde ser atualizada. Verifique se os nomes estão no formato Cidade/UF.");
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao atualizar populações");
+    } finally {
+      setUpdatingPopulations(false);
+    }
   };
 
   return (
@@ -36,6 +128,20 @@ export default function Cidades() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          {isAdmin && (
+            <Button
+              variant="outline"
+              onClick={handleUpdatePopulations}
+              disabled={updatingPopulations}
+            >
+              {updatingPopulations ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="mr-2 h-4 w-4" />
+              )}
+              Atualizar Populações
+            </Button>
+          )}
           {isAdmin && <NormalizeCidadesDialog />}
           <Button onClick={() => setCreateDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
