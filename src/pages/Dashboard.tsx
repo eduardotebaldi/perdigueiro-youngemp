@@ -91,6 +91,12 @@ export default function Dashboard() {
                   <span className="text-lg text-muted-foreground">/ {META_SEMESTRAL}</span>
                 </div>
                 <Progress value={progressPercent} className="h-3" />
+                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {getWeeksRemaining() === 0
+                    ? "Última semana do semestre"
+                    : `Faltam ${getWeeksRemaining()} semanas para terminar o semestre`}
+                </p>
               </div>
               {metaAtingida && (
                 <span className="text-sm font-medium text-green-600 whitespace-nowrap pb-1">
