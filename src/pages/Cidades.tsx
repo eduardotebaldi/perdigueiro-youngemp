@@ -31,13 +31,29 @@ export default function Cidades() {
   const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
+  const [ufFilter, setUfFilter] = useState<string>("all");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editingCidade, setEditingCidade] = useState<Cidade | null>(null);
   const [updatingPopulations, setUpdatingPopulations] = useState(false);
 
-  const filteredCidades = cidades?.filter((cidade) =>
-    cidade.nome.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Extract unique UFs from city names (format: "Cidade/UF")
+  const availableUFs = useMemo(() => {
+    if (!cidades) return [];
+    const ufs = new Set<string>();
+    cidades.forEach((c) => {
+      const match = c.nome.match(/\/([A-Z]{2})$/i);
+      if (match) ufs.add(match[1].toUpperCase());
+    });
+    return Array.from(ufs).sort();
+  }, [cidades]);
+
+  const filteredCidades = useMemo(() => {
+    return cidades?.filter((cidade) => {
+      const matchesSearch = cidade.nome.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesUF = ufFilter === "all" || cidade.nome.toUpperCase().endsWith(`/${ufFilter}`);
+      return matchesSearch && matchesUF;
+    });
+  }, [cidades, searchTerm, ufFilter]);
 
   const handleDelete = async (id: string) => {
     await deleteCidade.mutateAsync(id);
