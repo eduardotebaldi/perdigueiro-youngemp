@@ -105,7 +105,9 @@ export function ReportConfigCard() {
   const handleGenerateNow = async (report: ReportConfig) => {
     setGeneratingReport(true);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-weekly-report");
+      const { data, error } = await supabase.functions.invoke("generate-weekly-report", {
+        body: { force: true },
+      });
       if (error) throw error;
       if (data?.html) {
         setPreviewHtml(data.html);
