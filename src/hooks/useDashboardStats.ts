@@ -9,6 +9,7 @@ interface DashboardStats {
   totalPropostas: number;
   totalCidades: number;
   negociosFechados: number;
+  negociosFechadosSemestre: number;
   propostasPorMes: { month: string; count: number }[];
   atividadesPorDia: { day: string; count: number }[];
   atividadesEstaSemana: number;
@@ -32,18 +33,26 @@ export function useDashboardStats() {
   return useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async (): Promise<DashboardStats> => {
+      const now = new Date();
+
+      // Calculate current semester start
+      const currentMonth = now.getMonth();
+      const semesterStartMonth = currentMonth < 6 ? 0 : 6;
+      const semesterStart = new Date(now.getFullYear(), semesterStartMonth, 1);
+
       // Buscar dados em paralelo
-      const [glebasResult, propostasResult, cidadesResult, atividadesResult] = await Promise.all([
+      const [glebasResult, propostasResult, cidadesResult, atividadesResult, negociosSemestreResult] = await Promise.all([
         supabase.from("glebas").select("id, status, prioridade"),
         supabase.from("propostas").select("id, data_proposta"),
         supabase.from("cidades").select("id"),
         supabase.from("atividades").select("id, data"),
+        supabase.from("glebas").select("id").eq("status", "negocio_fechado").gte("updated_at", semesterStart.toISOString()),
       ]);
 
       if (glebasResult.error) throw glebasResult.error;
       if (propostasResult.error) throw propostasResult.error;
       if (cidadesResult.error) throw cidadesResult.error;
-      if (atividadesResult.error) throw atividadesResult.error;
+      if (negociosSemestreResult.error) throw negociosSemestreResult.error;
 
       const glebas = glebasResult.data || [];
       const propostas = propostasResult.data || [];
@@ -62,11 +71,11 @@ export function useDashboardStats() {
       });
 
       const negociosFechados = glebasPorStatus["negocio_fechado"] || 0;
+      const negociosFechadosSemestre = negociosSemestreResult.data?.length || 0;
       const glebasEmStandby = glebasPorStatus["standby"] || 0;
       const glebasPrioritarias = glebas.filter((g) => g.prioridade).length;
 
       // Propostas por mês (últimos 6 meses)
-      const now = new Date();
       const sixMonthsAgo = subMonths(now, 5);
       const months = eachMonthOfInterval({ start: startOfMonth(sixMonthsAgo), end: endOfMonth(now) });
       
@@ -112,6 +121,7 @@ export function useDashboardStats() {
         totalPropostas,
         totalCidades,
         negociosFechados,
+        negociosFechadosSemestre,
         propostasPorMes,
         atividadesPorDia,
         atividadesEstaSemana,
