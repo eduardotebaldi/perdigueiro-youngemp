@@ -434,6 +434,9 @@ export default function Configuracoes() {
         </CardContent>
       </Card>
 
+      {/* Relatórios */}
+      <ReportConfigCard />
+
       {/* Reprocessar KMZs */}
       <ReprocessKmzCard />
     </div>
