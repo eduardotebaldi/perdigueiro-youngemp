@@ -51,12 +51,13 @@ export function useDashboardStats() {
       const semesterStart = semesterStartDate > cutoffDate ? semesterStartDate : cutoffDate;
 
       // Buscar dados em paralelo
-      const [glebasResult, propostasResult, cidadesResult, atividadesResult, negociosSemestreResult] = await Promise.all([
-        supabase.from("glebas").select("id, status, prioridade"),
+      const [glebasResult, propostasResult, cidadesResult, atividadesResult, negociosSemestreResult, recentAtividadesResult] = await Promise.all([
+        supabase.from("glebas").select("id, status, prioridade, numero, apelido"),
         supabase.from("propostas").select("id, data_proposta"),
         supabase.from("cidades").select("id"),
         supabase.from("atividades").select("id, data"),
         supabase.from("glebas").select("id").eq("status", "negocio_fechado").gte("updated_at", semesterStart.toISOString()),
+        supabase.from("atividades").select("gleba_id").gte("created_at", subDays(now, 10).toISOString()),
       ]);
 
       if (glebasResult.error) throw glebasResult.error;
