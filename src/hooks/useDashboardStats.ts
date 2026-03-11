@@ -3,6 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { startOfMonth, endOfMonth, subMonths, format, startOfWeek, endOfWeek, eachDayOfInterval, eachMonthOfInterval, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
+interface InactiveGleba {
+  id: string;
+  numero: number | null;
+  apelido: string;
+  status: string;
+}
+
 interface DashboardStats {
   totalGlebas: number;
   glebasPorStatus: Record<string, number>;
@@ -15,6 +22,7 @@ interface DashboardStats {
   atividadesEstaSemana: number;
   glebasEmStandby: number;
   glebasPrioritarias: number;
+  glebasInativas: InactiveGleba[];
 }
 
 const STATUS_LABELS: Record<string, string> = {
