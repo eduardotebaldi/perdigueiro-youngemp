@@ -18,12 +18,26 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Building, FileText, MoreVertical, Pencil, Trash2, MapPin, Users } from "lucide-react";
+import { Building, FileText, MoreVertical, Pencil, Trash2, MapPin, Users, ChevronDown, ChevronUp } from "lucide-react";
 import { Cidade, useCidadeGlebas, useCidadePropostas } from "@/hooks/useCidades";
 import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { formatarPopulacao } from "@/lib/ibgeApi";
+import { STATUS_LABELS } from "@/hooks/useGlebas";
+
+const GLEBA_STATUS_COLORS: Record<string, string> = {
+  identificada: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+  informacoes_recebidas: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200",
+  visita_realizada: "bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200",
+  proposta_enviada: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
+  protocolo_assinado: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
+  descartada: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+  proposta_recusada: "bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200",
+  negocio_fechado: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+  standby: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+};
+
 interface CidadeCardProps {
   cidade: Cidade;
   onEdit: (cidade: Cidade) => void;
@@ -33,6 +47,7 @@ interface CidadeCardProps {
 export function CidadeCard({ cidade, onEdit, onDelete }: CidadeCardProps) {
   const { isAdmin } = useAuth();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showGlebas, setShowGlebas] = useState(false);
   const { data: glebas } = useCidadeGlebas(cidade.id);
   const { data: propostasCount } = useCidadePropostas(cidade.id);
 
@@ -78,7 +93,7 @@ export function CidadeCard({ cidade, onEdit, onDelete }: CidadeCardProps) {
             </DropdownMenu>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-3">
           {/* Stats */}
           <div className="flex gap-3 flex-wrap">
             {cidade.populacao && (
@@ -87,15 +102,48 @@ export function CidadeCard({ cidade, onEdit, onDelete }: CidadeCardProps) {
                 {formatarPopulacao(cidade.populacao)}
               </Badge>
             )}
-            <Badge variant="secondary" className="font-normal">
+            <Badge
+              variant="secondary"
+              className="font-normal cursor-pointer hover:bg-secondary/80 transition-colors"
+              onClick={() => glebasCount > 0 && setShowGlebas(!showGlebas)}
+            >
               <MapPin className="h-3 w-3 mr-1" />
               {glebasCount} gleba{glebasCount !== 1 ? "s" : ""}
+              {glebasCount > 0 && (
+                showGlebas
+                  ? <ChevronUp className="h-3 w-3 ml-1" />
+                  : <ChevronDown className="h-3 w-3 ml-1" />
+              )}
             </Badge>
             <Badge variant="outline" className="font-normal">
               <FileText className="h-3 w-3 mr-1" />
               {propostasCount || 0} proposta{propostasCount !== 1 ? "s" : ""}
             </Badge>
           </div>
+
+          {/* Glebas list */}
+          {showGlebas && glebas && glebas.length > 0 && (
+            <div className="border-t pt-3 space-y-1.5">
+              {glebas.map((gleba) => (
+                <div
+                  key={gleba.id}
+                  className="flex items-center justify-between text-sm px-2 py-1.5 rounded-md bg-muted/50"
+                >
+                  <span className="font-medium truncate">{gleba.apelido}</span>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {gleba.tamanho_m2 && (
+                      <span className="text-xs text-muted-foreground">
+                        {gleba.tamanho_m2.toLocaleString("pt-BR")} ha
+                      </span>
+                    )}
+                    <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${GLEBA_STATUS_COLORS[gleba.status] || ""}`}>
+                      {STATUS_LABELS[gleba.status] || gleba.status}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
