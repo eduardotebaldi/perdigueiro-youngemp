@@ -398,27 +398,27 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
           )}
         </div>
 
-        <div className="flex items-center gap-1.5 border rounded-md px-2 py-1">
-          <Switch id="filter-priority" checked={filterPriority} onCheckedChange={setFilterPriority} className="scale-75" />
-          <Label htmlFor="filter-priority" className="flex items-center gap-1 cursor-pointer text-xs whitespace-nowrap">
-            <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+        <div className="flex items-center gap-1 border rounded px-1.5 py-0.5 shrink-0">
+          <Switch id="filter-priority" checked={filterPriority} onCheckedChange={setFilterPriority} className="scale-[0.65]" />
+          <Label htmlFor="filter-priority" className="flex items-center gap-0.5 cursor-pointer text-[11px] whitespace-nowrap">
+            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
             Prioritárias
           </Label>
         </div>
 
-        <div className="flex items-center gap-1.5 border rounded-md px-2 py-1">
-          <Switch id="filter-inactive" checked={filterInactive} onCheckedChange={setFilterInactive} className="scale-75" />
-          <Label htmlFor="filter-inactive" className="flex items-center gap-1 cursor-pointer text-xs whitespace-nowrap">
-            <MessageSquareOff className="h-3.5 w-3.5 text-orange-500" />
-            Sem atualização
+        <div className="flex items-center gap-1 border rounded px-1.5 py-0.5 shrink-0">
+          <Switch id="filter-inactive" checked={filterInactive} onCheckedChange={setFilterInactive} className="scale-[0.65]" />
+          <Label htmlFor="filter-inactive" className="flex items-center gap-0.5 cursor-pointer text-[11px] whitespace-nowrap">
+            <MessageSquareOff className="h-3 w-3 text-orange-500" />
+            S/ atualização
           </Label>
         </div>
 
-        <div className="flex items-center gap-1.5 border rounded-md px-2 py-1">
-          <Switch id="filter-stale" checked={filterStale} onCheckedChange={setFilterStale} className="scale-75" />
-          <Label htmlFor="filter-stale" className="flex items-center gap-1 cursor-pointer text-xs whitespace-nowrap">
-            <Clock className="h-3.5 w-3.5 text-red-500" />
-            Paradas 60d+
+        <div className="flex items-center gap-1 border rounded px-1.5 py-0.5 shrink-0">
+          <Switch id="filter-stale" checked={filterStale} onCheckedChange={setFilterStale} className="scale-[0.65]" />
+          <Label htmlFor="filter-stale" className="flex items-center gap-0.5 cursor-pointer text-[11px] whitespace-nowrap">
+            <Clock className="h-3 w-3 text-red-500" />
+            60d+
           </Label>
         </div>
 
