@@ -1,5 +1,5 @@
 import { useAuth } from "@/contexts/AuthContext";
-import { useDashboardStats } from "@/hooks/useDashboardStats";
+import { useDashboardStats, STATUS_LABELS } from "@/hooks/useDashboardStats";
 import { StatsCards } from "@/components/dashboard/StatsCards";
 import { PropostasChart } from "@/components/dashboard/PropostasChart";
 import { AtividadesChart } from "@/components/dashboard/AtividadesChart";
@@ -7,8 +7,10 @@ import { StatusPieChart } from "@/components/dashboard/StatusPieChart";
 import { QuickAccess } from "@/components/dashboard/QuickAccess";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Target, Trophy } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Target, Trophy, MessageSquareOff } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Link } from "react-router-dom";
 
 const META_SEMESTRAL = 5;
 
