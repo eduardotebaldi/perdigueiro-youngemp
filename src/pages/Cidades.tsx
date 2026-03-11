@@ -1,5 +1,12 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Search, Building, RefreshCw, Loader2 } from "lucide-react";
@@ -31,13 +38,29 @@ export default function Cidades() {
   const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
+  const [ufFilter, setUfFilter] = useState<string>("all");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editingCidade, setEditingCidade] = useState<Cidade | null>(null);
   const [updatingPopulations, setUpdatingPopulations] = useState(false);
 
-  const filteredCidades = cidades?.filter((cidade) =>
-    cidade.nome.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Extract unique UFs from city names (format: "Cidade/UF")
+  const availableUFs = useMemo(() => {
+    if (!cidades) return [];
+    const ufs = new Set<string>();
+    cidades.forEach((c) => {
+      const match = c.nome.match(/\/([A-Z]{2})$/i);
+      if (match) ufs.add(match[1].toUpperCase());
+    });
+    return Array.from(ufs).sort();
+  }, [cidades]);
+
+  const filteredCidades = useMemo(() => {
+    return cidades?.filter((cidade) => {
+      const matchesSearch = cidade.nome.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesUF = ufFilter === "all" || cidade.nome.toUpperCase().endsWith(`/${ufFilter}`);
+      return matchesSearch && matchesUF;
+    });
+  }, [cidades, searchTerm, ufFilter]);
 
   const handleDelete = async (id: string) => {
     await deleteCidade.mutateAsync(id);
@@ -150,15 +173,28 @@ export default function Cidades() {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Buscar cidade..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10"
-        />
+      {/* Search & Filters */}
+      <div className="flex gap-3 items-center flex-wrap">
+        <div className="relative max-w-md flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar cidade..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <Select value={ufFilter} onValueChange={setUfFilter}>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Estado" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os Estados</SelectItem>
+            {availableUFs.map((uf) => (
+              <SelectItem key={uf} value={uf}>{uf}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Loading State */}

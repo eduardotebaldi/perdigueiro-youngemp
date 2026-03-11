@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Toggle } from "@/components/ui/toggle";
-import { Search, X, Star, Check, AlertTriangle } from "lucide-react";
+import { Search, X, Star, Check, AlertTriangle, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useQuery } from "@tanstack/react-query";
@@ -91,6 +91,13 @@ export function GlebaTable({ onViewGleba }: GlebaTableProps) {
   const [cidadeFilter, setCidadeFilter] = useState<string>("all");
   const [imobiliariaFilter, setImobiliariaFilter] = useState<string>("all");
   const [showPendingOnly, setShowPendingOnly] = useState(false);
+  const [showStaleOnly, setShowStaleOnly] = useState(false);
+
+  const sixtyDaysAgo = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 60);
+    return d;
+  }, []);
 
   // Contagem de pendentes
   const pendingCount = useMemo(() => {
@@ -111,10 +118,13 @@ export function GlebaTable({ onViewGleba }: GlebaTableProps) {
         imobiliariaFilter === "all" || gleba.imobiliaria_id === imobiliariaFilter;
       
       const matchesPending = !showPendingOnly || !validateGlebaStatus(gleba).isValid;
+      
+      const excludedStatuses = ["descartada", "negocio_fechado"];
+      const matchesStale = !showStaleOnly || (!excludedStatuses.includes(gleba.status) && new Date(gleba.updated_at) < sixtyDaysAgo);
 
-      return matchesSearch && matchesStatus && matchesCidade && matchesImobiliaria && matchesPending;
+      return matchesSearch && matchesStatus && matchesCidade && matchesImobiliaria && matchesPending && matchesStale;
     });
-  }, [glebas, searchTerm, statusFilter, cidadeFilter, imobiliariaFilter, showPendingOnly]);
+  }, [glebas, searchTerm, statusFilter, cidadeFilter, imobiliariaFilter, showPendingOnly, showStaleOnly, sixtyDaysAgo]);
 
   const clearFilters = () => {
     setSearchTerm("");
@@ -122,14 +132,21 @@ export function GlebaTable({ onViewGleba }: GlebaTableProps) {
     setCidadeFilter("all");
     setImobiliariaFilter("all");
     setShowPendingOnly(false);
+    setShowStaleOnly(false);
   };
+
+  const staleCount = useMemo(() => {
+    const excludedStatuses = ["descartada", "negocio_fechado"];
+    return glebas.filter((g) => !excludedStatuses.includes(g.status) && new Date(g.updated_at) < sixtyDaysAgo).length;
+  }, [glebas, sixtyDaysAgo]);
 
   const hasActiveFilters =
     searchTerm ||
     statusFilter !== "all" ||
     cidadeFilter !== "all" ||
     imobiliariaFilter !== "all" ||
-    showPendingOnly;
+    showPendingOnly ||
+    showStaleOnly;
 
   const getCidadeName = (cidadeId: string | null) => {
     if (!cidadeId) return "-";
@@ -236,6 +253,18 @@ export function GlebaTable({ onViewGleba }: GlebaTableProps) {
         >
           <AlertTriangle className="h-4 w-4" />
           Pendentes ({pendingCount})
+        </Toggle>
+
+        {/* Filtro de Paradas 60+ dias */}
+        <Toggle
+          pressed={showStaleOnly}
+          onPressedChange={setShowStaleOnly}
+          variant="outline"
+          className="gap-2 data-[state=on]:bg-red-500/10 data-[state=on]:text-red-600 data-[state=on]:border-red-500/50"
+          aria-label="Filtrar paradas"
+        >
+          <Clock className="h-4 w-4" />
+          Paradas 60d+ ({staleCount})
         </Toggle>
 
         {/* Seletor de Colunas */}

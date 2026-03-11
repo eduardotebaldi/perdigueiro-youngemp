@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Loader2, ChevronLeft, ChevronRight, Search, Star, ChevronsLeft, ChevronsRight, MapPin, X, MessageSquareOff } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, Search, Star, ChevronsLeft, ChevronsRight, MapPin, X, MessageSquareOff, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -176,6 +176,7 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterPriority, setFilterPriority] = useState(false);
   const [filterInactive, setFilterInactive] = useState(false);
+  const [filterStale, setFilterStale] = useState(false);
   const [selectedCidades, setSelectedCidades] = useState<Set<string>>(new Set());
   const [cidadeSearchTerm, setCidadeSearchTerm] = useState("");
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
@@ -225,6 +226,12 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
     });
   };
 
+  const sixtyDaysAgo = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 60);
+    return d;
+  }, []);
+
   const filteredGlebas = useMemo(() => {
     let result = glebas;
     if (filterPriority) {
@@ -232,6 +239,10 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
     }
     if (filterInactive) {
       result = result.filter((g) => inactiveGlebaIds.has(g.id));
+    }
+    if (filterStale) {
+      const excludedStatuses = ["descartada", "negocio_fechado"];
+      result = result.filter((g) => !excludedStatuses.includes(g.status) && new Date(g.updated_at) < sixtyDaysAgo);
     }
     if (selectedCidades.size > 0) {
       result = result.filter((g) => g.cidade_id && selectedCidades.has(g.cidade_id));
@@ -245,7 +256,7 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
       });
     }
     return result;
-  }, [glebas, searchTerm, filterPriority, filterInactive, selectedCidades, inactiveGlebaIds]);
+  }, [glebas, searchTerm, filterPriority, filterInactive, filterStale, selectedCidades, inactiveGlebaIds, sixtyDaysAgo]);
 
   const getFilteredGlebasByStatus = useCallback((status: string) => {
     return filteredGlebas.filter((g) => g.status === status);
@@ -406,6 +417,17 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
           <Label htmlFor="filter-inactive" className="flex items-center gap-1 cursor-pointer text-sm">
             <MessageSquareOff className="h-4 w-4 text-orange-500" />
             Sem atualização
+          </Label>
+        </div>
+        <div className="flex items-center gap-2">
+          <Switch
+            id="filter-stale"
+            checked={filterStale}
+            onCheckedChange={setFilterStale}
+          />
+          <Label htmlFor="filter-stale" className="flex items-center gap-1 cursor-pointer text-sm">
+            <Clock className="h-4 w-4 text-red-500" />
+            Paradas 60+ dias
           </Label>
         </div>
 
