@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
       .from("glebas")
       .select("id, apelido, numero, status");
 
-    const excludedStatuses = ["descartada", "negocio_fechado"];
+    const excludedStatuses = ["descartada", "negocio_fechado", "proposta_recusada", "standby"];
     const inactiveGlebas = (allGlebas || []).filter(
       (g: any) =>
         !excludedStatuses.includes(g.status) && !activeGlebaIds.has(g.id)

@@ -87,7 +87,7 @@ export function useDashboardStats() {
       const glebasPrioritarias = glebas.filter((g) => g.prioridade).length;
 
       // Glebas inativas (sem atividade nos últimos 10 dias, excluindo descartada/negocio_fechado)
-      const excludedStatuses = ["descartada", "negocio_fechado"];
+      const excludedStatuses = ["descartada", "negocio_fechado", "proposta_recusada", "standby"];
       const activeGlebaIds = new Set(
         (recentAtividadesResult.data || []).map((a) => a.gleba_id).filter(Boolean)
       );
