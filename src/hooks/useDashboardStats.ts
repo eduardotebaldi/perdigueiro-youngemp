@@ -3,6 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { startOfMonth, endOfMonth, subMonths, format, startOfWeek, endOfWeek, eachDayOfInterval, eachMonthOfInterval, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
+interface InactiveGleba {
+  id: string;
+  numero: number | null;
+  apelido: string;
+  status: string;
+}
+
 interface DashboardStats {
   totalGlebas: number;
   glebasPorStatus: Record<string, number>;
@@ -15,6 +22,7 @@ interface DashboardStats {
   atividadesEstaSemana: number;
   glebasEmStandby: number;
   glebasPrioritarias: number;
+  glebasInativas: InactiveGleba[];
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -43,12 +51,13 @@ export function useDashboardStats() {
       const semesterStart = semesterStartDate > cutoffDate ? semesterStartDate : cutoffDate;
 
       // Buscar dados em paralelo
-      const [glebasResult, propostasResult, cidadesResult, atividadesResult, negociosSemestreResult] = await Promise.all([
-        supabase.from("glebas").select("id, status, prioridade"),
+      const [glebasResult, propostasResult, cidadesResult, atividadesResult, negociosSemestreResult, recentAtividadesResult] = await Promise.all([
+        supabase.from("glebas").select("id, status, prioridade, numero, apelido"),
         supabase.from("propostas").select("id, data_proposta"),
         supabase.from("cidades").select("id"),
         supabase.from("atividades").select("id, data"),
         supabase.from("glebas").select("id").eq("status", "negocio_fechado").gte("updated_at", semesterStart.toISOString()),
+        supabase.from("atividades").select("gleba_id").gte("created_at", subDays(now, 10).toISOString()),
       ]);
 
       if (glebasResult.error) throw glebasResult.error;
@@ -76,6 +85,15 @@ export function useDashboardStats() {
       const negociosFechadosSemestre = negociosSemestreResult.data?.length || 0;
       const glebasEmStandby = glebasPorStatus["standby"] || 0;
       const glebasPrioritarias = glebas.filter((g) => g.prioridade).length;
+
+      // Glebas inativas (sem atividade nos últimos 10 dias, excluindo descartada/negocio_fechado)
+      const excludedStatuses = ["descartada", "negocio_fechado"];
+      const activeGlebaIds = new Set(
+        (recentAtividadesResult.data || []).map((a) => a.gleba_id).filter(Boolean)
+      );
+      const glebasInativas: InactiveGleba[] = glebas
+        .filter((g) => !excludedStatuses.includes(g.status) && !activeGlebaIds.has(g.id))
+        .map((g) => ({ id: g.id, numero: g.numero, apelido: g.apelido, status: g.status }));
 
       // Propostas por mês (últimos 6 meses)
       const sixMonthsAgo = subMonths(now, 5);
@@ -129,6 +147,7 @@ export function useDashboardStats() {
         atividadesEstaSemana,
         glebasEmStandby,
         glebasPrioritarias,
+        glebasInativas,
       };
     },
     staleTime: 1000 * 60 * 5, // 5 minutos
