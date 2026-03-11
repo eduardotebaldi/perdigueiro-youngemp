@@ -1,4 +1,6 @@
 import { useState, useRef } from "react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Tables } from "@/integrations/supabase/types";
 import {
   Dialog,
