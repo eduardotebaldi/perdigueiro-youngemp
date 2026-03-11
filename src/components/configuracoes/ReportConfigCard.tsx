@@ -1,0 +1,247 @@
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  Card, CardContent, CardDescription, CardHeader, CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { FileText, Loader2, Eye, Send } from "lucide-react";
+import { toast } from "sonner";
+
+interface ReportConfig {
+  id: string;
+  report_key: string;
+  nome: string;
+  descricao: string;
+  ativo: boolean;
+  destinatarios: string[];
+  ultimo_envio: string | null;
+  ultimo_relatorio_html: string | null;
+}
+
+interface UserWithRole {
+  id: string;
+  email: string;
+  nome: string;
+  role: string;
+}
+
+export function ReportConfigCard() {
+  const queryClient = useQueryClient();
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewHtml, setPreviewHtml] = useState("");
+  const [generatingReport, setGeneratingReport] = useState(false);
+
+  const { data: reports, isLoading } = useQuery({
+    queryKey: ["report-configs"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("report_configs")
+        .select("*")
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return (data || []) as ReportConfig[];
+    },
+  });
+
+  const { data: users } = useQuery({
+    queryKey: ["admin-users"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_all_users_with_roles" as any);
+      if (error) throw error;
+      return (data || []) as UserWithRole[];
+    },
+  });
+
+  const updateReport = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<ReportConfig> }) => {
+      const { error } = await supabase
+        .from("report_configs")
+        .update(updates as any)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["report-configs"] });
+    },
+    onError: () => {
+      toast.error("Erro ao atualizar relatório");
+    },
+  });
+
+  const handleToggleAtivo = (report: ReportConfig) => {
+    updateReport.mutate({
+      id: report.id,
+      updates: { ativo: !report.ativo },
+    });
+  };
+
+  const handleToggleDestinatario = (report: ReportConfig, userId: string) => {
+    const current = report.destinatarios || [];
+    const updated = current.includes(userId)
+      ? current.filter((id) => id !== userId)
+      : [...current, userId];
+    updateReport.mutate({
+      id: report.id,
+      updates: { destinatarios: updated } as any,
+    });
+  };
+
+  const handleViewLastReport = (report: ReportConfig) => {
+    if (report.ultimo_relatorio_html) {
+      setPreviewHtml(report.ultimo_relatorio_html);
+      setPreviewOpen(true);
+    }
+  };
+
+  const handleGenerateNow = async (report: ReportConfig) => {
+    setGeneratingReport(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-weekly-report");
+      if (error) throw error;
+      if (data?.html) {
+        setPreviewHtml(data.html);
+        setPreviewOpen(true);
+        queryClient.invalidateQueries({ queryKey: ["report-configs"] });
+        toast.success("Relatório gerado com sucesso!");
+      } else if (data?.message) {
+        toast.info(data.message);
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao gerar relatório");
+    } finally {
+      setGeneratingReport(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            Relatórios
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            Relatórios
+          </CardTitle>
+          <CardDescription>
+            Configure os relatórios automáticos do sistema
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {(!reports || reports.length === 0) ? (
+            <p className="text-sm text-muted-foreground">Nenhum relatório configurado.</p>
+          ) : (
+            reports.map((report) => (
+              <div key={report.id} className="border rounded-lg p-4 space-y-4">
+                {/* Header with toggle */}
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-semibold text-sm">{report.nome}</h3>
+                      <Badge variant={report.ativo ? "default" : "secondary"} className="text-xs">
+                        {report.ativo ? "Ativo" : "Inativo"}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{report.descricao}</p>
+                  </div>
+                  <Switch
+                    checked={report.ativo}
+                    onCheckedChange={() => handleToggleAtivo(report)}
+                  />
+                </div>
+
+                {/* Recipients */}
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-2 block">Destinatários</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {users?.map((user) => (
+                      <label
+                        key={user.id}
+                        className="flex items-center gap-1.5 text-sm cursor-pointer bg-muted/50 rounded-md px-2 py-1 hover:bg-muted transition-colors"
+                      >
+                        <Checkbox
+                          checked={(report.destinatarios || []).includes(user.id)}
+                          onCheckedChange={() => handleToggleDestinatario(report, user.id)}
+                        />
+                        <span>{user.nome || user.email}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-2 pt-2 border-t">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleGenerateNow(report)}
+                    disabled={generatingReport}
+                  >
+                    {generatingReport ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="mr-2 h-4 w-4" />
+                    )}
+                    Gerar Agora
+                  </Button>
+                  {report.ultimo_relatorio_html && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleViewLastReport(report)}
+                    >
+                      <Eye className="mr-2 h-4 w-4" />
+                      Ver Último Relatório
+                    </Button>
+                  )}
+                  {report.ultimo_envio && (
+                    <span className="text-xs text-muted-foreground ml-auto">
+                      Último envio: {new Date(report.ultimo_envio).toLocaleString("pt-BR")}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Report Preview Dialog */}
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Pré-visualização do Relatório</DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="max-h-[65vh]">
+            <div dangerouslySetInnerHTML={{ __html: previewHtml }} />
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
