@@ -12,17 +12,25 @@ import {
   useDraggable,
 } from "@dnd-kit/core";
 import { useGlebas, STATUS_ORDER, STATUS_LABELS } from "@/hooks/useGlebas";
+import { useCidades } from "@/hooks/useCidades";
 import { GlebaCard } from "./GlebaCard";
 import { useToast } from "@/hooks/use-toast";
 import { Tables } from "@/integrations/supabase/types";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Loader2, ChevronLeft, ChevronRight, Search, Star } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, Search, Star, ChevronsLeft, ChevronsRight, MapPin, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type Gleba = Tables<"glebas">;
 
