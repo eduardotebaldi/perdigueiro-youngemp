@@ -10,6 +10,13 @@ interface InactiveGleba {
   status: string;
 }
 
+interface NegocioFechado {
+  id: string;
+  numero: number | null;
+  apelido: string;
+  cidade_id: string | null;
+}
+
 interface DashboardStats {
   totalGlebas: number;
   glebasPorStatus: Record<string, number>;
@@ -17,6 +24,7 @@ interface DashboardStats {
   totalCidades: number;
   negociosFechados: number;
   negociosFechadosSemestre: number;
+  negociosFechadosSemestreList: NegocioFechado[];
   propostasPorMes: { month: string; count: number }[];
   atividadesPorDia: { day: string; count: number }[];
   atividadesEstaSemana: number;
