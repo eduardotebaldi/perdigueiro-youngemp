@@ -138,7 +138,7 @@ export function CreateGlebaDialog({ onSuccess }: CreateGlebaDialogProps) {
                 name="tamanho_m2"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tamanho (m²)</FormLabel>
+                    <FormLabel>Tamanho (ha)</FormLabel>
                     <FormControl>
                       <Input 
                         type="number" 
