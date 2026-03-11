@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Loader2, ChevronLeft, ChevronRight, Search, Star, ChevronsLeft, ChevronsRight, MapPin, X } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, Search, Star, ChevronsLeft, ChevronsRight, MapPin, X, MessageSquareOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -174,6 +174,7 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
   const [activeGleba, setActiveGleba] = useState<Gleba | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterPriority, setFilterPriority] = useState(false);
+  const [filterInactive, setFilterInactive] = useState(false);
   const [selectedCidades, setSelectedCidades] = useState<Set<string>>(new Set());
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
 
@@ -227,6 +228,9 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
     if (filterPriority) {
       result = result.filter((g) => g.prioridade);
     }
+    if (filterInactive) {
+      result = result.filter((g) => inactiveGlebaIds.has(g.id));
+    }
     if (selectedCidades.size > 0) {
       result = result.filter((g) => g.cidade_id && selectedCidades.has(g.cidade_id));
     }
@@ -239,7 +243,7 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
       });
     }
     return result;
-  }, [glebas, searchTerm, filterPriority, selectedCidades]);
+  }, [glebas, searchTerm, filterPriority, filterInactive, selectedCidades, inactiveGlebaIds]);
 
   const getFilteredGlebasByStatus = useCallback((status: string) => {
     return filteredGlebas.filter((g) => g.status === status);
@@ -345,6 +349,17 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
           <Label htmlFor="filter-priority" className="flex items-center gap-1 cursor-pointer text-sm">
             <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
             Prioritárias
+          </Label>
+        </div>
+        <div className="flex items-center gap-2">
+          <Switch
+            id="filter-inactive"
+            checked={filterInactive}
+            onCheckedChange={setFilterInactive}
+          />
+          <Label htmlFor="filter-inactive" className="flex items-center gap-1 cursor-pointer text-sm">
+            <MessageSquareOff className="h-4 w-4 text-orange-500" />
+            Sem atualização
           </Label>
         </div>
 
