@@ -837,6 +837,7 @@ export type Database = {
           cidade_id: string | null
           comentarios: string | null
           created_at: string
+          data_fechamento: string | null
           data_visita: string | null
           descricao_descarte: string | null
           google_drive_file_id: string | null
@@ -870,6 +871,7 @@ export type Database = {
           cidade_id?: string | null
           comentarios?: string | null
           created_at?: string
+          data_fechamento?: string | null
           data_visita?: string | null
           descricao_descarte?: string | null
           google_drive_file_id?: string | null
@@ -903,6 +905,7 @@ export type Database = {
           cidade_id?: string | null
           comentarios?: string | null
           created_at?: string
+          data_fechamento?: string | null
           data_visita?: string | null
           descricao_descarte?: string | null
           google_drive_file_id?: string | null
