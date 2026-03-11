@@ -228,6 +228,9 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
     if (filterPriority) {
       result = result.filter((g) => g.prioridade);
     }
+    if (filterInactive) {
+      result = result.filter((g) => inactiveGlebaIds.has(g.id));
+    }
     if (selectedCidades.size > 0) {
       result = result.filter((g) => g.cidade_id && selectedCidades.has(g.cidade_id));
     }
@@ -240,7 +243,7 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
       });
     }
     return result;
-  }, [glebas, searchTerm, filterPriority, selectedCidades]);
+  }, [glebas, searchTerm, filterPriority, filterInactive, selectedCidades, inactiveGlebaIds]);
 
   const getFilteredGlebasByStatus = useCallback((status: string) => {
     return filteredGlebas.filter((g) => g.status === status);
