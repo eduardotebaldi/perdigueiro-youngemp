@@ -134,6 +134,7 @@ export function EditGlebaDialog({ gleba, open, onOpenChange }: EditGlebaDialogPr
       cidade_id: null,
       imobiliaria_id: null,
       data_visita: null,
+      data_fechamento: null,
       motivo_descarte_id: null,
       descricao_descarte: "",
       standby_motivo: "",
