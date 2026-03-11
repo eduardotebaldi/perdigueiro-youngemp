@@ -145,7 +145,8 @@ export function GlebaTable({ onViewGleba }: GlebaTableProps) {
     statusFilter !== "all" ||
     cidadeFilter !== "all" ||
     imobiliariaFilter !== "all" ||
-    showPendingOnly;
+    showPendingOnly ||
+    showStaleOnly;
 
   const getCidadeName = (cidadeId: string | null) => {
     if (!cidadeId) return "-";
