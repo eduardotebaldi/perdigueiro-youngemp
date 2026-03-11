@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDashboardStats, STATUS_LABELS } from "@/hooks/useDashboardStats";
+import { useCidades } from "@/hooks/useCidades";
 import { StatsCards } from "@/components/dashboard/StatsCards";
 import { PropostasChart } from "@/components/dashboard/PropostasChart";
 import { AtividadesChart } from "@/components/dashboard/AtividadesChart";
@@ -8,6 +10,12 @@ import { QuickAccess } from "@/components/dashboard/QuickAccess";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
 import { Target, Trophy, MessageSquareOff } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
