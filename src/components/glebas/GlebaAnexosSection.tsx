@@ -37,7 +37,7 @@ const TIPO_ICONS: Record<string, any> = {
 
 export function GlebaAnexosSection({ glebaId }: GlebaAnexosSectionProps) {
   const { getAnexosByTipo, uploadAnexo, addDriveLink, deleteAnexo, getSignedUrl, isGoogleDriveLink, isLoading } = useGlebaAnexos(glebaId);
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const [loadingFile, setLoadingFile] = useState<string | null>(null);
   const [uploadingTipo, setUploadingTipo] = useState<string | null>(null);
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
