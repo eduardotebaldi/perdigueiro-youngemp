@@ -347,6 +347,69 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
             Prioritárias
           </Label>
         </div>
+
+        {/* Filtro por cidade */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-1">
+              <MapPin className="h-4 w-4" />
+              Cidades
+              {selectedCidades.size > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                  {selectedCidades.size}
+                </Badge>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64 p-3" align="start">
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {usedCidades.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhuma cidade disponível</p>
+              ) : (
+                usedCidades.map((cidade) => (
+                  <label key={cidade.id} className="flex items-center gap-2 cursor-pointer text-sm hover:bg-muted/50 rounded px-1 py-0.5">
+                    <Checkbox
+                      checked={selectedCidades.has(cidade.id)}
+                      onCheckedChange={() => toggleCidade(cidade.id)}
+                    />
+                    {cidade.nome}
+                  </label>
+                ))
+              )}
+            </div>
+            {selectedCidades.size > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full mt-2 text-xs"
+                onClick={() => setSelectedCidades(new Set())}
+              >
+                <X className="h-3 w-3 mr-1" />
+                Limpar filtro
+              </Button>
+            )}
+          </PopoverContent>
+        </Popover>
+
+        {/* Colapsar/expandir todas */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={toggleCollapseAll}
+          className="gap-1"
+        >
+          {allCollapsed ? (
+            <>
+              <ChevronsRight className="h-4 w-4" />
+              Expandir todas
+            </>
+          ) : (
+            <>
+              <ChevronsLeft className="h-4 w-4" />
+              Colapsar todas
+            </>
+          )}
+        </Button>
       </div>
 
       <DndContext
