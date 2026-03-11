@@ -167,17 +167,60 @@ export function EditGlebaDialog({ gleba, open, onOpenChange }: EditGlebaDialogPr
     }
   }, [gleba, form]);
 
+  const handleKmzUpload = async (url: string) => {
+    setArquivoKmz(url);
+    setIsProcessingKmz(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("process-kmz", {
+        body: { kmzUrl: url, glebaApelido: gleba?.apelido || "" },
+      });
+      if (error) throw error;
+      if (data?.success && data.geojson) {
+        setExtractedGeojson(data.geojson);
+        // Update the storage path if process-kmz uploaded its own copy
+        if (data.kmzStoragePath) {
+          const { data: urlData } = supabase.storage
+            .from("glebas-kmz")
+            .getPublicUrl(data.kmzStoragePath);
+          setArquivoKmz(urlData.publicUrl);
+        }
+        toast({ title: "Polígono extraído com sucesso!" });
+      } else {
+        setExtractedGeojson(null);
+        toast({ title: "KMZ enviado", description: "Não foi possível extrair o polígono deste arquivo." });
+      }
+    } catch (err: any) {
+      console.error("KMZ processing error:", err);
+      setExtractedGeojson(null);
+      toast({ title: "KMZ enviado", description: "Erro ao processar polígono, mas o arquivo foi salvo." });
+    } finally {
+      setIsProcessingKmz(false);
+    }
+  };
+
+  const handleKmzRemove = () => {
+    setArquivoKmz(null);
+    setExtractedGeojson(null);
+  };
+
   const onSubmit = async (data: GlebaForm) => {
     if (!gleba) return;
     setIsSubmitting(true);
 
     try {
-      await updateGleba(gleba.id, {
+      const updateData: any = {
         ...data,
         arquivo_kmz: arquivoKmz,
         arquivo_protocolo: arquivoProtocolo,
         arquivo_contrato: arquivoContrato,
-      } as any);
+      };
+
+      // Only update poligono_geojson if KMZ was changed
+      if (extractedGeojson !== undefined) {
+        updateData.poligono_geojson = extractedGeojson;
+      }
+
+      await updateGleba(gleba.id, updateData);
 
       toast({
         title: "Sucesso!",
