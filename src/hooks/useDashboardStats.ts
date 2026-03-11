@@ -35,10 +35,12 @@ export function useDashboardStats() {
     queryFn: async (): Promise<DashboardStats> => {
       const now = new Date();
 
-      // Calculate current semester start
+      // Calculate current semester start, but never before 2026-03-10
       const currentMonth = now.getMonth();
       const semesterStartMonth = currentMonth < 6 ? 0 : 6;
-      const semesterStart = new Date(now.getFullYear(), semesterStartMonth, 1);
+      const semesterStartDate = new Date(now.getFullYear(), semesterStartMonth, 1);
+      const cutoffDate = new Date("2026-03-10T00:00:00");
+      const semesterStart = semesterStartDate > cutoffDate ? semesterStartDate : cutoffDate;
 
       // Buscar dados em paralelo
       const [glebasResult, propostasResult, cidadesResult, atividadesResult, negociosSemestreResult] = await Promise.all([
