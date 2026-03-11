@@ -72,6 +72,8 @@ export function EditGlebaDialog({ gleba, open, onOpenChange }: EditGlebaDialogPr
   const [arquivoKmz, setArquivoKmz] = useState<string | null>(null);
   const [arquivoProtocolo, setArquivoProtocolo] = useState<string | null>(null);
   const [arquivoContrato, setArquivoContrato] = useState<string | null>(null);
+  const [extractedGeojson, setExtractedGeojson] = useState<any>(undefined); // undefined = not changed
+  const [isProcessingKmz, setIsProcessingKmz] = useState(false);
   const { updateGleba } = useGlebas();
   const { toast } = useToast();
 
@@ -160,20 +162,65 @@ export function EditGlebaDialog({ gleba, open, onOpenChange }: EditGlebaDialogPr
       setArquivoKmz(gleba.arquivo_kmz);
       setArquivoProtocolo(gleba.arquivo_protocolo);
       setArquivoContrato(gleba.arquivo_contrato);
+      setExtractedGeojson(undefined);
+      setIsProcessingKmz(false);
     }
   }, [gleba, form]);
+
+  const handleKmzUpload = async (url: string) => {
+    setArquivoKmz(url);
+    setIsProcessingKmz(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("process-kmz", {
+        body: { kmzUrl: url, glebaApelido: gleba?.apelido || "" },
+      });
+      if (error) throw error;
+      if (data?.success && data.geojson) {
+        setExtractedGeojson(data.geojson);
+        // Update the storage path if process-kmz uploaded its own copy
+        if (data.kmzStoragePath) {
+          const { data: urlData } = supabase.storage
+            .from("glebas-kmz")
+            .getPublicUrl(data.kmzStoragePath);
+          setArquivoKmz(urlData.publicUrl);
+        }
+        toast({ title: "Polígono extraído com sucesso!" });
+      } else {
+        setExtractedGeojson(null);
+        toast({ title: "KMZ enviado", description: "Não foi possível extrair o polígono deste arquivo." });
+      }
+    } catch (err: any) {
+      console.error("KMZ processing error:", err);
+      setExtractedGeojson(null);
+      toast({ title: "KMZ enviado", description: "Erro ao processar polígono, mas o arquivo foi salvo." });
+    } finally {
+      setIsProcessingKmz(false);
+    }
+  };
+
+  const handleKmzRemove = () => {
+    setArquivoKmz(null);
+    setExtractedGeojson(null);
+  };
 
   const onSubmit = async (data: GlebaForm) => {
     if (!gleba) return;
     setIsSubmitting(true);
 
     try {
-      await updateGleba(gleba.id, {
+      const updateData: any = {
         ...data,
         arquivo_kmz: arquivoKmz,
         arquivo_protocolo: arquivoProtocolo,
         arquivo_contrato: arquivoContrato,
-      } as any);
+      };
+
+      // Only update poligono_geojson if KMZ was changed
+      if (extractedGeojson !== undefined) {
+        updateData.poligono_geojson = extractedGeojson;
+      }
+
+      await updateGleba(gleba.id, updateData);
 
       toast({
         title: "Sucesso!",
@@ -530,9 +577,9 @@ export function EditGlebaDialog({ gleba, open, onOpenChange }: EditGlebaDialogPr
                   path={gleba.id}
                   accept=".kmz,.kml"
                   currentFileUrl={arquivoKmz}
-                  onUpload={setArquivoKmz}
-                  onRemove={() => setArquivoKmz(null)}
-                  label="Arquivo KMZ/KML"
+                  onUpload={handleKmzUpload}
+                  onRemove={handleKmzRemove}
+                  label={isProcessingKmz ? "Arquivo KMZ/KML (processando polígono...)" : "Arquivo KMZ/KML"}
                 />
 
                 <FileUpload
@@ -565,7 +612,7 @@ export function EditGlebaDialog({ gleba, open, onOpenChange }: EditGlebaDialogPr
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting || isProcessingKmz}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Salvar
               </Button>
