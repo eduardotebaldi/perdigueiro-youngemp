@@ -63,11 +63,11 @@ export default function Glebas() {
               {viewMode === "kanban" ? "Kanban de Glebas" : "Planilha de Glebas"}
             </h1>
           </div>
-          <p className="text-muted-foreground">
-            {viewMode === "kanban"
-              ? "Gerencie suas glebas arrastando-as entre os status"
-              : "Visualize e filtre todas as suas glebas em formato de planilha"}
-          </p>
+          {viewMode === "table" && (
+            <p className="text-muted-foreground">
+              Visualize e filtre todas as suas glebas em formato de planilha
+            </p>
+          )}
         </div>
         
         <div className="flex items-center gap-3">
