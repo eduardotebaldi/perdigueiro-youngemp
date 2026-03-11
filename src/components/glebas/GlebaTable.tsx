@@ -132,7 +132,13 @@ export function GlebaTable({ onViewGleba }: GlebaTableProps) {
     setCidadeFilter("all");
     setImobiliariaFilter("all");
     setShowPendingOnly(false);
+    setShowStaleOnly(false);
   };
+
+  const staleCount = useMemo(() => {
+    const excludedStatuses = ["descartada", "negocio_fechado"];
+    return glebas.filter((g) => !excludedStatuses.includes(g.status) && new Date(g.updated_at) < sixtyDaysAgo).length;
+  }, [glebas, sixtyDaysAgo]);
 
   const hasActiveFilters =
     searchTerm ||
