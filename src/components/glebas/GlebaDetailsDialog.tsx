@@ -375,7 +375,7 @@ export function GlebaDetailsDialog({
                 <InfoItem icon={MapPin} label="Área Total" value={formatArea(gleba.tamanho_m2)} highlight />
                 <InfoItem icon={Ruler} label="Lote Mínimo" value={formatArea(gleba.tamanho_lote_minimo, "m²")} />
                 <InfoItem icon={FileText} label="Zona do Plano Diretor" value={gleba.zona_plano_diretor} />
-                <InfoItem icon={MapPin} label="Possui Polígono" value={gleba.poligono_geojson ? "Sim" : "Não"} />
+                <InfoItem icon={MapPin} label="Possui Polígono" value={(gleba.poligono_geojson || gleba.arquivo_kmz) ? "Sim" : "Não"} />
               </div>
             </div>
 
