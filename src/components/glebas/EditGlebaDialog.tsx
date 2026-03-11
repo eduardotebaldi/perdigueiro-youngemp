@@ -157,6 +157,7 @@ export function EditGlebaDialog({ gleba, open, onOpenChange }: EditGlebaDialogPr
         cidade_id: gleba.cidade_id || null,
         imobiliaria_id: gleba.imobiliaria_id || null,
         data_visita: gleba.data_visita || null,
+        data_fechamento: gleba.status === "negocio_fechado" ? (gleba.updated_at ? gleba.updated_at.split("T")[0] : null) : null,
         motivo_descarte_id: gleba.motivo_descarte_id || null,
         descricao_descarte: gleba.descricao_descarte || "",
         standby_motivo: gleba.standby_motivo || "",
