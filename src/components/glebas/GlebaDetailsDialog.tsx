@@ -1,4 +1,6 @@
 import { useState, useRef } from "react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Tables } from "@/integrations/supabase/types";
 import {
   Dialog,
@@ -420,6 +422,35 @@ export function GlebaDetailsDialog({
                 <p className="text-sm text-muted-foreground">Última atualização</p>
                 <p className="font-medium">{formatDate(gleba.updated_at)}</p>
               </div>
+              {gleba.status === "negocio_fechado" && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Fechamento do Negócio</p>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="ghost" className="h-auto p-0 font-medium hover:text-primary">
+                        {formatDate(gleba.updated_at)}
+                        <Pencil className="h-3 w-3 ml-1 text-muted-foreground" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={new Date(gleba.updated_at)}
+                        onSelect={async (date) => {
+                          if (!date) return;
+                          try {
+                            await updateGleba(gleba.id, { updated_at: date.toISOString() } as any);
+                            toast.success("Data de fechamento atualizada!");
+                          } catch {
+                            toast.error("Erro ao atualizar data");
+                          }
+                        }}
+                        locale={ptBR}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              )}
               {gleba.last_sync_at && (
                 <div>
                   <p className="text-sm text-muted-foreground">Última sincronização</p>

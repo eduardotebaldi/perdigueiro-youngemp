@@ -16,7 +16,8 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Target, Trophy, MessageSquareOff } from "lucide-react";
+import { Target, Trophy, MessageSquareOff, Clock } from "lucide-react";
+import { differenceInWeeks } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
 
@@ -26,6 +27,14 @@ function getSemesterLabel() {
   const month = new Date().getMonth();
   const year = new Date().getFullYear();
   return month < 6 ? `1º Semestre ${year}` : `2º Semestre ${year}`;
+}
+
+function getWeeksRemaining() {
+  const now = new Date();
+  const month = now.getMonth();
+  const year = now.getFullYear();
+  const semesterEnd = month < 6 ? new Date(year, 5, 30) : new Date(year, 11, 31);
+  return Math.max(0, differenceInWeeks(semesterEnd, now));
 }
 
 export default function Dashboard() {
@@ -82,6 +91,12 @@ export default function Dashboard() {
                   <span className="text-lg text-muted-foreground">/ {META_SEMESTRAL}</span>
                 </div>
                 <Progress value={progressPercent} className="h-3" />
+                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {getWeeksRemaining() === 0
+                    ? "Última semana do semestre"
+                    : `Faltam ${getWeeksRemaining()} semanas para terminar o semestre`}
+                </p>
               </div>
               {metaAtingida && (
                 <span className="text-sm font-medium text-green-600 whitespace-nowrap pb-1">
