@@ -69,6 +69,7 @@ export function useDashboardStats() {
       });
 
       const negociosFechados = glebasPorStatus["negocio_fechado"] || 0;
+      const negociosFechadosSemestre = negociosSemestreResult.data?.length || 0;
       const glebasEmStandby = glebasPorStatus["standby"] || 0;
       const glebasPrioritarias = glebas.filter((g) => g.prioridade).length;
 
