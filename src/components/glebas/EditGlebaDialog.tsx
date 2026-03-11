@@ -162,6 +162,8 @@ export function EditGlebaDialog({ gleba, open, onOpenChange }: EditGlebaDialogPr
       setArquivoKmz(gleba.arquivo_kmz);
       setArquivoProtocolo(gleba.arquivo_protocolo);
       setArquivoContrato(gleba.arquivo_contrato);
+      setExtractedGeojson(undefined);
+      setIsProcessingKmz(false);
     }
   }, [gleba, form]);
 
