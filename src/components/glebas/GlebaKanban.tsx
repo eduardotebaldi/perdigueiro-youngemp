@@ -351,6 +351,17 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
             Prioritárias
           </Label>
         </div>
+        <div className="flex items-center gap-2">
+          <Switch
+            id="filter-inactive"
+            checked={filterInactive}
+            onCheckedChange={setFilterInactive}
+          />
+          <Label htmlFor="filter-inactive" className="flex items-center gap-1 cursor-pointer text-sm">
+            <MessageSquareOff className="h-4 w-4 text-orange-500" />
+            Sem atualização
+          </Label>
+        </div>
 
         {/* Filtro por cidade */}
         <Popover>
