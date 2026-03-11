@@ -517,6 +517,22 @@ export function EditGlebaDialog({ gleba, open, onOpenChange }: EditGlebaDialogPr
                   )}
                 />
 
+                {gleba.status === "negocio_fechado" && (
+                  <FormField
+                    control={form.control}
+                    name="data_fechamento"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Data do Fechamento do Negócio</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} value={field.value || ""} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
                 {gleba.status === "descartada" && (
                   <>
                     <FormField
