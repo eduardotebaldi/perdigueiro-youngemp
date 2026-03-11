@@ -33,12 +33,18 @@ export function useDashboardStats() {
   return useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async (): Promise<DashboardStats> => {
+      // Calculate current semester start
+      const currentMonth = now.getMonth(); // 0-11
+      const semesterStartMonth = currentMonth < 6 ? 0 : 6;
+      const semesterStart = new Date(now.getFullYear(), semesterStartMonth, 1);
+
       // Buscar dados em paralelo
-      const [glebasResult, propostasResult, cidadesResult, atividadesResult] = await Promise.all([
+      const [glebasResult, propostasResult, cidadesResult, atividadesResult, negociosSemestreResult] = await Promise.all([
         supabase.from("glebas").select("id, status, prioridade"),
         supabase.from("propostas").select("id, data_proposta"),
         supabase.from("cidades").select("id"),
         supabase.from("atividades").select("id, data"),
+        supabase.from("glebas").select("id").eq("status", "negocio_fechado").gte("updated_at", semesterStart.toISOString()),
       ]);
 
       if (glebasResult.error) throw glebasResult.error;
