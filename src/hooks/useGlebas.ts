@@ -44,9 +44,13 @@ export function useGlebas() {
   });
 
   const updateGlebaStatus = async (glebaId: string, newStatus: string) => {
+    const updateData: any = { status: newStatus };
+    if (newStatus === "negocio_fechado") {
+      updateData.data_fechamento = new Date().toISOString().split("T")[0];
+    }
     const { error } = await supabase
       .from("glebas")
-      .update({ status: newStatus as any })
+      .update(updateData)
       .eq("id", glebaId);
 
     if (error) throw error;
