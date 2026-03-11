@@ -300,8 +300,52 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
 
       try {
         await updateGlebaStatus(glebaId, newStatus);
+
+        // Celebration animation for "negocio_fechado"
+        if (newStatus === "negocio_fechado") {
+          // Confetti burst
+          const end = Date.now() + 2000;
+          const colors = ["#22c55e", "#16a34a", "#fbbf24", "#f59e0b", "#3b82f6"];
+          const frame = () => {
+            confetti({
+              particleCount: 3,
+              angle: 60,
+              spread: 55,
+              origin: { x: 0, y: 0.7 },
+              colors,
+            });
+            confetti({
+              particleCount: 3,
+              angle: 120,
+              spread: 55,
+              origin: { x: 1, y: 0.7 },
+              colors,
+            });
+            if (Date.now() < end) requestAnimationFrame(frame);
+          };
+          frame();
+
+          // Celebration sound
+          try {
+            const audioCtx = new AudioContext();
+            const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
+            notes.forEach((freq, i) => {
+              const osc = audioCtx.createOscillator();
+              const gain = audioCtx.createGain();
+              osc.type = "sine";
+              osc.frequency.value = freq;
+              gain.gain.setValueAtTime(0.15, audioCtx.currentTime + i * 0.12);
+              gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + i * 0.12 + 0.5);
+              osc.connect(gain);
+              gain.connect(audioCtx.destination);
+              osc.start(audioCtx.currentTime + i * 0.12);
+              osc.stop(audioCtx.currentTime + i * 0.12 + 0.5);
+            });
+          } catch {}
+        }
+
         toast({
-          title: "Status atualizado",
+          title: newStatus === "negocio_fechado" ? "🎉 Negócio fechado!" : "Status atualizado",
           description: `"${gleba.apelido}" movida para ${STATUS_LABELS[newStatus]}`,
         });
       } catch {
