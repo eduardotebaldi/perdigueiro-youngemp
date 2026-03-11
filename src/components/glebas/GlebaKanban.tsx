@@ -168,11 +168,13 @@ interface GlebaKanbanProps {
 
 export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
   const { glebas, isLoading, updateGlebaStatus } = useGlebas();
+  const { cidades } = useCidades();
   const { toast } = useToast();
   
   const [activeGleba, setActiveGleba] = useState<Gleba | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterPriority, setFilterPriority] = useState(false);
+  const [selectedCidades, setSelectedCidades] = useState<Set<string>>(new Set());
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
 
   // Fetch atividades to detect inactive glebas (no comments in last 10 days)
@@ -204,10 +206,29 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
     );
   }, [glebas, activeGlebaIds]);
 
+  // Cidades used by glebas for the filter
+  const usedCidades = useMemo(() => {
+    if (!cidades) return [];
+    const cidadeIdsInUse = new Set(glebas.map((g) => g.cidade_id).filter(Boolean));
+    return cidades.filter((c) => cidadeIdsInUse.has(c.id));
+  }, [cidades, glebas]);
+
+  const toggleCidade = (cidadeId: string) => {
+    setSelectedCidades((prev) => {
+      const next = new Set(prev);
+      if (next.has(cidadeId)) next.delete(cidadeId);
+      else next.add(cidadeId);
+      return next;
+    });
+  };
+
   const filteredGlebas = useMemo(() => {
     let result = glebas;
     if (filterPriority) {
       result = result.filter((g) => g.prioridade);
+    }
+    if (selectedCidades.size > 0) {
+      result = result.filter((g) => g.cidade_id && selectedCidades.has(g.cidade_id));
     }
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase().trim();
@@ -218,7 +239,7 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
       });
     }
     return result;
-  }, [glebas, searchTerm, filterPriority]);
+  }, [glebas, searchTerm, filterPriority, selectedCidades]);
 
   const getFilteredGlebasByStatus = useCallback((status: string) => {
     return filteredGlebas.filter((g) => g.status === status);
