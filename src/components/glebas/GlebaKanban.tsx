@@ -419,6 +419,17 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
             Sem atualização
           </Label>
         </div>
+        <div className="flex items-center gap-2">
+          <Switch
+            id="filter-stale"
+            checked={filterStale}
+            onCheckedChange={setFilterStale}
+          />
+          <Label htmlFor="filter-stale" className="flex items-center gap-1 cursor-pointer text-sm">
+            <Clock className="h-4 w-4 text-red-500" />
+            Paradas 60+ dias
+          </Label>
+        </div>
 
         {/* Filtro por cidade */}
         <Popover>
