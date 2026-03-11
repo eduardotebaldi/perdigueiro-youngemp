@@ -26,6 +26,7 @@ export default function Dashboard() {
 
   const firstName = user?.user_metadata?.full_name?.split(" ")[0] || "Usuário";
   const negociosSemestre = stats?.negociosFechadosSemestre || 0;
+  const glebasInativas = stats?.glebasInativas || [];
   const progressPercent = Math.min((negociosSemestre / META_SEMESTRAL) * 100, 100);
   const metaAtingida = negociosSemestre >= META_SEMESTRAL;
 
