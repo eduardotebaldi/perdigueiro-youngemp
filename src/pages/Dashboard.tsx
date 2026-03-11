@@ -16,7 +16,8 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Target, Trophy, MessageSquareOff } from "lucide-react";
+import { Target, Trophy, MessageSquareOff, Clock } from "lucide-react";
+import { differenceInWeeks, endOfMonth } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
 
