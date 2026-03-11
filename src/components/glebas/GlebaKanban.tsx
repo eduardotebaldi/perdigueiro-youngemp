@@ -478,16 +478,16 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
           variant="outline"
           size="sm"
           onClick={toggleCollapseAll}
-          className="gap-1 h-8 text-xs"
+          className="gap-0.5 h-7 text-[11px] shrink-0"
         >
           {allCollapsed ? (
             <>
-              <ChevronsRight className="h-3.5 w-3.5" />
+              <ChevronsRight className="h-3 w-3" />
               Expandir
             </>
           ) : (
             <>
-              <ChevronsLeft className="h-3.5 w-3.5" />
+              <ChevronsLeft className="h-3 w-3" />
               Colapsar
             </>
           )}
