@@ -8,7 +8,7 @@ import { GlebaTable } from "@/components/glebas/GlebaTable";
 import { GoogleDriveSyncConfig } from "@/components/glebas/GoogleDriveSyncConfig";
 import { GoogleEarthIntegrationCard } from "@/components/glebas/GoogleEarthIntegrationCard";
 import { Tables } from "@/integrations/supabase/types";
-import { Kanban, Table2, Zap, Settings } from "lucide-react";
+import { Kanban, Table2, Settings } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
@@ -108,17 +108,6 @@ export default function Glebas() {
       {/* Kanban View */}
       {viewMode === "kanban" && (
         <>
-          {/* Info Card */}
-          <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 flex gap-3">
-            <Zap className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="font-medium text-sm">Dica: Clique em um card para ver detalhes</p>
-              <p className="text-sm text-muted-foreground">
-                Arraste os cards entre as colunas para atualizar o status
-              </p>
-            </div>
-          </div>
-
           {/* Kanban Board */}
           <GlebaKanban onViewGleba={handleViewGleba} />
         </>
