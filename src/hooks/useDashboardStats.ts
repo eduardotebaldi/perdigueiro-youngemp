@@ -9,6 +9,7 @@ interface DashboardStats {
   totalPropostas: number;
   totalCidades: number;
   negociosFechados: number;
+  negociosFechadosSemestre: number;
   propostasPorMes: { month: string; count: number }[];
   atividadesPorDia: { day: string; count: number }[];
   atividadesEstaSemana: number;
