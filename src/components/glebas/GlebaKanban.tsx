@@ -422,19 +422,29 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-64 p-3" align="start">
+            <div className="mb-2">
+              <Input
+                placeholder="Buscar cidade..."
+                value={cidadeSearchTerm}
+                onChange={(e) => setCidadeSearchTerm(e.target.value)}
+                className="h-8 text-sm"
+              />
+            </div>
             <div className="space-y-2 max-h-60 overflow-y-auto">
               {usedCidades.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Nenhuma cidade disponível</p>
               ) : (
-                usedCidades.map((cidade) => (
-                  <label key={cidade.id} className="flex items-center gap-2 cursor-pointer text-sm hover:bg-muted/50 rounded px-1 py-0.5">
-                    <Checkbox
-                      checked={selectedCidades.has(cidade.id)}
-                      onCheckedChange={() => toggleCidade(cidade.id)}
-                    />
-                    {cidade.nome}
-                  </label>
-                ))
+                usedCidades
+                  .filter((c) => c.nome.toLowerCase().includes(cidadeSearchTerm.toLowerCase().trim()))
+                  .map((cidade) => (
+                    <label key={cidade.id} className="flex items-center gap-2 cursor-pointer text-sm hover:bg-muted/50 rounded px-1 py-0.5">
+                      <Checkbox
+                        checked={selectedCidades.has(cidade.id)}
+                        onCheckedChange={() => toggleCidade(cidade.id)}
+                      />
+                      {cidade.nome}
+                    </label>
+                  ))
               )}
             </div>
             {selectedCidades.size > 0 && (
