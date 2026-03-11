@@ -147,6 +147,7 @@ export function useDashboardStats() {
         atividadesEstaSemana,
         glebasEmStandby,
         glebasPrioritarias,
+        glebasInativas,
       };
     },
     staleTime: 1000 * 60 * 5, // 5 minutos
