@@ -177,6 +177,7 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
   const [filterPriority, setFilterPriority] = useState(false);
   const [filterInactive, setFilterInactive] = useState(false);
   const [selectedCidades, setSelectedCidades] = useState<Set<string>>(new Set());
+  const [cidadeSearchTerm, setCidadeSearchTerm] = useState("");
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
 
   // Fetch atividades to detect inactive glebas (no comments in last 10 days)
