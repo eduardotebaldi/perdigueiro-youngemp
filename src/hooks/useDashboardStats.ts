@@ -33,8 +33,10 @@ export function useDashboardStats() {
   return useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async (): Promise<DashboardStats> => {
+      const now = new Date();
+
       // Calculate current semester start
-      const currentMonth = now.getMonth(); // 0-11
+      const currentMonth = now.getMonth();
       const semesterStartMonth = currentMonth < 6 ? 0 : 6;
       const semesterStart = new Date(now.getFullYear(), semesterStartMonth, 1);
 
