@@ -76,7 +76,6 @@ export function useDashboardStats() {
       const glebasPrioritarias = glebas.filter((g) => g.prioridade).length;
 
       // Propostas por mês (últimos 6 meses)
-      const now = new Date();
       const sixMonthsAgo = subMonths(now, 5);
       const months = eachMonthOfInterval({ start: startOfMonth(sixMonthsAgo), end: endOfMonth(now) });
       
