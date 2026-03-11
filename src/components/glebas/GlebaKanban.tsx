@@ -381,18 +381,18 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
 
   return (
     <div className="space-y-3">
-      {/* Filtros - compact layout */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <div className="relative flex-1 min-w-[180px] max-w-xs">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+      {/* Filtros - single row, no wrap */}
+      <div className="flex items-center gap-2 overflow-x-auto">
+        <div className="relative min-w-[140px] max-w-[180px]">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
           <Input
             placeholder="Pesquisar..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-8 h-8 text-sm"
+            className="pl-7 h-7 text-xs"
           />
           {searchTerm && (
-            <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
               {filteredGlebas.length}
             </span>
           )}
