@@ -226,6 +226,12 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
     });
   };
 
+  const sixtyDaysAgo = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 60);
+    return d;
+  }, []);
+
   const filteredGlebas = useMemo(() => {
     let result = glebas;
     if (filterPriority) {
@@ -233,6 +239,10 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
     }
     if (filterInactive) {
       result = result.filter((g) => inactiveGlebaIds.has(g.id));
+    }
+    if (filterStale) {
+      const excludedStatuses = ["descartada", "negocio_fechado"];
+      result = result.filter((g) => !excludedStatuses.includes(g.status) && new Date(g.updated_at) < sixtyDaysAgo);
     }
     if (selectedCidades.size > 0) {
       result = result.filter((g) => g.cidade_id && selectedCidades.has(g.cidade_id));
@@ -246,7 +256,7 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
       });
     }
     return result;
-  }, [glebas, searchTerm, filterPriority, filterInactive, selectedCidades, inactiveGlebaIds]);
+  }, [glebas, searchTerm, filterPriority, filterInactive, filterStale, selectedCidades, inactiveGlebaIds, sixtyDaysAgo]);
 
   const getFilteredGlebasByStatus = useCallback((status: string) => {
     return filteredGlebas.filter((g) => g.status === status);
