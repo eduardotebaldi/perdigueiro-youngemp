@@ -254,6 +254,15 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
     });
   };
 
+  const allCollapsed = collapsedColumns.size === STATUS_ORDER.length;
+  const toggleCollapseAll = () => {
+    if (allCollapsed) {
+      setCollapsedColumns(new Set());
+    } else {
+      setCollapsedColumns(new Set(STATUS_ORDER));
+    }
+  };
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
