@@ -298,16 +298,6 @@ export function ReportConfigCard() {
                         )}
                         Enviar por E-mail
                       </Button>
-                      {report.ultimo_relatorio_html && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleViewLastReport(report)}
-                        >
-                          <Eye className="mr-2 h-4 w-4" />
-                          Ver Último Relatório
-                        </Button>
-                      )}
                     </div>
                   </CollapsibleContent>
                 </div>
