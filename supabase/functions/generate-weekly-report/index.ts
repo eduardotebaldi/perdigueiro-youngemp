@@ -402,8 +402,26 @@ Deno.serve(async (req) => {
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      const { data: recipientData } = await supabase.rpc("get_user_emails", { user_ids: destinatarios });
-      if (!recipientData || recipientData.length === 0) {
+
+      // Fetch recipient emails directly (service role bypasses RLS)
+      const recipientData: { id: string; email: string; nome: string }[] = [];
+      for (const userId of destinatarios) {
+        const { data: { user } } = await supabase.auth.admin.getUserById(userId);
+        if (user?.email) {
+          const { data: profile } = await supabase
+            .from("user_profiles")
+            .select("nome")
+            .eq("user_id", userId)
+            .maybeSingle();
+          recipientData.push({
+            id: userId,
+            email: user.email,
+            nome: profile?.nome || user.email,
+          });
+        }
+      }
+
+      if (recipientData.length === 0) {
         return new Response(
           JSON.stringify({ success: true, html, emailResult: { sent: 0, failed: [], message: "Nenhum e-mail encontrado para os destinatários" } }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
