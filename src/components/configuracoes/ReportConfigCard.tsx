@@ -16,7 +16,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { FileText, Loader2, Eye, Send, ChevronDown } from "lucide-react";
+import { FileText, Loader2, Eye, Send, ChevronDown, Mail } from "lucide-react";
 import { toast } from "sonner";
 
 interface ReportConfig {
@@ -42,6 +42,7 @@ export function ReportConfigCard() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewHtml, setPreviewHtml] = useState("");
   const [generatingReport, setGeneratingReport] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   const { data: reports, isLoading } = useQuery({
     queryKey: ["report-configs"],
@@ -124,6 +125,37 @@ export function ReportConfigCard() {
       toast.error(err.message || "Erro ao gerar relatório");
     } finally {
       setGeneratingReport(false);
+    }
+  };
+
+  const handleSendEmail = async (report: ReportConfig) => {
+    if (!report.destinatarios || report.destinatarios.length === 0) {
+      toast.error("Nenhum destinatário configurado");
+      return;
+    }
+    setSendingEmail(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-weekly-report", {
+        body: { force: true, sendEmail: true },
+      });
+      if (error) throw error;
+      if (data?.emailResult) {
+        const { sent, failed, message } = data.emailResult;
+        if (message) {
+          toast.info(message);
+        } else if (sent > 0 && failed.length === 0) {
+          toast.success(`Relatório enviado para ${sent} destinatário(s)!`);
+        } else if (sent > 0 && failed.length > 0) {
+          toast.warning(`Enviado para ${sent}, falhou para: ${failed.join(", ")}`);
+        } else {
+          toast.error(`Falha ao enviar: ${failed.join(", ")}`);
+        }
+        queryClient.invalidateQueries({ queryKey: ["report-configs"] });
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao enviar relatório");
+    } finally {
+      setSendingEmail(false);
     }
   };
 
@@ -221,6 +253,19 @@ export function ReportConfigCard() {
                           <Send className="mr-2 h-4 w-4" />
                         )}
                         Gerar Agora
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleSendEmail(report)}
+                        disabled={sendingEmail}
+                      >
+                        {sendingEmail ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <Mail className="mr-2 h-4 w-4" />
+                        )}
+                        Enviar por E-mail
                       </Button>
                       {report.ultimo_relatorio_html && (
                         <Button
