@@ -28,6 +28,8 @@ interface ReportConfig {
   destinatarios: string[];
   ultimo_envio: string | null;
   ultimo_relatorio_html: string | null;
+  cron_expression: string | null;
+  cron_ativo: boolean;
 }
 
 interface UserWithRole {
