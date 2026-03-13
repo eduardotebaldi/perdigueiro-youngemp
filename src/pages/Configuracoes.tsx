@@ -1,7 +1,8 @@
 import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Settings, Users, Plus, Trash2, Shield, ShieldCheck, Loader2, Pencil, Check, X, RefreshCw, MapPin } from "lucide-react";
+import { Settings, Users, Plus, Trash2, Shield, ShieldCheck, Loader2, Pencil, Check, X, RefreshCw, MapPin, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -212,227 +213,232 @@ export default function Configuracoes() {
       </div>
 
       {/* Users Management */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Usuários
-              </CardTitle>
-              <CardDescription>
-                Gerencie os usuários e suas permissões de acesso
-              </CardDescription>
-            </div>
-            <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Novo Usuário
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Criar Novo Usuário</DialogTitle>
-                  <DialogDescription>
-                    Preencha os dados para criar uma nova conta de acesso ao sistema.
-                  </DialogDescription>
-                </DialogHeader>
-
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="usuario@email.com"
-                      value={newUserEmail}
-                      onChange={(e) => setNewUserEmail(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Senha</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="Mínimo 6 caracteres"
-                      value={newUserPassword}
-                      onChange={(e) => setNewUserPassword(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="role">Nível de Acesso</Label>
-                    <Select value={newUserRole} onValueChange={(v) => setNewUserRole(v as "admin" | "user")}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="user">
-                          <div className="flex items-center gap-2">
-                            <Shield className="h-4 w-4" />
-                            Usuário
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="admin">
-                          <div className="flex items-center gap-2">
-                            <ShieldCheck className="h-4 w-4" />
-                            Administrador
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <p className="text-xs text-muted-foreground">
-                      Usuários podem criar e editar registros. Administradores têm acesso total.
-                    </p>
-                  </div>
-                </div>
-
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
-                    Cancelar
+      <Collapsible defaultOpen>
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CollapsibleTrigger className="flex-1 text-left group">
+                <CardTitle className="flex items-center gap-2">
+                  <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=closed]:-rotate-90" />
+                  <Users className="h-5 w-5" />
+                  Usuários
+                </CardTitle>
+                <CardDescription className="ml-10">
+                  Gerencie os usuários e suas permissões de acesso
+                </CardDescription>
+              </CollapsibleTrigger>
+              <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Novo Usuário
                   </Button>
-                  <Button onClick={handleCreateUser} disabled={isCreating}>
-                    {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Criar Usuário
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : !users || users.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              Nenhum usuário encontrado
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Permissão</TableHead>
-                  <TableHead>Criado em</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.email}</TableCell>
-                    <TableCell>
-                      {editingNameId === user.id ? (
-                        <div className="flex items-center gap-1">
-                          <Input
-                            value={editingNameValue}
-                            onChange={(e) => setEditingNameValue(e.target.value)}
-                            className="h-8 w-40"
-                            autoFocus
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                updateName.mutate({ userId: user.id, nome: editingNameValue });
-                                setEditingNameId(null);
-                              }
-                              if (e.key === "Escape") setEditingNameId(null);
-                            }}
-                          />
-                          <Button
-                            variant="ghost" size="icon" className="h-7 w-7"
-                            onClick={() => {
-                              updateName.mutate({ userId: user.id, nome: editingNameValue });
-                              setEditingNameId(null);
-                            }}
-                          >
-                            <Check className="h-3 w-3" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingNameId(null)}>
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-1">
-                          <span className="text-muted-foreground">{user.nome || "—"}</span>
-                          <Button
-                            variant="ghost" size="icon" className="h-7 w-7"
-                            onClick={() => {
-                              setEditingNameId(user.id);
-                              setEditingNameValue(user.nome || "");
-                            }}
-                          >
-                            <Pencil className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Select
-                        value={user.role}
-                        onValueChange={(role) => updateRole.mutate({ userId: user.id, role: role as "admin" | "user" })}
-                        disabled={user.id === currentUser?.id}
-                      >
-                        <SelectTrigger className="w-36">
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Criar Novo Usuário</DialogTitle>
+                    <DialogDescription>
+                      Preencha os dados para criar uma nova conta de acesso ao sistema.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="usuario@email.com"
+                        value={newUserEmail}
+                        onChange={(e) => setNewUserEmail(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="password">Senha</Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        placeholder="Mínimo 6 caracteres"
+                        value={newUserPassword}
+                        onChange={(e) => setNewUserPassword(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="role">Nível de Acesso</Label>
+                      <Select value={newUserRole} onValueChange={(v) => setNewUserRole(v as "admin" | "user")}>
+                        <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="user">
-                            <Badge variant="secondary" className="gap-1">
-                              <Shield className="h-3 w-3" />
+                            <div className="flex items-center gap-2">
+                              <Shield className="h-4 w-4" />
                               Usuário
-                            </Badge>
+                            </div>
                           </SelectItem>
                           <SelectItem value="admin">
-                            <Badge variant="default" className="gap-1">
-                              <ShieldCheck className="h-3 w-3" />
-                              Admin
-                            </Badge>
+                            <div className="flex items-center gap-2">
+                              <ShieldCheck className="h-4 w-4" />
+                              Administrador
+                            </div>
                           </SelectItem>
                         </SelectContent>
                       </Select>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {new Date(user.created_at).toLocaleDateString("pt-BR")}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {user.id !== currentUser?.id && (
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Excluir usuário?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Esta ação não pode ser desfeita. O usuário "{user.email}" será removido permanentemente do sistema.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => deleteUser.mutate(user.id)}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      <p className="text-xs text-muted-foreground">
+                        Usuários podem criar e editar registros. Administradores têm acesso total.
+                      </p>
+                    </div>
+                  </div>
+
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
+                      Cancelar
+                    </Button>
+                    <Button onClick={handleCreateUser} disabled={isCreating}>
+                      {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Criar Usuário
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </CardHeader>
+          <CollapsibleContent>
+            <CardContent>
+              {isLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : !users || users.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Nenhum usuário encontrado
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Nome</TableHead>
+                      <TableHead>Permissão</TableHead>
+                      <TableHead>Criado em</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {users.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell className="font-medium">{user.email}</TableCell>
+                        <TableCell>
+                          {editingNameId === user.id ? (
+                            <div className="flex items-center gap-1">
+                              <Input
+                                value={editingNameValue}
+                                onChange={(e) => setEditingNameValue(e.target.value)}
+                                className="h-8 w-40"
+                                autoFocus
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    updateName.mutate({ userId: user.id, nome: editingNameValue });
+                                    setEditingNameId(null);
+                                  }
+                                  if (e.key === "Escape") setEditingNameId(null);
+                                }}
+                              />
+                              <Button
+                                variant="ghost" size="icon" className="h-7 w-7"
+                                onClick={() => {
+                                  updateName.mutate({ userId: user.id, nome: editingNameValue });
+                                  setEditingNameId(null);
+                                }}
                               >
-                                Excluir
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                                <Check className="h-3 w-3" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingNameId(null)}>
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1">
+                              <span className="text-muted-foreground">{user.nome || "—"}</span>
+                              <Button
+                                variant="ghost" size="icon" className="h-7 w-7"
+                                onClick={() => {
+                                  setEditingNameId(user.id);
+                                  setEditingNameValue(user.nome || "");
+                                }}
+                              >
+                                <Pencil className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Select
+                            value={user.role}
+                            onValueChange={(role) => updateRole.mutate({ userId: user.id, role: role as "admin" | "user" })}
+                            disabled={user.id === currentUser?.id}
+                          >
+                            <SelectTrigger className="w-36">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="user">
+                                <Badge variant="secondary" className="gap-1">
+                                  <Shield className="h-3 w-3" />
+                                  Usuário
+                                </Badge>
+                              </SelectItem>
+                              <SelectItem value="admin">
+                                <Badge variant="default" className="gap-1">
+                                  <ShieldCheck className="h-3 w-3" />
+                                  Admin
+                                </Badge>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {new Date(user.created_at).toLocaleDateString("pt-BR")}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {user.id !== currentUser?.id && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Excluir usuário?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Esta ação não pode ser desfeita. O usuário "{user.email}" será removido permanentemente do sistema.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => deleteUser.mutate(user.id)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Excluir
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
 
       {/* Relatórios */}
       <ReportConfigCard />

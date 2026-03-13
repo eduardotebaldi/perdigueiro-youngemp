@@ -147,17 +147,22 @@ export function ReportConfigCard() {
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Relatórios
-          </CardTitle>
-          <CardDescription>
-            Configure os relatórios automáticos do sistema
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
+      <Collapsible defaultOpen>
+        <Card>
+          <CardHeader>
+            <CollapsibleTrigger className="w-full text-left group">
+              <CardTitle className="flex items-center gap-2">
+                <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=closed]:-rotate-90" />
+                <FileText className="h-5 w-5" />
+                Relatórios
+              </CardTitle>
+              <CardDescription className="ml-10">
+                Configure os relatórios automáticos do sistema
+              </CardDescription>
+            </CollapsibleTrigger>
+          </CardHeader>
+          <CollapsibleContent>
+            <CardContent className="space-y-6">
           {(!reports || reports.length === 0) ? (
             <p className="text-sm text-muted-foreground">Nenhum relatório configurado.</p>
           ) : (
@@ -238,8 +243,10 @@ export function ReportConfigCard() {
               </Collapsible>
             ))
           )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
 
       {/* Report Preview Dialog */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
