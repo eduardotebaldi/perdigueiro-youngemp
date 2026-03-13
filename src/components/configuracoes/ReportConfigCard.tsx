@@ -16,7 +16,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { FileText, Loader2, Eye, Send, ChevronDown } from "lucide-react";
+import { FileText, Loader2, Eye, Send, ChevronDown, Mail } from "lucide-react";
 import { toast } from "sonner";
 
 interface ReportConfig {
