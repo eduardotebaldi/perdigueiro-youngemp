@@ -128,6 +128,37 @@ export function ReportConfigCard() {
     }
   };
 
+  const handleSendEmail = async (report: ReportConfig) => {
+    if (!report.destinatarios || report.destinatarios.length === 0) {
+      toast.error("Nenhum destinatário configurado");
+      return;
+    }
+    setSendingEmail(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-weekly-report", {
+        body: { force: true, sendEmail: true },
+      });
+      if (error) throw error;
+      if (data?.emailResult) {
+        const { sent, failed, message } = data.emailResult;
+        if (message) {
+          toast.info(message);
+        } else if (sent > 0 && failed.length === 0) {
+          toast.success(`Relatório enviado para ${sent} destinatário(s)!`);
+        } else if (sent > 0 && failed.length > 0) {
+          toast.warning(`Enviado para ${sent}, falhou para: ${failed.join(", ")}`);
+        } else {
+          toast.error(`Falha ao enviar: ${failed.join(", ")}`);
+        }
+        queryClient.invalidateQueries({ queryKey: ["report-configs"] });
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao enviar relatório");
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <Card>
