@@ -42,6 +42,7 @@ export function ReportConfigCard() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewHtml, setPreviewHtml] = useState("");
   const [generatingReport, setGeneratingReport] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   const { data: reports, isLoading } = useQuery({
     queryKey: ["report-configs"],
