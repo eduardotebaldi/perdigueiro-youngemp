@@ -110,7 +110,7 @@ export function ReportConfigCard() {
     setGeneratingReport(true);
     try {
       const { data, error } = await supabase.functions.invoke("generate-weekly-report", {
-        body: { force: true },
+        body: { force: true, report_key: report.report_key },
       });
       if (error) throw error;
       if (data?.html) {
@@ -136,7 +136,7 @@ export function ReportConfigCard() {
     setSendingEmail(true);
     try {
       const { data, error } = await supabase.functions.invoke("generate-weekly-report", {
-        body: { force: true, sendEmail: true },
+        body: { force: true, sendEmail: true, report_key: report.report_key },
       });
       if (error) throw error;
       if (data?.emailResult) {
