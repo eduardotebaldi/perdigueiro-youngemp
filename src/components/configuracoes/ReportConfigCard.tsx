@@ -16,7 +16,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { FileText, Loader2, Eye, Send, ChevronDown, Mail, Clock, CalendarClock } from "lucide-react";
+import { FileText, Loader2, Eye, ChevronDown, Mail, Clock, CalendarClock } from "lucide-react";
 import { toast } from "sonner";
 
 function describeCron(expr: string | null): string {
@@ -281,9 +281,9 @@ export function ReportConfigCard() {
                         {generatingReport ? (
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         ) : (
-                          <Send className="mr-2 h-4 w-4" />
+                          <Eye className="mr-2 h-4 w-4" />
                         )}
-                        Gerar Agora
+                        Visualizar
                       </Button>
                       <Button
                         variant="outline"
@@ -298,16 +298,6 @@ export function ReportConfigCard() {
                         )}
                         Enviar por E-mail
                       </Button>
-                      {report.ultimo_relatorio_html && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleViewLastReport(report)}
-                        >
-                          <Eye className="mr-2 h-4 w-4" />
-                          Ver Último Relatório
-                        </Button>
-                      )}
                     </div>
                   </CollapsibleContent>
                 </div>

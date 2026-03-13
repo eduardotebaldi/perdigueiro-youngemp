@@ -89,7 +89,7 @@ async function buildNewBusinessReport(supabase: any): Promise<string> {
 
   const { data: negociosSemestre } = await supabase
     .from("glebas").select("id").eq("status", "negocio_fechado")
-    .gte("updated_at", effectiveStart.toISOString());
+    .gte("data_fechamento", effectiveStart.toISOString().split("T")[0]);
   const negociosCount = negociosSemestre?.length || 0;
 
   const tenDaysAgo = new Date(now);
@@ -163,7 +163,7 @@ async function buildDirectorateReport(supabase: any): Promise<string> {
   // Semester goal
   const { data: negociosSemestre } = await supabase
     .from("glebas").select("id").eq("status", "negocio_fechado")
-    .gte("updated_at", effectiveStart.toISOString());
+    .gte("data_fechamento", effectiveStart.toISOString().split("T")[0]);
   const negociosCount = negociosSemestre?.length || 0;
 
   // Glebas in target statuses
