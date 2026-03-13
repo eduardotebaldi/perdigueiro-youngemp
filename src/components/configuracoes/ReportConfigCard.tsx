@@ -162,75 +162,80 @@ export function ReportConfigCard() {
             <p className="text-sm text-muted-foreground">Nenhum relatório configurado.</p>
           ) : (
             reports.map((report) => (
-              <div key={report.id} className="border rounded-lg p-4 space-y-4">
-                {/* Header with toggle */}
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-sm">{report.nome}</h3>
-                      <Badge variant={report.ativo ? "default" : "secondary"} className="text-xs">
-                        {report.ativo ? "Ativo" : "Inativo"}
-                      </Badge>
+              <Collapsible key={report.id} defaultOpen={false}>
+                <div className="border rounded-lg p-4 space-y-4">
+                  {/* Header with toggle */}
+                  <div className="flex items-start justify-between gap-4">
+                    <CollapsibleTrigger className="flex-1 text-left group">
+                      <div className="flex items-center gap-2 mb-1">
+                        <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+                        <h3 className="font-semibold text-sm">{report.nome}</h3>
+                        <Badge variant={report.ativo ? "default" : "secondary"} className="text-xs">
+                          {report.ativo ? "Ativo" : "Inativo"}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground ml-6">{report.descricao}</p>
+                    </CollapsibleTrigger>
+                    <Switch
+                      checked={report.ativo}
+                      onCheckedChange={() => handleToggleAtivo(report)}
+                    />
+                  </div>
+
+                  <CollapsibleContent className="space-y-4">
+                    {/* Recipients */}
+                    <div>
+                      <Label className="text-xs text-muted-foreground mb-2 block">Destinatários</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {users?.map((user) => (
+                          <label
+                            key={user.id}
+                            className="flex items-center gap-1.5 text-sm cursor-pointer bg-muted/50 rounded-md px-2 py-1 hover:bg-muted transition-colors"
+                          >
+                            <Checkbox
+                              checked={(report.destinatarios || []).includes(user.id)}
+                              onCheckedChange={() => handleToggleDestinatario(report, user.id)}
+                            />
+                            <span>{user.nome || user.email}</span>
+                          </label>
+                        ))}
+                      </div>
                     </div>
-                    <p className="text-sm text-muted-foreground">{report.descricao}</p>
-                  </div>
-                  <Switch
-                    checked={report.ativo}
-                    onCheckedChange={() => handleToggleAtivo(report)}
-                  />
-                </div>
 
-                {/* Recipients */}
-                <div>
-                  <Label className="text-xs text-muted-foreground mb-2 block">Destinatários</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {users?.map((user) => (
-                      <label
-                        key={user.id}
-                        className="flex items-center gap-1.5 text-sm cursor-pointer bg-muted/50 rounded-md px-2 py-1 hover:bg-muted transition-colors"
+                    {/* Actions */}
+                    <div className="flex items-center gap-2 pt-2 border-t">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleGenerateNow(report)}
+                        disabled={generatingReport}
                       >
-                        <Checkbox
-                          checked={(report.destinatarios || []).includes(user.id)}
-                          onCheckedChange={() => handleToggleDestinatario(report, user.id)}
-                        />
-                        <span>{user.nome || user.email}</span>
-                      </label>
-                    ))}
-                  </div>
+                        {generatingReport ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <Send className="mr-2 h-4 w-4" />
+                        )}
+                        Gerar Agora
+                      </Button>
+                      {report.ultimo_relatorio_html && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleViewLastReport(report)}
+                        >
+                          <Eye className="mr-2 h-4 w-4" />
+                          Ver Último Relatório
+                        </Button>
+                      )}
+                      {report.ultimo_envio && (
+                        <span className="text-xs text-muted-foreground ml-auto">
+                          Último envio: {new Date(report.ultimo_envio).toLocaleString("pt-BR")}
+                        </span>
+                      )}
+                    </div>
+                  </CollapsibleContent>
                 </div>
-
-                {/* Actions */}
-                <div className="flex items-center gap-2 pt-2 border-t">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleGenerateNow(report)}
-                    disabled={generatingReport}
-                  >
-                    {generatingReport ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Send className="mr-2 h-4 w-4" />
-                    )}
-                    Gerar Agora
-                  </Button>
-                  {report.ultimo_relatorio_html && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleViewLastReport(report)}
-                    >
-                      <Eye className="mr-2 h-4 w-4" />
-                      Ver Último Relatório
-                    </Button>
-                  )}
-                  {report.ultimo_envio && (
-                    <span className="text-xs text-muted-foreground ml-auto">
-                      Último envio: {new Date(report.ultimo_envio).toLocaleString("pt-BR")}
-                    </span>
-                  )}
-                </div>
-              </div>
+              </Collapsible>
             ))
           )}
         </CardContent>
