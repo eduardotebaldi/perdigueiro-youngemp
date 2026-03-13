@@ -871,24 +871,33 @@ export type Database = {
           created_at: string | null
           descricao: string | null
           destinatarios: Json | null
+          frequencia: string | null
+          horario: string | null
           id: string
           nome: string
+          ultimo_envio: string | null
         }
         Insert: {
           ativo?: boolean | null
           created_at?: string | null
           descricao?: string | null
           destinatarios?: Json | null
+          frequencia?: string | null
+          horario?: string | null
           id?: string
           nome: string
+          ultimo_envio?: string | null
         }
         Update: {
           ativo?: boolean | null
           created_at?: string | null
           descricao?: string | null
           destinatarios?: Json | null
+          frequencia?: string | null
+          horario?: string | null
           id?: string
           nome?: string
+          ultimo_envio?: string | null
         }
         Relationships: []
       }
