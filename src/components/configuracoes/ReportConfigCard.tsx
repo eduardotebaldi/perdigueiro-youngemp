@@ -243,8 +243,10 @@ export function ReportConfigCard() {
               </Collapsible>
             ))
           )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
 
       {/* Report Preview Dialog */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
