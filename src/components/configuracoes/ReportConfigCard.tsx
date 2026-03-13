@@ -281,9 +281,9 @@ export function ReportConfigCard() {
                         {generatingReport ? (
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         ) : (
-                          <Send className="mr-2 h-4 w-4" />
+                          <Eye className="mr-2 h-4 w-4" />
                         )}
-                        Gerar Agora
+                        Visualizar
                       </Button>
                       <Button
                         variant="outline"
