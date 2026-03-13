@@ -16,8 +16,20 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { FileText, Loader2, Eye, Send, ChevronDown, Mail } from "lucide-react";
+import { FileText, Loader2, Eye, Send, ChevronDown, Mail, Clock, CalendarClock } from "lucide-react";
 import { toast } from "sonner";
+
+function describeCron(expr: string | null): string {
+  if (!expr) return "Sem agendamento";
+  if (expr === "0 11 * * 1") return "Toda segunda-feira às 08:00 (BRT)";
+  const parts = expr.split(" ");
+  if (parts.length === 5) {
+    const [min, hour] = parts;
+    const brHour = ((parseInt(hour) - 3 + 24) % 24).toString().padStart(2, "0");
+    return `Cron: ${brHour}:${min.padStart(2, "0")} (BRT) — ${expr}`;
+  }
+  return expr;
+}
 
 interface ReportConfig {
   id: string;
@@ -28,6 +40,8 @@ interface ReportConfig {
   destinatarios: string[];
   ultimo_envio: string | null;
   ultimo_relatorio_html: string | null;
+  cron_expression: string | null;
+  cron_ativo: boolean;
 }
 
 interface UserWithRole {
@@ -204,14 +218,31 @@ export function ReportConfigCard() {
                   {/* Header with toggle */}
                   <div className="flex items-start justify-between gap-4">
                     <CollapsibleTrigger className="flex-1 text-left group">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
                         <h3 className="font-semibold text-sm">{report.nome}</h3>
                         <Badge variant={report.ativo ? "default" : "secondary"} className="text-xs">
                           {report.ativo ? "Ativo" : "Inativo"}
                         </Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground ml-6">{report.descricao}</p>
+                      <div className="flex items-center gap-3 ml-6 mt-1">
+                        {report.cron_ativo && report.cron_expression ? (
+                          <div className="flex items-center gap-1.5 text-xs font-medium text-primary bg-primary/10 rounded-full px-2.5 py-1">
+                            <CalendarClock className="h-3.5 w-3.5" />
+                            <span>📅 {describeCron(report.cron_expression)}</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 rounded-full px-2.5 py-1">
+                            <Clock className="h-3.5 w-3.5" />
+                            <span>Sem envio automático</span>
+                          </div>
+                        )}
+                        {report.ultimo_envio && (
+                          <span className="text-xs text-muted-foreground">
+                            Último envio: {new Date(report.ultimo_envio).toLocaleString("pt-BR")}
+                          </span>
+                        )}
+                      </div>
                     </CollapsibleTrigger>
                     <Switch
                       checked={report.ativo}
@@ -276,11 +307,6 @@ export function ReportConfigCard() {
                           <Eye className="mr-2 h-4 w-4" />
                           Ver Último Relatório
                         </Button>
-                      )}
-                      {report.ultimo_envio && (
-                        <span className="text-xs text-muted-foreground ml-auto">
-                          Último envio: {new Date(report.ultimo_envio).toLocaleString("pt-BR")}
-                        </span>
                       )}
                     </div>
                   </CollapsibleContent>

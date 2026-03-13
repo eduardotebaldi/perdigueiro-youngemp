@@ -1201,6 +1201,8 @@ export type Database = {
         Row: {
           ativo: boolean
           created_at: string
+          cron_ativo: boolean | null
+          cron_expression: string | null
           descricao: string
           destinatarios: string[]
           id: string
@@ -1213,6 +1215,8 @@ export type Database = {
         Insert: {
           ativo?: boolean
           created_at?: string
+          cron_ativo?: boolean | null
+          cron_expression?: string | null
           descricao?: string
           destinatarios?: string[]
           id?: string
@@ -1225,6 +1229,8 @@ export type Database = {
         Update: {
           ativo?: boolean
           created_at?: string
+          cron_ativo?: boolean | null
+          cron_expression?: string | null
           descricao?: string
           destinatarios?: string[]
           id?: string
