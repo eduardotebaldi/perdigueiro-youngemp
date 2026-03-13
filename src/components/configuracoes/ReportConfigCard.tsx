@@ -308,11 +308,6 @@ export function ReportConfigCard() {
                           Ver Último Relatório
                         </Button>
                       )}
-                      {report.ultimo_envio && (
-                        <span className="text-xs text-muted-foreground ml-auto">
-                          Último envio: {new Date(report.ultimo_envio).toLocaleString("pt-BR")}
-                        </span>
-                      )}
                     </div>
                   </CollapsibleContent>
                 </div>
