@@ -865,6 +865,33 @@ export type Database = {
           },
         ]
       }
+      esquadro_relatorios_config: {
+        Row: {
+          ativo: boolean | null
+          created_at: string | null
+          descricao: string | null
+          destinatarios: Json | null
+          id: string
+          nome: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          created_at?: string | null
+          descricao?: string | null
+          destinatarios?: Json | null
+          id?: string
+          nome: string
+        }
+        Update: {
+          ativo?: boolean | null
+          created_at?: string | null
+          descricao?: string | null
+          destinatarios?: Json | null
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
       esquadro_status: {
         Row: {
           ativo: boolean
