@@ -34,7 +34,7 @@ async function sendEmailsViaResend(
           Authorization: `Bearer ${resendApiKey}`,
         },
         body: JSON.stringify({
-          from: "Perdigueiro <onboarding@resend.dev>",
+          from: "Perdigueiro <noreply@youngempreendimentos.com.br>",
           to: [recipient.email],
           subject,
           html,
