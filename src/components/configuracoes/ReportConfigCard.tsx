@@ -254,6 +254,19 @@ export function ReportConfigCard() {
                         )}
                         Gerar Agora
                       </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleSendEmail(report)}
+                        disabled={sendingEmail}
+                      >
+                        {sendingEmail ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <Mail className="mr-2 h-4 w-4" />
+                        )}
+                        Enviar por E-mail
+                      </Button>
                       {report.ultimo_relatorio_html && (
                         <Button
                           variant="ghost"
