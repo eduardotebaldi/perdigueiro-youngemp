@@ -41,12 +41,12 @@ async function sendEmailsViaResend(
         }),
       });
 
+      const resBody = await res.text();
+      console.log(`Resend response for ${recipient.email}: status=${res.status} body=${resBody}`);
       if (!res.ok) {
-        const errBody = await res.text();
-        console.error(`Falha ao enviar para ${recipient.email}:`, errBody);
+        console.error(`Falha ao enviar para ${recipient.email}: ${resBody}`);
         failed.push(recipient.email);
       } else {
-        await res.text();
         sent++;
       }
     } catch (err) {
