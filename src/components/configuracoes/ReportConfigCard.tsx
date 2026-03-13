@@ -16,8 +16,20 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { FileText, Loader2, Eye, Send, ChevronDown, Mail } from "lucide-react";
+import { FileText, Loader2, Eye, Send, ChevronDown, Mail, Clock, CalendarClock } from "lucide-react";
 import { toast } from "sonner";
+
+function describeCron(expr: string | null): string {
+  if (!expr) return "Sem agendamento";
+  if (expr === "0 11 * * 1") return "Toda segunda-feira às 08:00 (BRT)";
+  const parts = expr.split(" ");
+  if (parts.length === 5) {
+    const [min, hour] = parts;
+    const brHour = ((parseInt(hour) - 3 + 24) % 24).toString().padStart(2, "0");
+    return `Cron: ${brHour}:${min.padStart(2, "0")} (BRT) — ${expr}`;
+  }
+  return expr;
+}
 
 interface ReportConfig {
   id: string;
