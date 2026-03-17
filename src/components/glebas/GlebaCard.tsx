@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { STATUS_LABELS, useGlebas } from "@/hooks/useGlebas";
 import { MapPin, Users, DollarSign, AlertTriangle, Star, MessageSquareOff } from "lucide-react";
 import { validateGlebaStatus, getValidationMessage } from "@/lib/glebaValidation";
+import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Tooltip,
