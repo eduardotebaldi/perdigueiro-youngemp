@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { STATUS_LABELS, useGlebas } from "@/hooks/useGlebas";
 import { MapPin, Users, DollarSign, AlertTriangle, Star, MessageSquareOff } from "lucide-react";
 import { validateGlebaStatus, getValidationMessage } from "@/lib/glebaValidation";
+import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Tooltip,
@@ -34,11 +35,24 @@ interface GlebaCardProps {
 export function GlebaCard({ gleba, showInactiveIcon }: GlebaCardProps) {
   const validation = validateGlebaStatus(gleba);
   const { isAdmin } = useAuth();
-  const { updateGleba } = useGlebas();
+  const { updateGleba, glebas } = useGlebas();
 
   const handlePriorityToggle = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!isAdmin) return;
+    
+    if (!gleba.prioridade) {
+      const priorityCount = glebas.filter((g) => g.prioridade).length;
+      if (priorityCount >= 5) {
+        toast({
+          title: "Quando tudo é prioridade, nada é prioridade.",
+          description: "Limite a no máximo 5 áreas prioritárias.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
     await updateGleba(gleba.id, { prioridade: !gleba.prioridade });
   };
 
