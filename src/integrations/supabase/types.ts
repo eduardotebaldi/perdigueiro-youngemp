@@ -79,6 +79,417 @@ export type Database = {
         }
         Relationships: []
       }
+      cobranca_config_calculo_intimacao: {
+        Row: {
+          ativo: boolean
+          atualizado_em: string
+          correcao_aplicacao: string | null
+          criado_em: string
+          descricao: string | null
+          id: number
+          indexador_padrao: string | null
+          juros_diario: number | null
+          juros_mensal: number | null
+          multa_aplicacao: string | null
+          multa_percentual: number | null
+          nome: string
+        }
+        Insert: {
+          ativo?: boolean
+          atualizado_em?: string
+          correcao_aplicacao?: string | null
+          criado_em?: string
+          descricao?: string | null
+          id: number
+          indexador_padrao?: string | null
+          juros_diario?: number | null
+          juros_mensal?: number | null
+          multa_aplicacao?: string | null
+          multa_percentual?: number | null
+          nome: string
+        }
+        Update: {
+          ativo?: boolean
+          atualizado_em?: string
+          correcao_aplicacao?: string | null
+          criado_em?: string
+          descricao?: string | null
+          id?: number
+          indexador_padrao?: string | null
+          juros_diario?: number | null
+          juros_mensal?: number | null
+          multa_aplicacao?: string | null
+          multa_percentual?: number | null
+          nome?: string
+        }
+        Relationships: []
+      }
+      cobranca_config_gdrive_empreendimento: {
+        Row: {
+          ativo: boolean
+          atualizado_em: string
+          criado_em: string
+          empreendimento_id: number
+          empreendimento_nome: string | null
+          gdrive_folder_id: string | null
+          gdrive_folder_url: string | null
+          id: number
+          padrao_nome_matricula: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          empreendimento_id: number
+          empreendimento_nome?: string | null
+          gdrive_folder_id?: string | null
+          gdrive_folder_url?: string | null
+          id: number
+          padrao_nome_matricula?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          empreendimento_id?: number
+          empreendimento_nome?: string | null
+          gdrive_folder_id?: string | null
+          gdrive_folder_url?: string | null
+          id?: number
+          padrao_nome_matricula?: string | null
+        }
+        Relationships: []
+      }
+      cobranca_empreendimentos: {
+        Row: {
+          atualizado_em: string
+          criado_em: string
+          empresa_id: number
+          id: number
+          nome: string | null
+        }
+        Insert: {
+          atualizado_em?: string
+          criado_em?: string
+          empresa_id: number
+          id: number
+          nome?: string | null
+        }
+        Update: {
+          atualizado_em?: string
+          criado_em?: string
+          empresa_id?: number
+          id?: number
+          nome?: string | null
+        }
+        Relationships: []
+      }
+      cobranca_empresas: {
+        Row: {
+          atualizado_em: string
+          criado_em: string
+          id: number
+          nome: string
+        }
+        Insert: {
+          atualizado_em?: string
+          criado_em?: string
+          id: number
+          nome: string
+        }
+        Update: {
+          atualizado_em?: string
+          criado_em?: string
+          id?: number
+          nome?: string
+        }
+        Relationships: []
+      }
+      cobranca_followup_cobrancas: {
+        Row: {
+          assunto_email_sienge: string | null
+          cliente_email: string | null
+          cliente_id: number
+          cliente_nome: string | null
+          created_at: string
+          data_alerta_notificacao_1: string | null
+          data_alerta_retorno: string | null
+          data_email_sienge: string | null
+          data_envio_notificacao_1: string | null
+          data_envio_notificacao_2: string | null
+          data_retorno: string | null
+          documento_titulo: string | null
+          email_sienge_id: number | null
+          empreendimento_id: number | null
+          empreendimento_nome: string | null
+          id: number
+          notificacao_1_id: number | null
+          notificacao_2_id: number | null
+          observacao_retorno: string | null
+          qtd_parcelas_atraso: number | null
+          recebeu_retorno: boolean | null
+          status: string
+          unidade: string | null
+          updated_at: string
+          valor_atraso: number | null
+        }
+        Insert: {
+          assunto_email_sienge?: string | null
+          cliente_email?: string | null
+          cliente_id: number
+          cliente_nome?: string | null
+          created_at?: string
+          data_alerta_notificacao_1?: string | null
+          data_alerta_retorno?: string | null
+          data_email_sienge?: string | null
+          data_envio_notificacao_1?: string | null
+          data_envio_notificacao_2?: string | null
+          data_retorno?: string | null
+          documento_titulo?: string | null
+          email_sienge_id?: number | null
+          empreendimento_id?: number | null
+          empreendimento_nome?: string | null
+          id: number
+          notificacao_1_id?: number | null
+          notificacao_2_id?: number | null
+          observacao_retorno?: string | null
+          qtd_parcelas_atraso?: number | null
+          recebeu_retorno?: boolean | null
+          status?: string
+          unidade?: string | null
+          updated_at?: string
+          valor_atraso?: number | null
+        }
+        Update: {
+          assunto_email_sienge?: string | null
+          cliente_email?: string | null
+          cliente_id?: number
+          cliente_nome?: string | null
+          created_at?: string
+          data_alerta_notificacao_1?: string | null
+          data_alerta_retorno?: string | null
+          data_email_sienge?: string | null
+          data_envio_notificacao_1?: string | null
+          data_envio_notificacao_2?: string | null
+          data_retorno?: string | null
+          documento_titulo?: string | null
+          email_sienge_id?: number | null
+          empreendimento_id?: number | null
+          empreendimento_nome?: string | null
+          id?: number
+          notificacao_1_id?: number | null
+          notificacao_2_id?: number | null
+          observacao_retorno?: string | null
+          qtd_parcelas_atraso?: number | null
+          recebeu_retorno?: boolean | null
+          status?: string
+          unidade?: string | null
+          updated_at?: string
+          valor_atraso?: number | null
+        }
+        Relationships: []
+      }
+      cobranca_historico_emails: {
+        Row: {
+          assunto: string | null
+          cliente_id: number | null
+          cliente_nome: string | null
+          created_at: string
+          data_envio: string | null
+          data_vencimento: string | null
+          documento_titulo: string | null
+          email: string | null
+          empreendimento_id: number | null
+          empreendimento_nome: string | null
+          empresa_id: number | null
+          empresa_nome: string | null
+          enviou_email: boolean | null
+          enviou_sms: boolean | null
+          id: number
+          mensagem_notificacao: string | null
+          origem: string | null
+          parcela_id: number | null
+          referencia: string | null
+          sienge_id: number | null
+          situacao: string | null
+          titulo_id: number | null
+          valor_parcela: string | null
+        }
+        Insert: {
+          assunto?: string | null
+          cliente_id?: number | null
+          cliente_nome?: string | null
+          created_at?: string
+          data_envio?: string | null
+          data_vencimento?: string | null
+          documento_titulo?: string | null
+          email?: string | null
+          empreendimento_id?: number | null
+          empreendimento_nome?: string | null
+          empresa_id?: number | null
+          empresa_nome?: string | null
+          enviou_email?: boolean | null
+          enviou_sms?: boolean | null
+          id: number
+          mensagem_notificacao?: string | null
+          origem?: string | null
+          parcela_id?: number | null
+          referencia?: string | null
+          sienge_id?: number | null
+          situacao?: string | null
+          titulo_id?: number | null
+          valor_parcela?: string | null
+        }
+        Update: {
+          assunto?: string | null
+          cliente_id?: number | null
+          cliente_nome?: string | null
+          created_at?: string
+          data_envio?: string | null
+          data_vencimento?: string | null
+          documento_titulo?: string | null
+          email?: string | null
+          empreendimento_id?: number | null
+          empreendimento_nome?: string | null
+          empresa_id?: number | null
+          empresa_nome?: string | null
+          enviou_email?: boolean | null
+          enviou_sms?: boolean | null
+          id?: number
+          mensagem_notificacao?: string | null
+          origem?: string | null
+          parcela_id?: number | null
+          referencia?: string | null
+          sienge_id?: number | null
+          situacao?: string | null
+          titulo_id?: number | null
+          valor_parcela?: string | null
+        }
+        Relationships: []
+      }
+      cobranca_historico_sincronizacao: {
+        Row: {
+          empreendimento_id: number | null
+          empresa_id: number | null
+          executado_em: string
+          id: number
+          mensagem: string | null
+          registros_importados: number | null
+          status: string | null
+        }
+        Insert: {
+          empreendimento_id?: number | null
+          empresa_id?: number | null
+          executado_em?: string
+          id: number
+          mensagem?: string | null
+          registros_importados?: number | null
+          status?: string | null
+        }
+        Update: {
+          empreendimento_id?: number | null
+          empresa_id?: number | null
+          executado_em?: string
+          id?: number
+          mensagem?: string | null
+          registros_importados?: number | null
+          status?: string | null
+        }
+        Relationships: []
+      }
+      cobranca_inadimplencia: {
+        Row: {
+          acrescimos: number | null
+          atraso_atualizado: number | null
+          atraso_desde: string | null
+          atualizado_em: string
+          cliente_cpf: string | null
+          cliente_email: string | null
+          cliente_endereco: string | null
+          cliente_id: number | null
+          cliente_telefone: string | null
+          contrato_id: number | null
+          criado_em: string
+          dados_originais: Json | null
+          data_contrato: string | null
+          data_venda: string | null
+          documento_titulo: string | null
+          empreendimento_id: number | null
+          empreendimento_nome: string | null
+          empresa_id: number | null
+          id: number
+          numero_contrato: string | null
+          proprietario: string | null
+          qtd_parcelas: number | null
+          saldo_devedor: number | null
+          status: string | null
+          unidade: string | null
+          valor_corrigido: number | null
+          valor_recebido: number | null
+          valor_total_contrato: number | null
+        }
+        Insert: {
+          acrescimos?: number | null
+          atraso_atualizado?: number | null
+          atraso_desde?: string | null
+          atualizado_em?: string
+          cliente_cpf?: string | null
+          cliente_email?: string | null
+          cliente_endereco?: string | null
+          cliente_id?: number | null
+          cliente_telefone?: string | null
+          contrato_id?: number | null
+          criado_em?: string
+          dados_originais?: Json | null
+          data_contrato?: string | null
+          data_venda?: string | null
+          documento_titulo?: string | null
+          empreendimento_id?: number | null
+          empreendimento_nome?: string | null
+          empresa_id?: number | null
+          id: number
+          numero_contrato?: string | null
+          proprietario?: string | null
+          qtd_parcelas?: number | null
+          saldo_devedor?: number | null
+          status?: string | null
+          unidade?: string | null
+          valor_corrigido?: number | null
+          valor_recebido?: number | null
+          valor_total_contrato?: number | null
+        }
+        Update: {
+          acrescimos?: number | null
+          atraso_atualizado?: number | null
+          atraso_desde?: string | null
+          atualizado_em?: string
+          cliente_cpf?: string | null
+          cliente_email?: string | null
+          cliente_endereco?: string | null
+          cliente_id?: number | null
+          cliente_telefone?: string | null
+          contrato_id?: number | null
+          criado_em?: string
+          dados_originais?: Json | null
+          data_contrato?: string | null
+          data_venda?: string | null
+          documento_titulo?: string | null
+          empreendimento_id?: number | null
+          empreendimento_nome?: string | null
+          empresa_id?: number | null
+          id?: number
+          numero_contrato?: string | null
+          proprietario?: string | null
+          qtd_parcelas?: number | null
+          saldo_devedor?: number | null
+          status?: string | null
+          unidade?: string | null
+          valor_corrigido?: number | null
+          valor_recebido?: number | null
+          valor_total_contrato?: number | null
+        }
+        Relationships: []
+      }
       comercial_corretores: {
         Row: {
           bairro: string
@@ -606,6 +1017,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      esquadro_comentarios_pauta: {
+        Row: {
+          conteudo: string
+          created_at: string
+          fixado: boolean
+          id: string
+          user_id: string
+        }
+        Insert: {
+          conteudo: string
+          created_at?: string
+          fixado?: boolean
+          id?: string
+          user_id: string
+        }
+        Update: {
+          conteudo?: string
+          created_at?: string
+          fixado?: boolean
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       esquadro_custo_hora_historico: {
         Row: {
@@ -1183,6 +1618,617 @@ export type Database = {
         }
         Relationships: []
       }
+      paver_dependency_rules: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          obra_id: string
+          predecessor: string
+          successor: string
+          tipo: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          obra_id: string
+          predecessor: string
+          successor: string
+          tipo: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          obra_id?: string
+          predecessor?: string
+          successor?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "paver_dependency_rules_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "paver_obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      paver_diario_atividades: {
+        Row: {
+          avanco_percentual: number
+          created_at: string | null
+          diario_id: string
+          eap_item_id: string
+          id: string
+          quantidade_dia: number
+        }
+        Insert: {
+          avanco_percentual?: number
+          created_at?: string | null
+          diario_id: string
+          eap_item_id: string
+          id?: string
+          quantidade_dia?: number
+        }
+        Update: {
+          avanco_percentual?: number
+          created_at?: string | null
+          diario_id?: string
+          eap_item_id?: string
+          id?: string
+          quantidade_dia?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "paver_diario_atividades_diario_id_fkey"
+            columns: ["diario_id"]
+            isOneToOne: false
+            referencedRelation: "paver_diarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "paver_diario_atividades_eap_item_id_fkey"
+            columns: ["eap_item_id"]
+            isOneToOne: false
+            referencedRelation: "paver_eap_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      paver_diarios: {
+        Row: {
+          atividades: string
+          clima: string
+          clima_manha: string
+          clima_tarde: string
+          created_at: string | null
+          created_by: string
+          data: string
+          fotos: string[] | null
+          id: string
+          mao_de_obra: string | null
+          obra_id: string
+          observacoes: string | null
+          temperatura_max: number | null
+          temperatura_min: number | null
+        }
+        Insert: {
+          atividades: string
+          clima?: string
+          clima_manha?: string
+          clima_tarde?: string
+          created_at?: string | null
+          created_by: string
+          data: string
+          fotos?: string[] | null
+          id?: string
+          mao_de_obra?: string | null
+          obra_id: string
+          observacoes?: string | null
+          temperatura_max?: number | null
+          temperatura_min?: number | null
+        }
+        Update: {
+          atividades?: string
+          clima?: string
+          clima_manha?: string
+          clima_tarde?: string
+          created_at?: string | null
+          created_by?: string
+          data?: string
+          fotos?: string[] | null
+          id?: string
+          mao_de_obra?: string | null
+          obra_id?: string
+          observacoes?: string | null
+          temperatura_max?: number | null
+          temperatura_min?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "paver_diarios_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "paver_obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      paver_eap_baseline_items: {
+        Row: {
+          avanco_previsto: number | null
+          baseline_id: string
+          created_at: string | null
+          data_fim_prevista: string | null
+          data_inicio_prevista: string | null
+          eap_item_id: string
+          id: string
+        }
+        Insert: {
+          avanco_previsto?: number | null
+          baseline_id: string
+          created_at?: string | null
+          data_fim_prevista?: string | null
+          data_inicio_prevista?: string | null
+          eap_item_id: string
+          id?: string
+        }
+        Update: {
+          avanco_previsto?: number | null
+          baseline_id?: string
+          created_at?: string | null
+          data_fim_prevista?: string | null
+          data_inicio_prevista?: string | null
+          eap_item_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "paver_eap_baseline_items_baseline_id_fkey"
+            columns: ["baseline_id"]
+            isOneToOne: false
+            referencedRelation: "paver_eap_baselines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "paver_eap_baseline_items_eap_item_id_fkey"
+            columns: ["eap_item_id"]
+            isOneToOne: false
+            referencedRelation: "paver_eap_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      paver_eap_baselines: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          id: string
+          nome: string
+          obra_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          id?: string
+          nome: string
+          obra_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          nome?: string
+          obra_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "paver_eap_baselines_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "paver_obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      paver_eap_items: {
+        Row: {
+          avanco_base: number | null
+          avanco_previsto: number | null
+          avanco_realizado: number | null
+          classificacao_adicional: string | null
+          codigo: string | null
+          created_at: string | null
+          data_fim_prevista: string | null
+          data_fim_real: string | null
+          data_inicio_prevista: string | null
+          data_inicio_real: string | null
+          descricao: string
+          id: string
+          lote: string | null
+          obra_id: string
+          ordem: number | null
+          pacote: string | null
+          parent_id: string | null
+          predecessoras: string[] | null
+          quantidade: number | null
+          sucessoras: string[] | null
+          tipo: string
+          unidade: string | null
+        }
+        Insert: {
+          avanco_base?: number | null
+          avanco_previsto?: number | null
+          avanco_realizado?: number | null
+          classificacao_adicional?: string | null
+          codigo?: string | null
+          created_at?: string | null
+          data_fim_prevista?: string | null
+          data_fim_real?: string | null
+          data_inicio_prevista?: string | null
+          data_inicio_real?: string | null
+          descricao: string
+          id?: string
+          lote?: string | null
+          obra_id: string
+          ordem?: number | null
+          pacote?: string | null
+          parent_id?: string | null
+          predecessoras?: string[] | null
+          quantidade?: number | null
+          sucessoras?: string[] | null
+          tipo?: string
+          unidade?: string | null
+        }
+        Update: {
+          avanco_base?: number | null
+          avanco_previsto?: number | null
+          avanco_realizado?: number | null
+          classificacao_adicional?: string | null
+          codigo?: string | null
+          created_at?: string | null
+          data_fim_prevista?: string | null
+          data_fim_real?: string | null
+          data_inicio_prevista?: string | null
+          data_inicio_real?: string | null
+          descricao?: string
+          id?: string
+          lote?: string | null
+          obra_id?: string
+          ordem?: number | null
+          pacote?: string | null
+          parent_id?: string | null
+          predecessoras?: string[] | null
+          quantidade?: number | null
+          sucessoras?: string[] | null
+          tipo?: string
+          unidade?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "paver_eap_items_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "paver_obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "paver_eap_items_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "paver_eap_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      paver_fotos_localizadas: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          descricao: string | null
+          diario_id: string | null
+          foto_url: string
+          id: string
+          obra_id: string
+          pacote: string | null
+          planta_id: string
+          pos_x: number
+          pos_y: number
+          tipo_servico: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          descricao?: string | null
+          diario_id?: string | null
+          foto_url: string
+          id?: string
+          obra_id: string
+          pacote?: string | null
+          planta_id: string
+          pos_x: number
+          pos_y: number
+          tipo_servico?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          descricao?: string | null
+          diario_id?: string | null
+          foto_url?: string
+          id?: string
+          obra_id?: string
+          pacote?: string | null
+          planta_id?: string
+          pos_x?: number
+          pos_y?: number
+          tipo_servico?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "paver_fotos_localizadas_diario_id_fkey"
+            columns: ["diario_id"]
+            isOneToOne: false
+            referencedRelation: "paver_diarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "paver_fotos_localizadas_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "paver_obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "paver_fotos_localizadas_planta_id_fkey"
+            columns: ["planta_id"]
+            isOneToOne: false
+            referencedRelation: "paver_plantas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      paver_obras: {
+        Row: {
+          cidade: string | null
+          created_at: string | null
+          created_by: string
+          data_inicio: string | null
+          data_previsao: string | null
+          endereco: string | null
+          estado: string | null
+          id: string
+          nome: string
+          responsavel_id: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          cidade?: string | null
+          created_at?: string | null
+          created_by: string
+          data_inicio?: string | null
+          data_previsao?: string | null
+          endereco?: string | null
+          estado?: string | null
+          id?: string
+          nome: string
+          responsavel_id?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          cidade?: string | null
+          created_at?: string | null
+          created_by?: string
+          data_inicio?: string | null
+          data_previsao?: string | null
+          endereco?: string | null
+          estado?: string | null
+          id?: string
+          nome?: string
+          responsavel_id?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      paver_orcamento_itens: {
+        Row: {
+          codigo: string
+          codigo_pai_n1: string | null
+          codigo_pai_n2: string | null
+          codigo_pai_n3: string | null
+          created_at: string
+          descricao: string
+          id: string
+          nivel: number
+          obra_id: string
+          orcamento_id: string
+          ordem: number
+          pacote_trabalho: string | null
+          preco_total: number
+          preco_unitario: number
+          quantidade: number
+          tipo_servico: string | null
+          unidade: string | null
+        }
+        Insert: {
+          codigo: string
+          codigo_pai_n1?: string | null
+          codigo_pai_n2?: string | null
+          codigo_pai_n3?: string | null
+          created_at?: string
+          descricao: string
+          id?: string
+          nivel?: number
+          obra_id: string
+          orcamento_id: string
+          ordem?: number
+          pacote_trabalho?: string | null
+          preco_total?: number
+          preco_unitario?: number
+          quantidade?: number
+          tipo_servico?: string | null
+          unidade?: string | null
+        }
+        Update: {
+          codigo?: string
+          codigo_pai_n1?: string | null
+          codigo_pai_n2?: string | null
+          codigo_pai_n3?: string | null
+          created_at?: string
+          descricao?: string
+          id?: string
+          nivel?: number
+          obra_id?: string
+          orcamento_id?: string
+          ordem?: number
+          pacote_trabalho?: string | null
+          preco_total?: number
+          preco_unitario?: number
+          quantidade?: number
+          tipo_servico?: string | null
+          unidade?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "paver_orcamento_itens_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "paver_obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "paver_orcamento_itens_orcamento_id_fkey"
+            columns: ["orcamento_id"]
+            isOneToOne: false
+            referencedRelation: "paver_orcamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      paver_orcamentos: {
+        Row: {
+          arquivo_url: string | null
+          created_at: string
+          created_by: string
+          id: string
+          nome_arquivo: string | null
+          obra_id: string
+          total_itens: number
+          valor_total: number
+        }
+        Insert: {
+          arquivo_url?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          nome_arquivo?: string | null
+          obra_id: string
+          total_itens?: number
+          valor_total?: number
+        }
+        Update: {
+          arquivo_url?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          nome_arquivo?: string | null
+          obra_id?: string
+          total_itens?: number
+          valor_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "paver_orcamentos_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "paver_obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      paver_plantas: {
+        Row: {
+          created_at: string | null
+          id: string
+          imagem_url: string
+          nome: string
+          obra_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          imagem_url: string
+          nome: string
+          obra_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          imagem_url?: string
+          nome?: string
+          obra_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "paver_plantas_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "paver_obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      paver_profiles: {
+        Row: {
+          ativo: boolean
+          avatar_url: string | null
+          created_at: string | null
+          full_name: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      paver_user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["paver_app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["paver_app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["paver_app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       propostas: {
         Row: {
           arquivo_carta: string | null
@@ -1375,6 +2421,13 @@ export type Database = {
           role: Database["public"]["Enums"]["app_role"]
         }[]
       }
+      get_eap_avanco_sums: {
+        Args: { p_obra_id?: string }
+        Returns: {
+          eap_item_id: string
+          sum_quantidade_dia: number
+        }[]
+      }
       get_user_emails: {
         Args: { user_ids: string[] }
         Returns: {
@@ -1391,6 +2444,10 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      paver_has_role: {
+        Args: { _role: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "user"
@@ -1415,6 +2472,7 @@ export type Database = {
         | "proposta_recusada"
         | "negocio_fechado"
         | "standby"
+      paver_app_role: "admin" | "engenharia"
       permuta_status: "incerto" | "nao" | "sim"
       tipo_anexo_gleba:
         | "pesquisa_mercado"
@@ -1572,6 +2630,7 @@ export const Constants = {
         "negocio_fechado",
         "standby",
       ],
+      paver_app_role: ["admin", "engenharia"],
       permuta_status: ["incerto", "nao", "sim"],
       tipo_anexo_gleba: [
         "pesquisa_mercado",

@@ -35,11 +35,24 @@ interface GlebaCardProps {
 export function GlebaCard({ gleba, showInactiveIcon }: GlebaCardProps) {
   const validation = validateGlebaStatus(gleba);
   const { isAdmin } = useAuth();
-  const { updateGleba } = useGlebas();
+  const { updateGleba, glebas } = useGlebas();
 
   const handlePriorityToggle = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!isAdmin) return;
+    
+    if (!gleba.prioridade) {
+      const priorityCount = glebas.filter((g) => g.prioridade).length;
+      if (priorityCount >= 5) {
+        toast({
+          title: "Quando tudo é prioridade, nada é prioridade.",
+          description: "Limite a no máximo 5 áreas prioritárias.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
     await updateGleba(gleba.id, { prioridade: !gleba.prioridade });
   };
 
