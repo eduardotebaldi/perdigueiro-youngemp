@@ -1,4 +1,4 @@
-import { CalendarDays } from "lucide-react";
+import { CreateAtividadeDialog } from "@/components/atividades/CreateAtividadeDialog";
 import { CreateAtividadeDialog } from "@/components/atividades/CreateAtividadeDialog";
 import { AtividadesList } from "@/components/atividades/AtividadesList";
 
