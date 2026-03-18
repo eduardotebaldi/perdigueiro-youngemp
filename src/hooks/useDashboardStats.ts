@@ -99,6 +99,12 @@ export function useDashboardStats() {
       const glebasEmStandby = glebasPorStatus["standby"] || 0;
       const glebasPrioritarias = glebas.filter((g) => g.prioridade).length;
 
+      // Glebas com informações faltando (validação de status)
+      const glebasComInfoFaltando = glebas.filter((g) => {
+        const result = validateGlebaStatus(g as any);
+        return !result.isValid;
+      }).length;
+
       // Glebas inativas (sem atividade nos últimos 10 dias, excluindo descartada/negocio_fechado)
       const excludedStatuses = ["descartada", "negocio_fechado", "proposta_recusada", "standby"];
       const activeGlebaIds = new Set(
