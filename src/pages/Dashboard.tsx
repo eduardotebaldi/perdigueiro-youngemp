@@ -150,6 +150,9 @@ export default function Dashboard() {
         </DialogContent>
       </Dialog>
 
+      {/* Comunicados da Direção */}
+      <ComunicadosDirecao />
+
       {/* KPI Cards */}
       <StatsCards
         totalGlebas={stats?.totalGlebas || 0}
