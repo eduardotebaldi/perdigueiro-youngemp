@@ -52,23 +52,7 @@ export default function Glebas() {
       )}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            {viewMode === "kanban" ? (
-              <Kanban className="h-6 w-6 text-primary" />
-            ) : (
-              <Table2 className="h-6 w-6 text-primary" />
-            )}
-            <h1 className="text-3xl font-bold">
-              {viewMode === "kanban" ? "Kanban de Glebas" : "Planilha de Glebas"}
-            </h1>
-          </div>
-          {viewMode === "table" && (
-            <p className="text-muted-foreground">
-              Visualize e filtre todas as suas glebas em formato de planilha
-            </p>
-          )}
-        </div>
+        <div></div>
         
         <div className="flex items-center gap-3">
           {/* View Toggle */}

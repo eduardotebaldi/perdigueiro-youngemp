@@ -110,15 +110,7 @@ export default function Propostas() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <FileText className="h-6 w-6 text-primary" />
-            <h1 className="text-3xl font-bold">Propostas</h1>
-          </div>
-          <p className="text-muted-foreground">
-            Gerencie as propostas enviadas para as glebas
-          </p>
-        </div>
+        <div></div>
 
         <div className="flex items-center gap-3">
           {isAdmin && <ImportPropostasDialog />}

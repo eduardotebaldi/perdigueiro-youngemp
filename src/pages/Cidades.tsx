@@ -144,12 +144,7 @@ export default function Cidades() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Cidades</h1>
-          <p className="text-muted-foreground mt-1">
-            Gerencie as cidades e seus planos diretores
-          </p>
-        </div>
+        <div></div>
         <div className="flex items-center gap-3">
           {isAdmin && (
             <Button
