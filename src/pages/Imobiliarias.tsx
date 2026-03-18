@@ -46,15 +46,7 @@ export default function Imobiliarias() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <Building2 className="h-6 w-6 text-primary" />
-            <h1 className="text-3xl font-bold">Imobiliárias</h1>
-          </div>
-          <p className="text-muted-foreground">
-            Gerencie as imobiliárias parceiras e seus contatos
-          </p>
-        </div>
+        <div></div>
 
         <CreateImobiliariaDialog />
       </div>

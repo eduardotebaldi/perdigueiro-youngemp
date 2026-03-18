@@ -58,13 +58,6 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">Olá, {firstName}! 👋</h1>
-        <p className="text-muted-foreground mt-1">
-          Bem-vindo ao Perdigueiro
-        </p>
-      </div>
 
       {/* Meta Semestral */}
       {isLoading ? (

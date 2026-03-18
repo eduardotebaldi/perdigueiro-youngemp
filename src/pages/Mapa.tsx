@@ -170,10 +170,6 @@ export default function Mapa() {
     )}>
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Map className="h-6 w-6 text-primary" />
-          <h1 className="text-3xl font-bold">Mapa Integrado</h1>
-        </div>
 
         <div className="flex items-center gap-2">
           {/* Google Earth Integration */}
