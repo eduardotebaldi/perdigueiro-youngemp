@@ -21,6 +21,17 @@ export interface ValidationResult {
 export function validateGlebaStatus(gleba: Gleba): ValidationResult {
   const missingFields: string[] = [];
 
+  // Campos comuns obrigatórios para todas as glebas (exceto descartadas)
+  if (gleba.status !== "descartada") {
+    if (!gleba.cidade_id) {
+      missingFields.push("Cidade");
+    }
+    if (!gleba.tamanho_m2) {
+      missingFields.push("Área (m²)");
+    }
+  }
+
+  // Validações específicas por status
   switch (gleba.status) {
     case "visita_realizada":
       if (!gleba.data_visita) {
@@ -29,9 +40,9 @@ export function validateGlebaStatus(gleba: Gleba): ValidationResult {
       break;
 
     case "proposta_enviada":
-      // A proposta é uma entidade separada, mas podemos verificar se há algum indicador
-      // Por enquanto, assumimos que está ok se chegou nesse status
-      // Se quiser validar, precisa buscar na tabela propostas
+      if (!gleba.preco) {
+        missingFields.push("Preço");
+      }
       break;
 
     case "protocolo_assinado":
@@ -47,12 +58,14 @@ export function validateGlebaStatus(gleba: Gleba): ValidationResult {
       break;
 
     case "proposta_recusada":
-      // Não há requisitos específicos além de ter passado por proposta_enviada
       break;
 
     case "negocio_fechado":
       if (!gleba.arquivo_contrato) {
         missingFields.push("Contrato definitivo");
+      }
+      if (!gleba.data_fechamento) {
+        missingFields.push("Data de fechamento");
       }
       break;
 
@@ -62,7 +75,6 @@ export function validateGlebaStatus(gleba: Gleba): ValidationResult {
       }
       break;
 
-    // identificada e informacoes_recebidas não têm requisitos obrigatórios
     default:
       break;
   }
