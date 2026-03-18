@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfMonth, endOfMonth, subMonths, format, startOfWeek, endOfWeek, eachDayOfInterval, eachMonthOfInterval, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { validateGlebaStatus } from "@/lib/glebaValidation";
 
 interface InactiveGleba {
   id: string;
@@ -31,6 +32,7 @@ interface DashboardStats {
   glebasEmStandby: number;
   glebasPrioritarias: number;
   glebasInativas: InactiveGleba[];
+  glebasComInfoFaltando: number;
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -60,7 +62,7 @@ export function useDashboardStats() {
 
       // Buscar dados em paralelo
       const [glebasResult, propostasResult, cidadesResult, atividadesResult, negociosSemestreResult, recentAtividadesResult] = await Promise.all([
-        supabase.from("glebas").select("id, status, prioridade, numero, apelido"),
+        supabase.from("glebas").select("id, status, prioridade, numero, apelido, data_visita, arquivo_protocolo, motivo_descarte_id, arquivo_contrato, standby_motivo"),
         supabase.from("propostas").select("id, data_proposta"),
         supabase.from("cidades").select("id"),
         supabase.from("atividades").select("id, data"),
@@ -96,6 +98,12 @@ export function useDashboardStats() {
       }));
       const glebasEmStandby = glebasPorStatus["standby"] || 0;
       const glebasPrioritarias = glebas.filter((g) => g.prioridade).length;
+
+      // Glebas com informações faltando (validação de status)
+      const glebasComInfoFaltando = glebas.filter((g) => {
+        const result = validateGlebaStatus(g as any);
+        return !result.isValid;
+      }).length;
 
       // Glebas inativas (sem atividade nos últimos 10 dias, excluindo descartada/negocio_fechado)
       const excludedStatuses = ["descartada", "negocio_fechado", "proposta_recusada", "standby"];
@@ -160,6 +168,7 @@ export function useDashboardStats() {
         glebasEmStandby,
         glebasPrioritarias,
         glebasInativas,
+        glebasComInfoFaltando,
       };
     },
     staleTime: 1000 * 60 * 5, // 5 minutos
