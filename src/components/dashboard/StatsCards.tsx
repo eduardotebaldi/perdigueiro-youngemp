@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 interface StatsCardsProps {
   totalGlebas: number;
   totalPropostas: number;
-  totalCidades: number;
+  glebasInativas: number;
   negociosFechados: number;
   glebasEmStandby: number;
   glebasPrioritarias: number;
