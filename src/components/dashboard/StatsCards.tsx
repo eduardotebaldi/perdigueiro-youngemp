@@ -6,7 +6,7 @@ interface StatsCardsProps {
   totalGlebas: number;
   totalPropostas: number;
   glebasInativas: number;
-  negociosFechados: number;
+  glebasComInfoFaltando: number;
   glebasEmStandby: number;
   glebasPrioritarias: number;
   isLoading?: boolean;
