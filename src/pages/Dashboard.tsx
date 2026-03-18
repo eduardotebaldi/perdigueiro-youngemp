@@ -153,7 +153,7 @@ export default function Dashboard() {
       <StatsCards
         totalGlebas={stats?.totalGlebas || 0}
         totalPropostas={stats?.totalPropostas || 0}
-        totalCidades={stats?.totalCidades || 0}
+        glebasInativas={glebasInativas.length}
         negociosFechados={stats?.negociosFechados || 0}
         glebasEmStandby={stats?.glebasEmStandby || 0}
         glebasPrioritarias={stats?.glebasPrioritarias || 0}

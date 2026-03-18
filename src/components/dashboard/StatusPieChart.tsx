@@ -118,6 +118,9 @@ export function StatusPieChart({ data, isLoading }: StatusPieChartProps) {
             </div>
           ))}
         </div>
+        <p className="text-xs text-muted-foreground italic text-center mt-3">
+          * Glebas com status "Descartada" estão excluídas do gráfico.
+        </p>
       </CardContent>
     </Card>
   );
