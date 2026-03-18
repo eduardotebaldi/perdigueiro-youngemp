@@ -62,7 +62,7 @@ export function useDashboardStats() {
 
       // Buscar dados em paralelo
       const [glebasResult, propostasResult, cidadesResult, atividadesResult, negociosSemestreResult, recentAtividadesResult] = await Promise.all([
-        supabase.from("glebas").select("id, status, prioridade, numero, apelido"),
+        supabase.from("glebas").select("id, status, prioridade, numero, apelido, data_visita, arquivo_protocolo, motivo_descarte_id, arquivo_contrato, standby_motivo"),
         supabase.from("propostas").select("id, data_proposta"),
         supabase.from("cidades").select("id"),
         supabase.from("atividades").select("id, data"),
