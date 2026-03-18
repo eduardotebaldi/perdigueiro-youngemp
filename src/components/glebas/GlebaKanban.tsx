@@ -21,11 +21,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Loader2, ChevronLeft, ChevronRight, Search, Star, ChevronsLeft, ChevronsRight, MapPin, X, MessageSquareOff, Clock } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, Search, Star, ChevronsLeft, ChevronsRight, MapPin, X, MessageSquareOff, Clock, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import confetti from "canvas-confetti";
+import { validateGlebaStatus } from "@/lib/glebaValidation";
 import {
   Popover,
   PopoverContent,
@@ -177,6 +178,7 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
   const [filterPriority, setFilterPriority] = useState(false);
   const [filterInactive, setFilterInactive] = useState(false);
   const [filterStale, setFilterStale] = useState(false);
+  const [filterPending, setFilterPending] = useState(false);
   const [selectedCidades, setSelectedCidades] = useState<Set<string>>(new Set());
   const [cidadeSearchTerm, setCidadeSearchTerm] = useState("");
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
@@ -244,6 +246,9 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
       const excludedStatuses = ["descartada", "negocio_fechado"];
       result = result.filter((g) => !excludedStatuses.includes(g.status) && new Date(g.updated_at) < sixtyDaysAgo);
     }
+    if (filterPending) {
+      result = result.filter((g) => !validateGlebaStatus(g).isValid);
+    }
     if (selectedCidades.size > 0) {
       result = result.filter((g) => g.cidade_id && selectedCidades.has(g.cidade_id));
     }
@@ -256,7 +261,7 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
       });
     }
     return result;
-  }, [glebas, searchTerm, filterPriority, filterInactive, filterStale, selectedCidades, inactiveGlebaIds, sixtyDaysAgo]);
+  }, [glebas, searchTerm, filterPriority, filterInactive, filterStale, filterPending, selectedCidades, inactiveGlebaIds, sixtyDaysAgo]);
 
   const getFilteredGlebasByStatus = useCallback((status: string) => {
     return filteredGlebas.filter((g) => g.status === status);
@@ -419,6 +424,14 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
           <Label htmlFor="filter-stale" className="flex items-center gap-0.5 cursor-pointer text-[11px] whitespace-nowrap">
             <Clock className="h-3 w-3 text-red-500" />
             60d+
+          </Label>
+        </div>
+
+        <div className="flex items-center gap-1 border rounded px-1.5 py-0.5 shrink-0">
+          <Switch id="filter-pending" checked={filterPending} onCheckedChange={setFilterPending} className="scale-[0.65]" />
+          <Label htmlFor="filter-pending" className="flex items-center gap-0.5 cursor-pointer text-[11px] whitespace-nowrap">
+            <AlertTriangle className="h-3 w-3 text-amber-500" />
+            Info. faltando
           </Label>
         </div>
 
