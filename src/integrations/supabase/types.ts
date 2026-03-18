@@ -1319,6 +1319,33 @@ export type Database = {
           },
         ]
       }
+      dashboard_comunicados: {
+        Row: {
+          autor_id: string
+          autor_nome: string
+          conteudo: string
+          created_at: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          autor_id: string
+          autor_nome?: string
+          conteudo: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          autor_id?: string
+          autor_nome?: string
+          conteudo?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       esquadro_comentarios: {
         Row: {
           conteudo: string

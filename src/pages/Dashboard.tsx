@@ -7,6 +7,7 @@ import { PropostasChart } from "@/components/dashboard/PropostasChart";
 import { AtividadesChart } from "@/components/dashboard/AtividadesChart";
 import { StatusPieChart } from "@/components/dashboard/StatusPieChart";
 import { QuickAccess } from "@/components/dashboard/QuickAccess";
+import { ComunicadosDirecao } from "@/components/dashboard/ComunicadosDirecao";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -148,6 +149,9 @@ export default function Dashboard() {
           </p>
         </DialogContent>
       </Dialog>
+
+      {/* Comunicados da Direção */}
+      <ComunicadosDirecao />
 
       {/* KPI Cards */}
       <StatsCards
