@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Kanban, FileText, Map, TrendingUp, Clock, Star } from "lucide-react";
+import { Kanban, FileText, AlertTriangle, TrendingUp, Clock, Star } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface StatsCardsProps {
