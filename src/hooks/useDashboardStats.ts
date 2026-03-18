@@ -32,6 +32,7 @@ interface DashboardStats {
   glebasEmStandby: number;
   glebasPrioritarias: number;
   glebasInativas: InactiveGleba[];
+  glebasComInfoFaltando: number;
 }
 
 const STATUS_LABELS: Record<string, string> = {
