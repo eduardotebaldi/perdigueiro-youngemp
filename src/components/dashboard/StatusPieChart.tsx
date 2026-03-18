@@ -47,7 +47,7 @@ export function StatusPieChart({ data, isLoading }: StatusPieChartProps) {
   }
 
   const chartData = Object.entries(data)
-    .filter(([, value]) => value > 0)
+    .filter(([status, value]) => value > 0 && status !== "descartada")
     .map(([status, value]) => ({
       name: STATUS_LABELS[status] || status,
       value,
