@@ -35,10 +35,11 @@ export function StatsCards({
       icon: FileText,
     },
     {
-      title: "Cidades Mapeadas",
-      value: totalCidades,
-      description: totalCidades === 0 ? "Nenhuma cidade cadastrada" : "Com glebas cadastradas",
-      icon: Map,
+      title: "Sem Atualização",
+      value: glebasInativas,
+      description: glebasInativas === 0 ? "Todas em dia! 🎉" : "Sem atividade há 10 dias",
+      icon: Clock,
+      highlight: glebasInativas > 0,
     },
     {
       title: "Negócios Fechados",
