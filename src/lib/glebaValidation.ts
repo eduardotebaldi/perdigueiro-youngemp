@@ -8,15 +8,16 @@ export interface ValidationResult {
 }
 
 /**
- * Valida se uma gleba possui todas as informações necessárias para seu status atual.
+ * Valida se uma gleba possui todas as informações necessárias.
  * 
- * Regras:
- * - visita_realizada: exige data_visita
- * - proposta_enviada: exige arquivo de proposta (verificado via propostas relacionadas)
- * - protocolo_assinado: exige arquivo_protocolo
- * - descartada: exige motivo_descarte_id
- * - negocio_fechado: exige arquivo_contrato
- * - standby: exige standby_motivo
+ * Campos comuns (exceto descartadas): cidade, área (m²)
+ * Por status:
+ * - visita_realizada: data_visita
+ * - proposta_enviada: preço
+ * - protocolo_assinado: arquivo_protocolo
+ * - descartada: motivo_descarte_id
+ * - negocio_fechado: arquivo_contrato, data_fechamento
+ * - standby: standby_motivo
  */
 export function validateGlebaStatus(gleba: Gleba): ValidationResult {
   const missingFields: string[] = [];
