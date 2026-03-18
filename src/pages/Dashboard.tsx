@@ -154,7 +154,7 @@ export default function Dashboard() {
         totalGlebas={stats?.totalGlebas || 0}
         totalPropostas={stats?.totalPropostas || 0}
         glebasInativas={glebasInativas.length}
-        negociosFechados={stats?.negociosFechados || 0}
+        glebasComInfoFaltando={stats?.glebasComInfoFaltando || 0}
         glebasEmStandby={stats?.glebasEmStandby || 0}
         glebasPrioritarias={stats?.glebasPrioritarias || 0}
         isLoading={isLoading}
