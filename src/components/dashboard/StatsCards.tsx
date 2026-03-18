@@ -16,7 +16,7 @@ export function StatsCards({
   totalGlebas,
   totalPropostas,
   glebasInativas,
-  negociosFechados,
+  glebasComInfoFaltando,
   glebasEmStandby,
   glebasPrioritarias,
   isLoading,
