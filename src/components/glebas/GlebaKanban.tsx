@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import confetti from "canvas-confetti";
+import { validateGlebaStatus } from "@/lib/glebaValidation";
 import {
   Popover,
   PopoverContent,
