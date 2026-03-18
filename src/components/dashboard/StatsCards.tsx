@@ -42,11 +42,11 @@ export function StatsCards({
       highlight: glebasInativas > 0,
     },
     {
-      title: "Negócios Fechados",
-      value: negociosFechados,
-      description: negociosFechados === 0 ? "Nenhum negócio concluído" : "Contratos assinados",
-      icon: TrendingUp,
-      highlight: negociosFechados > 0,
+      title: "Info. Faltando",
+      value: glebasComInfoFaltando,
+      description: glebasComInfoFaltando === 0 ? "Tudo preenchido! ✅" : "Áreas com dados incompletos",
+      icon: AlertTriangle,
+      highlight: glebasComInfoFaltando > 0,
     },
     {
       title: "Em Standby",
