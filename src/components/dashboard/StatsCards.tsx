@@ -1,11 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Kanban, FileText, Map, TrendingUp, Clock, Star } from "lucide-react";
+import { Kanban, FileText, AlertTriangle, TrendingUp, Clock, Star } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface StatsCardsProps {
   totalGlebas: number;
   totalPropostas: number;
-  totalCidades: number;
+  glebasInativas: number;
   negociosFechados: number;
   glebasEmStandby: number;
   glebasPrioritarias: number;
@@ -15,7 +15,7 @@ interface StatsCardsProps {
 export function StatsCards({
   totalGlebas,
   totalPropostas,
-  totalCidades,
+  glebasInativas,
   negociosFechados,
   glebasEmStandby,
   glebasPrioritarias,
@@ -35,10 +35,11 @@ export function StatsCards({
       icon: FileText,
     },
     {
-      title: "Cidades Mapeadas",
-      value: totalCidades,
-      description: totalCidades === 0 ? "Nenhuma cidade cadastrada" : "Com glebas cadastradas",
-      icon: Map,
+      title: "Sem Atualização",
+      value: glebasInativas,
+      description: glebasInativas === 0 ? "Todas em dia! 🎉" : "Sem atividade há 10 dias",
+      icon: Clock,
+      highlight: glebasInativas > 0,
     },
     {
       title: "Negócios Fechados",

@@ -47,7 +47,7 @@ export function StatusPieChart({ data, isLoading }: StatusPieChartProps) {
   }
 
   const chartData = Object.entries(data)
-    .filter(([, value]) => value > 0)
+    .filter(([status, value]) => value > 0 && status !== "descartada")
     .map(([status, value]) => ({
       name: STATUS_LABELS[status] || status,
       value,
@@ -118,6 +118,9 @@ export function StatusPieChart({ data, isLoading }: StatusPieChartProps) {
             </div>
           ))}
         </div>
+        <p className="text-xs text-muted-foreground italic text-center mt-3">
+          * Glebas com status "Descartada" estão excluídas do gráfico.
+        </p>
       </CardContent>
     </Card>
   );
