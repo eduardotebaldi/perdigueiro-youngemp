@@ -261,7 +261,7 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
       });
     }
     return result;
-  }, [glebas, searchTerm, filterPriority, filterInactive, filterStale, selectedCidades, inactiveGlebaIds, sixtyDaysAgo]);
+  }, [glebas, searchTerm, filterPriority, filterInactive, filterStale, filterPending, selectedCidades, inactiveGlebaIds, sixtyDaysAgo]);
 
   const getFilteredGlebasByStatus = useCallback((status: string) => {
     return filteredGlebas.filter((g) => g.status === status);
