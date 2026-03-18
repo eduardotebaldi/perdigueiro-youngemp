@@ -246,6 +246,9 @@ export function GlebaKanban({ onViewGleba }: GlebaKanbanProps) {
       const excludedStatuses = ["descartada", "negocio_fechado"];
       result = result.filter((g) => !excludedStatuses.includes(g.status) && new Date(g.updated_at) < sixtyDaysAgo);
     }
+    if (filterPending) {
+      result = result.filter((g) => !validateGlebaStatus(g).isValid);
+    }
     if (selectedCidades.size > 0) {
       result = result.filter((g) => g.cidade_id && selectedCidades.has(g.cidade_id));
     }
