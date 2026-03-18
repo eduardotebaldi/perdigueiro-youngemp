@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Megaphone, Plus, Pencil, Trash2, Send, X } from "lucide-react";
 import { useComunicados } from "@/hooks/useComunicados";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -35,7 +36,9 @@ export function ComunicadosDirecao() {
 
   const handleCreate = async () => {
     if (!text.trim()) return;
-    const nome = user?.user_metadata?.full_name || user?.email || "Admin";
+    // Buscar nome do perfil do usuário
+    const { data: profile } = await supabase.from("user_profiles").select("nome").eq("user_id", user!.id).single();
+    const nome = profile?.nome || user?.user_metadata?.full_name || "Admin";
     await createMutation.mutateAsync({ conteudo: text.trim(), autorNome: nome });
     setText("");
     setIsCreating(false);
