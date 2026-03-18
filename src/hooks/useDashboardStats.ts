@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfMonth, endOfMonth, subMonths, format, startOfWeek, endOfWeek, eachDayOfInterval, eachMonthOfInterval, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { validateGlebaStatus } from "@/lib/glebaValidation";
 
 interface InactiveGleba {
   id: string;
