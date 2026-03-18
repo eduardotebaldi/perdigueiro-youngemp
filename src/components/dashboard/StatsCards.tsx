@@ -15,7 +15,7 @@ interface StatsCardsProps {
 export function StatsCards({
   totalGlebas,
   totalPropostas,
-  totalCidades,
+  glebasInativas,
   negociosFechados,
   glebasEmStandby,
   glebasPrioritarias,
