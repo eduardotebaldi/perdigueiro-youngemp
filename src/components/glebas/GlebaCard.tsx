@@ -39,7 +39,6 @@ export function GlebaCard({ gleba, showInactiveIcon }: GlebaCardProps) {
 
   const handlePriorityToggle = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!isAdmin) return;
     
     if (!gleba.prioridade) {
       const priorityCount = glebas.filter((g) => g.prioridade).length;
@@ -119,9 +118,7 @@ export function GlebaCard({ gleba, showInactiveIcon }: GlebaCardProps) {
               <TooltipTrigger asChild>
                 <button
                   onClick={handlePriorityToggle}
-                  className={`flex-shrink-0 transition-colors ${
-                    isAdmin ? "cursor-pointer hover:scale-110" : "cursor-default pointer-events-none"
-                  }`}
+                  className="flex-shrink-0 transition-colors cursor-pointer hover:scale-110"
                   type="button"
                 >
                   <Star
@@ -134,8 +131,7 @@ export function GlebaCard({ gleba, showInactiveIcon }: GlebaCardProps) {
                 </button>
               </TooltipTrigger>
               <TooltipContent side="top">
-                {gleba.prioridade ? "Gleba prioritária" : "Sem prioridade"}
-                {isAdmin && " (clique para alterar)"}
+                {gleba.prioridade ? "Gleba prioritária (clique para remover)" : "Clique para marcar como prioritária"}
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
