@@ -144,6 +144,34 @@ export function CreateGlebaDialog({ onSuccess }: CreateGlebaDialogProps) {
 
             <FormField
               control={form.control}
+              name="cidade_nome"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Cidade *</FormLabel>
+                  <FormControl>
+                    <CidadeAutocomplete
+                      value={field.value}
+                      onChange={(cidade: CidadeBrasil | null) => {
+                        if (cidade) {
+                          field.onChange(cidade.nomeCompleto);
+                          // Check if cidade already exists in our DB
+                          const existing = (cidades || []).find(c => c.nome === cidade.nomeCompleto);
+                          setSelectedCidadeId(existing?.id || null);
+                        } else {
+                          field.onChange("");
+                          setSelectedCidadeId(null);
+                        }
+                      }}
+                      placeholder="Digite o nome da cidade..."
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="proprietario_nome"
               render={({ field }) => (
                 <FormItem>
