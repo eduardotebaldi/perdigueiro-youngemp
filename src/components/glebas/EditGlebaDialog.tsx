@@ -392,7 +392,7 @@ export function EditGlebaDialog({ gleba, open, onOpenChange }: EditGlebaDialogPr
                   name="comentarios"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Comentários</FormLabel>
+                      <FormLabel>Informações da Gleba</FormLabel>
                       <FormControl>
                         <Textarea {...field} />
                       </FormControl>

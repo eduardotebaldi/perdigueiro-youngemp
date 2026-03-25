@@ -175,10 +175,10 @@ export function CreateGlebaDialog({ onSuccess }: CreateGlebaDialogProps) {
               name="comentarios"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Comentários</FormLabel>
+                  <FormLabel>Informações da Gleba</FormLabel>
                   <FormControl>
                     <Textarea 
-                      placeholder="Observações sobre a gleba..." 
+                      placeholder="Informações sobre a gleba..." 
                       {...field} 
                     />
                   </FormControl>

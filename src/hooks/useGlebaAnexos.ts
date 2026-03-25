@@ -1,16 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-type TipoAnexo = "pesquisa_mercado" | "planilha_viabilidade" | "matricula_imovel";
-
 interface GlebaAnexo {
   id: string;
   gleba_id: string;
-  tipo: TipoAnexo;
+  tipo: string;
   arquivo: string;
   nome_arquivo: string;
   created_at: string;
   created_by: string | null;
+  tipo_arquivo_id: string | null;
 }
 
 export function useGlebaAnexos(glebaId: string | null) {
@@ -32,9 +31,9 @@ export function useGlebaAnexos(glebaId: string | null) {
   });
 
   const uploadAnexo = useMutation({
-    mutationFn: async ({ file, tipo, glebaId: gId }: { file: File; tipo: TipoAnexo; glebaId: string }) => {
+    mutationFn: async ({ file, tipo, glebaId: gId }: { file: File; tipo: string; glebaId: string }) => {
       const fileExt = file.name.split(".").pop();
-      const fileName = `${gId}/${tipo}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const fileName = `${gId}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from("gleba-anexos")
@@ -57,7 +56,7 @@ export function useGlebaAnexos(glebaId: string | null) {
   });
 
   const addDriveLink = useMutation({
-    mutationFn: async ({ link, tipo, glebaId: gId, nome }: { link: string; tipo: TipoAnexo; glebaId: string; nome: string }) => {
+    mutationFn: async ({ link, tipo, glebaId: gId, nome }: { link: string; tipo: string; glebaId: string; nome: string }) => {
       const { error } = await supabase
         .from("gleba_anexos")
         .insert({
@@ -75,7 +74,6 @@ export function useGlebaAnexos(glebaId: string | null) {
 
   const deleteAnexo = useMutation({
     mutationFn: async (anexo: GlebaAnexo) => {
-      // Only delete from storage if it's not a URL
       if (!anexo.arquivo.startsWith("http")) {
         await supabase.storage.from("gleba-anexos").remove([anexo.arquivo]);
       }
@@ -87,8 +85,20 @@ export function useGlebaAnexos(glebaId: string | null) {
     },
   });
 
+  const updateAnexoTipo = useMutation({
+    mutationFn: async ({ anexoId, tipoArquivoId }: { anexoId: string; tipoArquivoId: string | null }) => {
+      const { error } = await supabase
+        .from("gleba_anexos")
+        .update({ tipo_arquivo_id: tipoArquivoId } as any)
+        .eq("id", anexoId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["gleba_anexos", glebaId] });
+    },
+  });
+
   const getSignedUrl = async (filePath: string): Promise<string | null> => {
-    // If it's already a URL (Drive link), return as-is
     if (filePath.startsWith("http")) return filePath;
     const { data, error } = await supabase.storage
       .from("gleba-anexos")
@@ -96,8 +106,6 @@ export function useGlebaAnexos(glebaId: string | null) {
     if (error) return null;
     return data.signedUrl;
   };
-
-  const getAnexosByTipo = (tipo: TipoAnexo) => anexos.filter((a) => a.tipo === tipo);
 
   const isGoogleDriveLink = (path: string) => path.startsWith("http");
 
@@ -107,20 +115,8 @@ export function useGlebaAnexos(glebaId: string | null) {
     uploadAnexo,
     addDriveLink,
     deleteAnexo,
+    updateAnexoTipo,
     getSignedUrl,
-    getAnexosByTipo,
     isGoogleDriveLink,
   };
 }
-
-export const TIPO_ANEXO_LABELS: Record<string, string> = {
-  pesquisa_mercado: "Pesquisa de Mercado",
-  planilha_viabilidade: "Planilha de Viabilidade",
-  matricula_imovel: "Matrícula do Imóvel",
-};
-
-export const TIPO_ANEXO_ACCEPT: Record<string, string> = {
-  pesquisa_mercado: ".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp",
-  planilha_viabilidade: ".xlsx,.xls,.csv,.ods",
-  matricula_imovel: ".pdf,.jpg,.jpeg,.png,.webp",
-};

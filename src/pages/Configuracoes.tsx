@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Settings, Users, Plus, Trash2, Shield, ShieldCheck, Loader2, Pencil, Check, X, RefreshCw, MapPin, ChevronDown } from "lucide-react";
+import { Settings, Users, Plus, Trash2, Shield, ShieldCheck, Loader2, Pencil, Check, X, RefreshCw, MapPin, ChevronDown, FileType } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
@@ -52,6 +52,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { ReportConfigCard } from "@/components/configuracoes/ReportConfigCard";
+import { useTiposArquivo } from "@/hooks/useTiposArquivo";
 
 interface UserWithRole {
   id: string;
@@ -201,7 +202,6 @@ export default function Configuracoes() {
 
   return (
     <div className="space-y-6">
-      
 
       {/* Users Management */}
       <Collapsible defaultOpen>
@@ -431,12 +431,156 @@ export default function Configuracoes() {
         </Card>
       </Collapsible>
 
+      {/* Tipos de Arquivo */}
+      <TiposArquivoCard />
+
       {/* Relatórios */}
       <ReportConfigCard />
 
       {/* Reprocessar KMZs */}
       <ReprocessKmzCard />
     </div>
+  );
+}
+
+function TiposArquivoCard() {
+  const { tiposArquivo, isLoading, createTipo, updateTipo, deleteTipo } = useTiposArquivo();
+  const [newNome, setNewNome] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingNome, setEditingNome] = useState("");
+
+  const handleCreate = async () => {
+    if (!newNome.trim()) return;
+    try {
+      await createTipo.mutateAsync(newNome.trim());
+      setNewNome("");
+      toast.success("Tipo de arquivo criado!");
+    } catch {
+      toast.error("Erro ao criar tipo de arquivo");
+    }
+  };
+
+  const handleUpdate = async (id: string) => {
+    if (!editingNome.trim()) return;
+    try {
+      await updateTipo.mutateAsync({ id, nome: editingNome.trim() });
+      setEditingId(null);
+      toast.success("Tipo atualizado!");
+    } catch {
+      toast.error("Erro ao atualizar tipo");
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteTipo.mutateAsync(id);
+      toast.success("Tipo removido!");
+    } catch {
+      toast.error("Erro ao remover tipo. Verifique se não está em uso.");
+    }
+  };
+
+  return (
+    <Collapsible>
+      <Card>
+        <CardHeader>
+          <CollapsibleTrigger className="flex-1 text-left group">
+            <CardTitle className="flex items-center gap-2">
+              <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=closed]:-rotate-90" />
+              <FileType className="h-5 w-5" />
+              Tipos de Arquivo
+            </CardTitle>
+            <CardDescription className="ml-10">
+              Gerencie os tipos de arquivo que podem ser atribuídos aos anexos das glebas
+            </CardDescription>
+          </CollapsibleTrigger>
+        </CardHeader>
+        <CollapsibleContent>
+          <CardContent className="space-y-4">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Novo tipo de arquivo..."
+                value={newNome}
+                onChange={(e) => setNewNome(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+              />
+              <Button onClick={handleCreate} disabled={createTipo.isPending || !newNome.trim()}>
+                <Plus className="h-4 w-4 mr-1" />
+                Criar
+              </Button>
+            </div>
+
+            {isLoading ? (
+              <div className="flex justify-center py-4">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : tiposArquivo.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">Nenhum tipo cadastrado</p>
+            ) : (
+              <div className="space-y-1">
+                {tiposArquivo.map((tipo) => (
+                  <div key={tipo.id} className="flex items-center justify-between gap-2 bg-muted/50 rounded-md px-3 py-2 group">
+                    {editingId === tipo.id ? (
+                      <div className="flex items-center gap-1 flex-1">
+                        <Input
+                          value={editingNome}
+                          onChange={(e) => setEditingNome(e.target.value)}
+                          className="h-8"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleUpdate(tipo.id);
+                            if (e.key === "Escape") setEditingId(null);
+                          }}
+                        />
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleUpdate(tipo.id)}>
+                          <Check className="h-3 w-3" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingId(null)}>
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <span className="text-sm">{tipo.nome}</span>
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            variant="ghost" size="icon" className="h-7 w-7"
+                            onClick={() => { setEditingId(tipo.id); setEditingNome(tipo.nome); }}
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive">
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Excluir tipo de arquivo?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  O tipo "{tipo.nome}" será removido. Isso só é possível se nenhum anexo estiver usando este tipo.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(tipo.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                  Excluir
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
   );
 }
 

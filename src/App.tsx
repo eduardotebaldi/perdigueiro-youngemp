@@ -15,6 +15,7 @@ import Atividades from "./pages/Atividades";
 import Imobiliarias from "./pages/Imobiliarias";
 import Propostas from "./pages/Propostas";
 import Configuracoes from "./pages/Configuracoes";
+import PesquisasMercado from "./pages/PesquisasMercado";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -98,6 +99,16 @@ const App = () => (
                 <ProtectedRoute>
                   <AppLayout>
                     <Atividades />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/pesquisas-mercado"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <PesquisasMercado />
                   </AppLayout>
                 </ProtectedRoute>
               }

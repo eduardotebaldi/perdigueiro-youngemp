@@ -108,6 +108,7 @@ export type Database = {
           gleba_id: string | null
           id: string
           responsavel_id: string
+          tipo_atividade_id: string | null
         }
         Insert: {
           created_at?: string
@@ -116,6 +117,7 @@ export type Database = {
           gleba_id?: string | null
           id?: string
           responsavel_id: string
+          tipo_atividade_id?: string | null
         }
         Update: {
           created_at?: string
@@ -124,6 +126,7 @@ export type Database = {
           gleba_id?: string | null
           id?: string
           responsavel_id?: string
+          tipo_atividade_id?: string | null
         }
         Relationships: [
           {
@@ -131,6 +134,13 @@ export type Database = {
             columns: ["gleba_id"]
             isOneToOne: false
             referencedRelation: "glebas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "atividades_tipo_atividade_id_fkey"
+            columns: ["tipo_atividade_id"]
+            isOneToOne: false
+            referencedRelation: "tipos_atividade"
             referencedColumns: ["id"]
           },
         ]
@@ -1100,6 +1110,7 @@ export type Database = {
           matricula: number
           num_lote: string
           onus: string
+          proprietario: string | null
         }
         Insert: {
           area: number
@@ -1108,6 +1119,7 @@ export type Database = {
           matricula: number
           num_lote: string
           onus?: string
+          proprietario?: string | null
         }
         Update: {
           area?: number
@@ -1116,6 +1128,7 @@ export type Database = {
           matricula?: number
           num_lote?: string
           onus?: string
+          proprietario?: string | null
         }
         Relationships: []
       }
@@ -2082,6 +2095,7 @@ export type Database = {
           id: string
           nome_arquivo: string
           tipo: Database["public"]["Enums"]["tipo_anexo_gleba"]
+          tipo_arquivo_id: string | null
         }
         Insert: {
           arquivo: string
@@ -2091,6 +2105,7 @@ export type Database = {
           id?: string
           nome_arquivo: string
           tipo: Database["public"]["Enums"]["tipo_anexo_gleba"]
+          tipo_arquivo_id?: string | null
         }
         Update: {
           arquivo?: string
@@ -2100,6 +2115,7 @@ export type Database = {
           id?: string
           nome_arquivo?: string
           tipo?: Database["public"]["Enums"]["tipo_anexo_gleba"]
+          tipo_arquivo_id?: string | null
         }
         Relationships: [
           {
@@ -2107,6 +2123,13 @@ export type Database = {
             columns: ["gleba_id"]
             isOneToOne: false
             referencedRelation: "glebas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gleba_anexos_tipo_arquivo_id_fkey"
+            columns: ["tipo_arquivo_id"]
+            isOneToOne: false
+            referencedRelation: "tipos_arquivo"
             referencedColumns: ["id"]
           },
         ]
@@ -2125,6 +2148,7 @@ export type Database = {
           data_visita: string | null
           descricao_descarte: string | null
           google_drive_file_id: string | null
+          google_drive_folder_id: string | null
           id: string
           imagem_capa: string | null
           imobiliaria_id: string | null
@@ -2159,6 +2183,7 @@ export type Database = {
           data_visita?: string | null
           descricao_descarte?: string | null
           google_drive_file_id?: string | null
+          google_drive_folder_id?: string | null
           id?: string
           imagem_capa?: string | null
           imobiliaria_id?: string | null
@@ -2193,6 +2218,7 @@ export type Database = {
           data_visita?: string | null
           descricao_descarte?: string | null
           google_drive_file_id?: string | null
+          google_drive_folder_id?: string | null
           id?: string
           imagem_capa?: string | null
           imobiliaria_id?: string | null
@@ -2900,6 +2926,103 @@ export type Database = {
         }
         Relationships: []
       }
+      pesquisa_mercado_terrenos: {
+        Row: {
+          condicoes_pagamento: string | null
+          created_at: string | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          nome: string
+          observacoes: string | null
+          pesquisa_id: string
+          placemark_name: string | null
+          preco: number | null
+          tamanho_m2: number | null
+          tipo_terreno: string | null
+          url_anuncio: string | null
+        }
+        Insert: {
+          condicoes_pagamento?: string | null
+          created_at?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          nome: string
+          observacoes?: string | null
+          pesquisa_id: string
+          placemark_name?: string | null
+          preco?: number | null
+          tamanho_m2?: number | null
+          tipo_terreno?: string | null
+          url_anuncio?: string | null
+        }
+        Update: {
+          condicoes_pagamento?: string | null
+          created_at?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          nome?: string
+          observacoes?: string | null
+          pesquisa_id?: string
+          placemark_name?: string | null
+          preco?: number | null
+          tamanho_m2?: number | null
+          tipo_terreno?: string | null
+          url_anuncio?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pesquisa_mercado_terrenos_pesquisa_id_fkey"
+            columns: ["pesquisa_id"]
+            isOneToOne: false
+            referencedRelation: "pesquisas_mercado"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pesquisas_mercado: {
+        Row: {
+          cidade_id: string | null
+          created_at: string | null
+          created_by: string | null
+          data_pesquisa: string
+          id: string
+          kmz_file: string | null
+          nome: string
+          observacoes: string | null
+        }
+        Insert: {
+          cidade_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          data_pesquisa?: string
+          id?: string
+          kmz_file?: string | null
+          nome: string
+          observacoes?: string | null
+        }
+        Update: {
+          cidade_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          data_pesquisa?: string
+          id?: string
+          kmz_file?: string | null
+          nome?: string
+          observacoes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pesquisas_mercado_cidade_id_fkey"
+            columns: ["cidade_id"]
+            isOneToOne: false
+            referencedRelation: "cidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       propostas: {
         Row: {
           arquivo_carta: string | null
@@ -3571,6 +3694,42 @@ export type Database = {
           role?: string
           updated_at?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      tipos_arquivo: {
+        Row: {
+          created_at: string | null
+          id: string
+          nome: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          nome: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
+      tipos_atividade: {
+        Row: {
+          created_at: string | null
+          id: string
+          nome: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          nome: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          nome?: string
         }
         Relationships: []
       }

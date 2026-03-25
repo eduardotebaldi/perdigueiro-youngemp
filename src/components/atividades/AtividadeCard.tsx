@@ -3,6 +3,7 @@ import { ptBR } from "date-fns/locale";
 import { CalendarDays, MapPin, Trash2, User } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +27,7 @@ interface AtividadeCardProps {
     created_at: string;
     responsavel_id: string;
     gleba?: { id: string; apelido: string } | null;
+    tipo_atividade?: { id: string; nome: string } | null;
   };
 }
 
@@ -56,17 +58,14 @@ export function AtividadeCard({ atividade }: AtividadeCardProps) {
     <Card className="group relative">
       <CardContent className="p-4">
         <div className="flex gap-4">
-          {/* Timeline indicator */}
           <div className="flex flex-col items-center">
             <div className="h-3 w-3 rounded-full bg-primary" />
             <div className="w-0.5 flex-1 bg-border" />
           </div>
 
-          {/* Content */}
           <div className="flex-1 pb-4">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
-                {/* Date */}
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
                   <CalendarDays className="h-4 w-4" />
                   <span>
@@ -74,12 +73,15 @@ export function AtividadeCard({ atividade }: AtividadeCardProps) {
                       locale: ptBR,
                     })}
                   </span>
+                  {atividade.tipo_atividade && (
+                    <Badge variant="secondary" className="text-xs">
+                      {atividade.tipo_atividade.nome}
+                    </Badge>
+                  )}
                 </div>
 
-                {/* Description */}
                 <p className="text-foreground">{atividade.descricao}</p>
 
-                {/* Gleba link */}
                 {atividade.gleba && (
                   <div className="flex items-center gap-2 mt-2 text-sm text-primary">
                     <MapPin className="h-4 w-4" />
@@ -88,7 +90,6 @@ export function AtividadeCard({ atividade }: AtividadeCardProps) {
                 )}
               </div>
 
-              {/* Delete button (admin or owner within 15 days) */}
               {canDelete && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>

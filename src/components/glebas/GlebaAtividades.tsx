@@ -4,11 +4,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Loader2, Send, MessageCircle, Trash2, User } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTiposAtividade } from "@/hooks/useTiposAtividade";
 
 interface GlebaAtividadesProps {
   glebaId: string;
@@ -20,30 +29,32 @@ interface Atividade {
   data: string;
   created_at: string;
   responsavel_id: string;
+  tipo_atividade_id: string | null;
 }
 
 export function GlebaAtividades({ glebaId }: GlebaAtividadesProps) {
   const [novaAtividade, setNovaAtividade] = useState("");
+  const [tipoAtividadeId, setTipoAtividadeId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
+  const { tiposAtividade } = useTiposAtividade();
 
   const { data: atividades = [], isLoading } = useQuery({
     queryKey: ["atividades", "gleba", glebaId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("atividades")
-        .select("*")
+        .select("*, tipo_atividade:tipos_atividade(id, nome)")
         .eq("gleba_id", glebaId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as Atividade[];
+      return data as (Atividade & { tipo_atividade: { id: string; nome: string } | null })[];
     },
     enabled: !!glebaId,
   });
 
-  // Fetch user names from user_profiles table (accessible to all authenticated users)
   const userIds = useMemo(() => {
     const ids = atividades.map((a) => a.responsavel_id).filter(Boolean);
     return [...new Set(ids)];
@@ -72,20 +83,22 @@ export function GlebaAtividades({ glebaId }: GlebaAtividadesProps) {
   }, [userProfiles]);
 
   const createMutation = useMutation({
-    mutationFn: async (descricao: string) => {
+    mutationFn: async ({ descricao, tipoId }: { descricao: string; tipoId: string | null }) => {
       if (!user) throw new Error("Usuário não autenticado");
       
       const { error } = await supabase.from("atividades").insert({
         descricao,
         gleba_id: glebaId,
         responsavel_id: user.id,
-      });
+        tipo_atividade_id: tipoId,
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["atividades", "gleba", glebaId] });
       queryClient.invalidateQueries({ queryKey: ["atividades"] });
       setNovaAtividade("");
+      setTipoAtividadeId(null);
       toast.success("Atividade adicionada!");
     },
     onError: (error) => {
@@ -114,7 +127,7 @@ export function GlebaAtividades({ glebaId }: GlebaAtividadesProps) {
     if (!novaAtividade.trim()) return;
     setIsSubmitting(true);
     try {
-      await createMutation.mutateAsync(novaAtividade.trim());
+      await createMutation.mutateAsync({ descricao: novaAtividade.trim(), tipoId: tipoAtividadeId });
     } finally {
       setIsSubmitting(false);
     }
@@ -135,8 +148,6 @@ export function GlebaAtividades({ glebaId }: GlebaAtividadesProps) {
     }
   };
 
-  const { isAdmin } = useAuth();
-
   const canDelete = (atividade: Atividade) => {
     if (isAdmin) return true;
     if (user?.id !== atividade.responsavel_id) return false;
@@ -148,7 +159,6 @@ export function GlebaAtividades({ glebaId }: GlebaAtividadesProps) {
 
   return (
     <div className="space-y-4">
-      {/* Lista de atividades */}
       <ScrollArea className="h-[200px] rounded-lg border">
         <div className="p-4 space-y-3">
           {isLoading ? (
@@ -168,6 +178,13 @@ export function GlebaAtividades({ glebaId }: GlebaAtividadesProps) {
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      {atividade.tipo_atividade && (
+                        <Badge variant="secondary" className="text-xs">
+                          {atividade.tipo_atividade.nome}
+                        </Badge>
+                      )}
+                    </div>
                     <p className="text-sm whitespace-pre-wrap break-words">
                       {atividade.descricao}
                     </p>
@@ -196,32 +213,51 @@ export function GlebaAtividades({ glebaId }: GlebaAtividadesProps) {
         </div>
       </ScrollArea>
 
-      {/* Campo para nova atividade */}
-      <div className="flex gap-2">
-        <Textarea
-          placeholder="Adicionar atividade..."
-          value={novaAtividade}
-          onChange={(e) => setNovaAtividade(e.target.value)}
-          onKeyDown={handleKeyDown}
-          className="min-h-[60px] resize-none"
-          disabled={isSubmitting}
-        />
-        <Button
-          size="icon"
-          onClick={handleSubmit}
-          disabled={!novaAtividade.trim() || isSubmitting}
-          className="shrink-0"
+      {/* Tipo de atividade + campo */}
+      <div className="space-y-2">
+        <Select
+          value={tipoAtividadeId || "none"}
+          onValueChange={(v) => setTipoAtividadeId(v === "none" ? null : v)}
         >
-          {isSubmitting ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Send className="h-4 w-4" />
-          )}
-        </Button>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Tipo de atividade (opcional)" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">Sem tipo</SelectItem>
+            {tiposAtividade.map((tipo) => (
+              <SelectItem key={tipo.id} value={tipo.id}>
+                {tipo.nome}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <div className="flex gap-2">
+          <Textarea
+            placeholder="Adicionar atividade..."
+            value={novaAtividade}
+            onChange={(e) => setNovaAtividade(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="min-h-[60px] resize-none"
+            disabled={isSubmitting}
+          />
+          <Button
+            size="icon"
+            onClick={handleSubmit}
+            disabled={!novaAtividade.trim() || isSubmitting}
+            className="shrink-0"
+          >
+            {isSubmitting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Pressione Enter para enviar ou Shift+Enter para nova linha
+        </p>
       </div>
-      <p className="text-xs text-muted-foreground">
-        Pressione Enter para enviar ou Shift+Enter para nova linha
-      </p>
     </div>
   );
 }

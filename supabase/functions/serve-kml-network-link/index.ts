@@ -32,15 +32,15 @@ async function validateAccessToken(req: Request, supabase: any): Promise<boolean
 
 // Status colors for Google Earth (AABBGGRR format - Alpha, Blue, Green, Red)
 const STATUS_STYLES: Record<string, { fill: string; line: string; label: string }> = {
-  identificada: { fill: "800000ff", line: "ff0000ff", label: "Identificada" }, // Red
-  informacoes_recebidas: { fill: "8000a5ff", line: "ff00a5ff", label: "Informações Recebidas" }, // Orange
-  visita_realizada: { fill: "8000ffff", line: "ff00ffff", label: "Visita Realizada" }, // Yellow
-  proposta_enviada: { fill: "80ff0000", line: "ffff0000", label: "Proposta Enviada" }, // Blue
-  protocolo_assinado: { fill: "8000ff00", line: "ff00ff00", label: "Protocolo Assinado" }, // Green
-  descartada: { fill: "80808080", line: "ff808080", label: "Descartada" }, // Gray
-  proposta_recusada: { fill: "800000aa", line: "ff0000aa", label: "Proposta Recusada" }, // Dark Red
-  negocio_fechado: { fill: "8000aa00", line: "ff00aa00", label: "Negócio Fechado" }, // Dark Green
-  standby: { fill: "80aa00aa", line: "ffaa00aa", label: "Standby" }, // Purple
+  identificada: { fill: "600000ff", line: "ff0000ff", label: "Identificada" }, // Red
+  informacoes_recebidas: { fill: "6000a5ff", line: "ff00a5ff", label: "Informações Recebidas" }, // Orange
+  visita_realizada: { fill: "6000ffff", line: "ff00ffff", label: "Visita Realizada" }, // Yellow
+  proposta_enviada: { fill: "60ff0000", line: "ffff0000", label: "Proposta Enviada" }, // Blue
+  protocolo_assinado: { fill: "6000ff00", line: "ff00ff00", label: "Protocolo Assinado" }, // Green
+  descartada: { fill: "60808080", line: "ff808080", label: "Descartada" }, // Gray
+  proposta_recusada: { fill: "600000aa", line: "ff0000aa", label: "Proposta Recusada" }, // Dark Red
+  negocio_fechado: { fill: "6000aa00", line: "ff00aa00", label: "Negócio Fechado" }, // Dark Green
+  standby: { fill: "60aa00aa", line: "ffaa00aa", label: "Standby" }, // Purple
 };
 
 interface Gleba {
@@ -171,7 +171,7 @@ function generatePlacemarkDescription(gleba: Gleba, appUrl: string): string {
       
       ${gleba.comentarios ? `
       <div style="margin-bottom: 12px; padding: 10px; background: #f5f5f5; border-radius: 6px; border-left: 3px solid #FE5009;">
-        <div style="color: #666; font-size: 11px; margin-bottom: 4px;">Comentários:</div>
+        <div style="color: #666; font-size: 11px; margin-bottom: 4px;">Informações da Gleba:</div>
         <div style="font-size: 13px; color: #333;">${escapeXml(gleba.comentarios)}</div>
       </div>` : ""}
       
