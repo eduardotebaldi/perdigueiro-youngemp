@@ -68,9 +68,9 @@ export function GoogleEarthIntegrationCard() {
     }
   };
 
-  const getFullUrl = () => {
+  const getFullUrl = (layer: string = "glebas") => {
     if (!accessToken) return null;
-    return `${BASE_URL}?token=${accessToken}`;
+    return `${BASE_URL}?token=${accessToken}&layer=${layer}`;
   };
 
   const handleCopyLink = async () => {
