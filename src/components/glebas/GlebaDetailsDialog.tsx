@@ -461,12 +461,12 @@ export function GlebaDetailsDialog({
             </div>
           </div>
 
-          {/* Comentários */}
+          {/* Informações da Gleba */}
           {gleba.comentarios && (
             <div className="mt-4">
               <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
                 <MessageSquare className="h-5 w-5 text-primary" />
-                Comentários
+                Informações da Gleba
               </h3>
               <div className="bg-muted/30 rounded-lg p-4">
                 <p className="text-sm whitespace-pre-wrap">{gleba.comentarios}</p>
