@@ -15,7 +15,8 @@ export function useAtividades() {
         .from("atividades")
         .select(`
           *,
-          gleba:glebas(id, apelido)
+          gleba:glebas(id, apelido),
+          tipo_atividade:tipos_atividade(id, nome)
         `)
         .order("data", { ascending: false });
 

@@ -38,6 +38,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { useAtividades } from "@/hooks/useAtividades";
 import { useGlebas } from "@/hooks/useGlebas";
+import { useTiposAtividade } from "@/hooks/useTiposAtividade";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
@@ -45,6 +46,7 @@ const formSchema = z.object({
   descricao: z.string().min(3, "Descrição deve ter pelo menos 3 caracteres"),
   data: z.date(),
   gleba_id: z.string().nullable(),
+  tipo_atividade_id: z.string().nullable(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -53,6 +55,7 @@ export function CreateAtividadeDialog() {
   const [open, setOpen] = useState(false);
   const { createAtividade } = useAtividades();
   const { glebas } = useGlebas();
+  const { tiposAtividade } = useTiposAtividade();
   const { user } = useAuth();
 
   const form = useForm<FormData>({
@@ -61,6 +64,7 @@ export function CreateAtividadeDialog() {
       descricao: "",
       data: new Date(),
       gleba_id: null,
+      tipo_atividade_id: null,
     },
   });
 
@@ -75,8 +79,9 @@ export function CreateAtividadeDialog() {
         descricao: values.descricao,
         data: format(values.data, "yyyy-MM-dd"),
         gleba_id: values.gleba_id,
+        tipo_atividade_id: values.tipo_atividade_id,
         responsavel_id: user.id,
-      });
+      } as any);
       toast.success("Atividade registrada com sucesso!");
       form.reset();
       setOpen(false);
@@ -137,6 +142,37 @@ export function CreateAtividadeDialog() {
                       />
                     </PopoverContent>
                   </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="tipo_atividade_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tipo de Atividade (opcional)</FormLabel>
+                  <Select
+                    onValueChange={(value) =>
+                      field.onChange(value === "none" ? null : value)
+                    }
+                    value={field.value || "none"}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um tipo" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="none">Nenhum tipo</SelectItem>
+                      {tiposAtividade.map((tipo) => (
+                        <SelectItem key={tipo.id} value={tipo.id}>
+                          {tipo.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
