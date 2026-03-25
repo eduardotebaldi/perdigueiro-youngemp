@@ -23,13 +23,17 @@ import {
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { useGlebas } from "@/hooks/useGlebas";
+import { useCidades } from "@/hooks/useCidades";
+import { CidadeAutocomplete } from "@/components/cidades/CidadeAutocomplete";
 import { Tables } from "@/integrations/supabase/types";
 import { Plus, Loader2 } from "lucide-react";
+import { CidadeBrasil } from "@/hooks/useCidadesBrasil";
 
 type Gleba = Tables<"glebas">;
 
 const glebaSchema = z.object({
   apelido: z.string().min(1, "Apelido é obrigatório"),
+  cidade_nome: z.string().min(1, "Cidade é obrigatória"),
   proprietario_nome: z.string().optional(),
   tamanho_m2: z.coerce.number().positive().optional(),
   preco: z.coerce.number().positive().optional(),

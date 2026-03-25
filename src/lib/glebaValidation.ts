@@ -22,11 +22,13 @@ export interface ValidationResult {
 export function validateGlebaStatus(gleba: Gleba): ValidationResult {
   const missingFields: string[] = [];
 
+  // Cidade é obrigatória para TODAS as glebas, independente do status
+  if (!gleba.cidade_id) {
+    missingFields.push("Cidade");
+  }
+
   // Campos comuns obrigatórios para todas as glebas (exceto descartadas)
   if (gleba.status !== "descartada") {
-    if (!gleba.cidade_id) {
-      missingFields.push("Cidade");
-    }
     if (!gleba.tamanho_m2) {
       missingFields.push("Área (m²)");
     }
