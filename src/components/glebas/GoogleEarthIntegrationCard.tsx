@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 const BASE_URL = "https://vvtympzatclvjaqucebr.supabase.co/functions/v1/serve-kml-network-link";
 
 export function GoogleEarthIntegrationCard() {
-  const [copied, setCopied] = useState(false);
+  const [copiedLayer, setCopiedLayer] = useState<string | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
