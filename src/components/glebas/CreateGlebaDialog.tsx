@@ -49,13 +49,16 @@ interface CreateGlebaDialogProps {
 export function CreateGlebaDialog({ onSuccess }: CreateGlebaDialogProps) {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedCidadeId, setSelectedCidadeId] = useState<string | null>(null);
   const { createGleba } = useGlebas();
+  const { cidades, createCidade } = useCidades();
   const { toast } = useToast();
 
   const form = useForm<GlebaForm>({
     resolver: zodResolver(glebaSchema),
     defaultValues: {
       apelido: "",
+      cidade_nome: "",
       proprietario_nome: "",
       tamanho_m2: undefined,
       preco: undefined,
