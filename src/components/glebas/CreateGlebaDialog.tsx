@@ -69,8 +69,24 @@ export function CreateGlebaDialog({ onSuccess }: CreateGlebaDialogProps) {
   const onSubmit = async (data: GlebaForm) => {
     setIsSubmitting(true);
     try {
+      // Find or create cidade
+      let cidadeId = selectedCidadeId;
+      if (!cidadeId) {
+        // Try to find existing cidade by name
+        const existing = cidades.find(c => c.nome === data.cidade_nome);
+        if (existing) {
+          cidadeId = existing.id;
+        } else {
+          // Create new cidade
+          const newCidade = await createCidade({ nome: data.cidade_nome });
+          cidadeId = (newCidade as any)?.id;
+        }
+      }
+
+      const { cidade_nome, ...rest } = data;
       await createGleba({
-        ...data,
+        ...rest,
+        cidade_id: cidadeId,
         status: "identificada",
       } as any);
 
