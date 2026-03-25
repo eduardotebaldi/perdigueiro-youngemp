@@ -73,8 +73,8 @@ export function GoogleEarthIntegrationCard() {
     return `${BASE_URL}?token=${accessToken}&layer=${layer}`;
   };
 
-  const handleCopyLink = async () => {
-    const fullUrl = getFullUrl();
+  const handleCopyLink = async (layer: string = "glebas") => {
+    const fullUrl = getFullUrl(layer);
     if (!fullUrl) {
       toast.error("Gere um token de acesso primeiro");
       return;
@@ -82,9 +82,9 @@ export function GoogleEarthIntegrationCard() {
 
     try {
       await navigator.clipboard.writeText(fullUrl);
-      setCopied(true);
+      setCopiedLayer(layer);
       toast.success("Link copiado para a área de transferência!");
-      setTimeout(() => setCopied(false), 2000);
+      setTimeout(() => setCopiedLayer(null), 2000);
     } catch {
       toast.error("Erro ao copiar link");
     }
