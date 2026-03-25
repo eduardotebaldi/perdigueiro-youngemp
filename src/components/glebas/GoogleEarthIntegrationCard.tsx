@@ -139,35 +139,35 @@ export function GoogleEarthIntegrationCard() {
           </p>
         </div>
 
-        {/* URL do Network Link */}
-        <div className="space-y-2">
-          <Label>Link de Rede (Network Link)</Label>
-          <div className="flex gap-2">
-            <Input
-              value={accessToken ? getFullUrl() || "" : "Gere um token primeiro..."}
-              readOnly
-              className="font-mono text-xs"
-              disabled={!accessToken}
-            />
-            <Button
-              onClick={handleCopyLink}
-              variant={copied ? "default" : "outline"}
-              className="shrink-0 gap-2"
-              disabled={!accessToken}
-            >
-              {copied ? (
-                <>
-                  <CheckCircle className="h-4 w-4" />
-                  Copiado!
-                </>
-              ) : (
-                <>
-                  <Copy className="h-4 w-4" />
-                  Copiar
-                </>
-              )}
-            </Button>
-          </div>
+        {/* URLs do Network Link */}
+        <div className="space-y-3">
+          <Label>Links de Rede (Network Links)</Label>
+          {[
+            { layer: "glebas", label: "Glebas", desc: "Apenas polígonos de glebas" },
+            { layer: "pesquisa", label: "Pesquisa de Mercado", desc: "Apenas PINs de pesquisa" },
+            { layer: "all", label: "Tudo", desc: "Glebas + Pesquisa de Mercado" },
+          ].map(({ layer, label, desc }) => (
+            <div key={layer} className="flex gap-2 items-center">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium">{label} <span className="text-muted-foreground font-normal">— {desc}</span></p>
+                <Input
+                  value={accessToken ? getFullUrl(layer) || "" : "Gere um token primeiro..."}
+                  readOnly
+                  className="font-mono text-xs mt-1"
+                  disabled={!accessToken}
+                />
+              </div>
+              <Button
+                onClick={() => handleCopyLink(layer)}
+                variant={copiedLayer === layer ? "default" : "outline"}
+                className="shrink-0 gap-2 mt-5"
+                size="sm"
+                disabled={!accessToken}
+              >
+                {copiedLayer === layer ? <><CheckCircle className="h-4 w-4" />Copiado!</> : <><Copy className="h-4 w-4" />Copiar</>}
+              </Button>
+            </div>
+          ))}
         </div>
 
         {/* Instruções */}
