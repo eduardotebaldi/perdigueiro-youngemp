@@ -1,163 +1,140 @@
 
 
-## Plano de Implementação - Sistema de Mapeamento de Glebas
-### Young Empreendimentos
+## Plano de Implementação
+
+Este plano cobre todas as modificações solicitadas, organizadas em 5 blocos independentes.
 
 ---
 
-### 🎯 Visão Geral
+### 1. Renomear "Comentários" → "Informações da Gleba"
 
-Sistema web para mapear e gerenciar terrenos (glebas) potenciais para empreendimentos imobiliários, com visualização Kanban, controle de propostas, integração com mapas e sincronização automática com Google Earth.
+Trocar apenas os labels de exibição (campo no banco permanece `comentarios`):
 
----
-
-### 👥 Controle de Acesso
-
-**Admin**
-- Acesso total ao sistema
-- Pode excluir glebas e exportar dados
-- Gerencia configurações (motivos de descarte, usuários)
-
-**Usuário Comum**
-- Pode visualizar, criar e editar registros
-- **NÃO pode** excluir glebas
-- **NÃO pode** exportar dados em massa
+- `CreateGlebaDialog.tsx` — FormLabel (linha 178) e placeholder
+- `EditGlebaDialog.tsx` — FormLabel (linha 395)
+- `GlebaDetailsDialog.tsx` — título da seção (linha 469) e ícone
+- `serve-kml-network-link/index.ts` — label "Comentários" no balão KML (linha 174)
 
 ---
 
-### 📋 Módulos do Sistema
+### 2. Tipos de Atividade
 
-#### 1. **Cadastro de Glebas** (Tela Principal)
+**Migration SQL:**
+```sql
+CREATE TABLE public.tipos_atividade (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  nome text NOT NULL UNIQUE,
+  created_at timestamptz DEFAULT now()
+);
+ALTER TABLE public.tipos_atividade ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Authenticated read" ON public.tipos_atividade FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Admin manage" ON public.tipos_atividade FOR ALL TO authenticated USING (public.has_role(auth.uid(), 'admin'));
 
-**Visualização Kanban** com 9 colunas de status e regras de transição:
+INSERT INTO public.tipos_atividade (nome) VALUES
+  ('Reunião presencial'), ('Reunião por vídeo'), ('Visita na gleba'), ('Ligação telefônica');
 
-| Status | Requisitos para Mover |
-|--------|----------------------|
-| Identificada | (inicial) |
-| Informações Recebidas | - |
-| Visita Realizada | Data da visita obrigatória |
-| Proposta Enviada | Proposta associada obrigatória |
-| Protocolo Assinado | Upload do protocolo obrigatório |
-| Descartada | Motivo (dropdown) + descrição |
-| Proposta Recusada | - |
-| Negócio Fechado | Upload do contrato obrigatório |
-| Standby | Motivo + tempo (máx 90 dias) → **retorno automático** |
+ALTER TABLE public.atividades ADD COLUMN tipo_atividade_id uuid REFERENCES public.tipos_atividade(id);
+```
 
-**Campos da Gleba**:
-- Cidade, apelido interno, tamanho (m²)
-- Nome do proprietário, imobiliária
-- Preço, % permuta, aceita permuta (sim/não)
-- Zona do plano diretor
-- Tamanho lote mínimo, responsável pela análise
-- Data atualização (automática)
-- Comentários, prioridade (destaque visual)
-- Polígono no mapa integrado
+**Frontend:**
+- **`useAtividades.ts`** — incluir `tipo_atividade:tipos_atividade(nome)` no select; criar hook `useTiposAtividade` para listar tipos
+- **`CreateAtividadeDialog.tsx`** — adicionar campo Select opcional para tipo de atividade
+- **`GlebaAtividades.tsx`** — adicionar Select opcional de tipo ao criar atividade; exibir badge do tipo na listagem
+- **`AtividadeCard.tsx`** — exibir badge com o nome do tipo
+- **`AtividadesList.tsx`** — adicionar filtro multi-select com busca por digitação (usando Command/Popover), permitindo selecionar múltiplos tipos simultaneamente
 
 ---
 
-#### 2. **Mapa Integrado**
+### 3. Transparência dos polígonos no KML
 
-- Desenhar polígonos diretamente no sistema
-- Visualizar todas as glebas coloridas por status
-- Upload/download de arquivo KMZ por gleba
-- Filtros por cidade, status, prioridade
+Em `serve-kml-network-link/index.ts`, trocar o alpha `80` por `60` nos valores de fill dos `STATUS_STYLES` (linhas 35-43). Isso reduz a opacidade de ~50% para ~37%.
 
 ---
 
-#### 3. **Integração Google Earth (Network Link)**
+### 4. Pesquisa de Mercado
 
-Edge Function que gera KML dinâmico para sincronização:
-- URL configurável no Google Earth Pro
-- Atualização automática (ex: a cada 5 min)
-- Polígonos coloridos por status
-- Popup com informações básicas da gleba
+**Migration SQL — duas tabelas:**
 
----
+`pesquisas_mercado` (sessão de pesquisa):
+- id, nome (ex: "Pesquisa-AlegreteRS-250326"), cidade_id (FK), data_pesquisa, observacoes, kmz_file (path storage), created_by, created_at
 
-#### 4. **Controle de Propostas**
+`pesquisa_mercado_terrenos` (cada terreno):
+- id, pesquisa_id (FK), nome, preco, tamanho_m2, preco_por_m2 (generated), condicoes_pagamento, tipo_terreno, observacoes, url_anuncio, latitude, longitude, placemark_name (para vincular ao KMZ)
 
-- Data da proposta
-- Arquivo da carta-proposta (upload)
-- Descrição da proposta
-- Gleba associada
-- Histórico de propostas por gleba
+RLS: leitura para authenticated, escrita para authenticated.
 
----
+**Fluxo:**
+1. Usuário cria pesquisa (nome, cidade, data)
+2. Cadastra terrenos com dados (preço, tamanho, condições)
+3. Faz upload de KMZ com pins — o sistema parseia placemarks e o usuário vincula cada placemark a um terreno pelo `placemark_name`
+4. Alternativa: cadastrar lat/lng manualmente sem KMZ
 
-#### 5. **Cadastro de Cidades**
+**KML Edge Function:**
+- Adicionar query param `layer=glebas|pesquisa|all`
+- Gerar PINs com ícone azul diferenciado para terrenos de pesquisa, com balão contendo preço, tamanho, preço/m², condições
+- Organizar em pastas KML separadas: "Glebas" e "Pesquisa de Mercado"
 
-- Nome da cidade
-- Arquivos de plano diretor (múltiplos uploads)
-- Lista de glebas associadas
-
----
-
-#### 6. **Cadastro de Imobiliárias**
-
-- Nome da imobiliária
-- Nome do contato
-- Telefone
-- Link rede social / website
-- Contador de glebas trazidas
+**Frontend:**
+- Nova página/seção para CRUD de pesquisas e terrenos
+- Rota no menu lateral
+- Upload de KMZ com parsing de placemarks
+- Toggle no `GlebaMap3D` para alternar camada
 
 ---
 
-#### 7. **Registro de Atividades**
+### 5. Upload → Google Drive + Tipos de Arquivo Dinâmicos
 
-- Data e descrição da atividade
-- Gleba(s) associada(s)
-- Responsável (usuário logado)
-- Timeline de histórico por gleba
+**5a. Tipos de Arquivo Configuráveis**
+
+Migration SQL:
+```sql
+CREATE TABLE public.tipos_arquivo (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  nome text NOT NULL UNIQUE,
+  created_at timestamptz DEFAULT now()
+);
+-- RLS: leitura authenticated, CRUD admin
+INSERT INTO public.tipos_arquivo (nome) VALUES
+  ('Pesquisa de Mercado'), ('Planilha de Viabilidade'), ('Matrícula do Imóvel');
+
+ALTER TABLE public.gleba_anexos ADD COLUMN tipo_arquivo_id uuid REFERENCES public.tipos_arquivo(id);
+-- Migrar dados existentes do enum para o novo campo
+```
+
+- **`Configuracoes.tsx`** — nova seção "Tipos de Arquivo" com CRUD (criar, renomear, excluir com proteção se em uso)
+- **`useGlebaAnexos.ts`** — remover enum `TipoAnexo`, `TIPO_ANEXO_LABELS`, `TIPO_ANEXO_ACCEPT`; adicionar mutation para atualizar `tipo_arquivo_id`
+- **`GlebaAnexosSection.tsx`** — refatorar: lista única de anexos, cada um com Select opcional para atribuir tipo; upload aceita qualquer tipo de arquivo
+- Novo hook **`useTiposArquivo.ts`** para CRUD de tipos
+
+**5b. Upload → Google Drive**
+
+Nova edge function **`upload-to-drive`**:
+- Recebe arquivo + dados da gleba (apelido, cidade, UF)
+- Usa `GOOGLE_SERVICE_ACCOUNT_JSON` (já configurado), atualizando scope de `drive.readonly` para `drive`
+- Cria/navega estrutura: `Projetos futuros/{UF}/{Cidade}/{Gleba}`
+- Faz upload e retorna link do Drive
+- Salva link na tabela `gleba_anexos`
+
+Nova edge function **`list-drive-files`**:
+- Lista TODOS os arquivos na pasta do Drive da gleba (não só os uploadados pelo Perdigueiro)
+- Retorna nome, link, tipo, data de modificação
+
+Migration: adicionar `google_drive_folder_id` na tabela `glebas`.
+
+**Frontend (`GlebaAnexosSection`):**
+- Upload envia para Drive via edge function
+- Exibir todos os arquivos do Drive (incluindo os não enviados pelo Perdigueiro)
+- Permitir atribuir tipo de arquivo a qualquer anexo
 
 ---
 
-#### 8. **Configurações (Admin)**
+### Resumo de arquivos
 
-- Gerenciar motivos de descarte (criar/editar/excluir)
-- Gerenciar usuários e permissões
-- Configurações gerais do sistema
-
----
-
-#### 9. **Dashboard**
-
-**Métricas visuais**:
-- Propostas enviadas por mês (gráfico de linha)
-- Atividades por dia/semana/mês
-- Distribuição de glebas por status (gráfico de pizza)
-- Total de glebas mapeadas (KPI principal)
-- Filtros por período
-
----
-
-### 🎨 Identidade Visual
-
-- **Cores**: Laranja Jovem (#FE5009), Azul Corporativo (#061B39), Cinzas (#323232, #0D0D0D, #F2F2F2)
-- **Tipografia**: Space Grotesk
-- **Estilo**: Moderno, tecnológico e minimalista
-- **Tema**: Suporte a dark mode
-
----
-
-### 🔧 Tecnologia
-
-- **Frontend**: React + TypeScript + Tailwind CSS
-- **Backend**: Supabase (Lovable Cloud)
-- **Mapas**: Leaflet com suporte a KMZ
-- **Armazenamento**: Supabase Storage (arquivos)
-- **Autenticação**: Supabase Auth com roles
-
----
-
-### 📱 Telas Principais
-
-1. **Login** - Autenticação segura
-2. **Dashboard** - Visão geral com métricas
-3. **Glebas (Kanban)** - Tela principal com drag-and-drop
-4. **Mapa** - Visualização geográfica
-5. **Propostas** - Listagem e cadastro
-6. **Cidades** - Cadastro com planos diretores
-7. **Imobiliárias** - Cadastro de parceiros
-8. **Atividades** - Registro diário
-9. **Configurações** - Área admin
+| Bloco | Arquivos afetados |
+|-------|-------------------|
+| 1. Label | `CreateGlebaDialog`, `EditGlebaDialog`, `GlebaDetailsDialog`, `serve-kml-network-link` |
+| 2. Tipos atividade | Migration, `useAtividades`, `GlebaAtividades`, `CreateAtividadeDialog`, `AtividadeCard`, `AtividadesList` |
+| 3. Transparência | `serve-kml-network-link/index.ts` |
+| 4. Pesquisa mercado | 2 migrations, `serve-kml-network-link`, novos componentes CRUD, rota, menu |
+| 5. Drive + tipos arquivo | 2 migrations, 2 edge functions, `GlebaAnexosSection`, `useGlebaAnexos`, `Configuracoes`, novo hook |
 
