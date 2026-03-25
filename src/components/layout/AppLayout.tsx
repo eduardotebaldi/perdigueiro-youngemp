@@ -31,6 +31,7 @@ import {
   ChevronRight,
   PanelLeftClose,
   PanelLeftOpen,
+  BarChart3,
 } from "lucide-react";
 
 interface NavItem {
@@ -48,6 +49,7 @@ const navItems: NavItem[] = [
   { label: "Cidades", href: "/cidades", icon: <Building className="h-5 w-5" /> },
   { label: "Imobiliárias", href: "/imobiliarias", icon: <Building2 className="h-5 w-5" /> },
   { label: "Atividades", href: "/atividades", icon: <CalendarDays className="h-5 w-5" /> },
+  { label: "Pesq. Mercado", href: "/pesquisas-mercado", icon: <BarChart3 className="h-5 w-5" /> },
   { label: "Configurações", href: "/configuracoes", icon: <Settings className="h-5 w-5" />, adminOnly: true },
 ];
 
