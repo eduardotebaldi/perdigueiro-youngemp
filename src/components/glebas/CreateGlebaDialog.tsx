@@ -96,6 +96,7 @@ export function CreateGlebaDialog({ onSuccess }: CreateGlebaDialogProps) {
       });
 
       form.reset();
+      setSelectedCidadeId(null);
       setOpen(false);
       onSuccess?.();
     } catch (error) {
