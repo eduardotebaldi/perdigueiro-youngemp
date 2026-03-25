@@ -23,13 +23,17 @@ import {
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { useGlebas } from "@/hooks/useGlebas";
+import { useCidades } from "@/hooks/useCidades";
+import { CidadeAutocomplete } from "@/components/cidades/CidadeAutocomplete";
 import { Tables } from "@/integrations/supabase/types";
 import { Plus, Loader2 } from "lucide-react";
+import { CidadeBrasil } from "@/hooks/useCidadesBrasil";
 
 type Gleba = Tables<"glebas">;
 
 const glebaSchema = z.object({
   apelido: z.string().min(1, "Apelido é obrigatório"),
+  cidade_nome: z.string().min(1, "Cidade é obrigatória"),
   proprietario_nome: z.string().optional(),
   tamanho_m2: z.coerce.number().positive().optional(),
   preco: z.coerce.number().positive().optional(),
@@ -45,13 +49,16 @@ interface CreateGlebaDialogProps {
 export function CreateGlebaDialog({ onSuccess }: CreateGlebaDialogProps) {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedCidadeId, setSelectedCidadeId] = useState<string | null>(null);
   const { createGleba } = useGlebas();
+  const { cidades, createCidade } = useCidades();
   const { toast } = useToast();
 
   const form = useForm<GlebaForm>({
     resolver: zodResolver(glebaSchema),
     defaultValues: {
       apelido: "",
+      cidade_nome: "",
       proprietario_nome: "",
       tamanho_m2: undefined,
       preco: undefined,
@@ -62,8 +69,24 @@ export function CreateGlebaDialog({ onSuccess }: CreateGlebaDialogProps) {
   const onSubmit = async (data: GlebaForm) => {
     setIsSubmitting(true);
     try {
+      // Find or create cidade
+      let cidadeId = selectedCidadeId;
+      if (!cidadeId) {
+        // Try to find existing cidade by name
+        const existing = (cidades || []).find(c => c.nome === data.cidade_nome);
+        if (existing) {
+          cidadeId = existing.id;
+        } else {
+          // Create new cidade
+          const newCidade = await createCidade.mutateAsync({ nome: data.cidade_nome });
+          cidadeId = newCidade?.id;
+        }
+      }
+
+      const { cidade_nome, ...rest } = data;
       await createGleba({
-        ...data,
+        ...rest,
+        cidade_id: cidadeId,
         status: "identificada",
       } as any);
 
@@ -73,6 +96,7 @@ export function CreateGlebaDialog({ onSuccess }: CreateGlebaDialogProps) {
       });
 
       form.reset();
+      setSelectedCidadeId(null);
       setOpen(false);
       onSuccess?.();
     } catch (error) {
@@ -112,6 +136,34 @@ export function CreateGlebaDialog({ onSuccess }: CreateGlebaDialogProps) {
                   <FormLabel>Apelido *</FormLabel>
                   <FormControl>
                     <Input placeholder="ex: Gleba Centro" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="cidade_nome"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Cidade *</FormLabel>
+                  <FormControl>
+                    <CidadeAutocomplete
+                      value={field.value}
+                      onChange={(cidade: CidadeBrasil | null) => {
+                        if (cidade) {
+                          field.onChange(cidade.nomeCompleto);
+                          // Check if cidade already exists in our DB
+                          const existing = (cidades || []).find(c => c.nome === cidade.nomeCompleto);
+                          setSelectedCidadeId(existing?.id || null);
+                        } else {
+                          field.onChange("");
+                          setSelectedCidadeId(null);
+                        }
+                      }}
+                      placeholder="Digite o nome da cidade..."
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

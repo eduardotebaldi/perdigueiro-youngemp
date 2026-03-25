@@ -3118,6 +3118,84 @@ export type Database = {
         }
         Relationships: []
       }
+      sienge_clientes: {
+        Row: {
+          address_number: string | null
+          address_type: string | null
+          city: string | null
+          city_id: number | null
+          contact_email: string | null
+          contact_name: string | null
+          cpf: string | null
+          created_at: string
+          email: string | null
+          id: number
+          mail: boolean | null
+          modified_at: string
+          name: string
+          neighborhood: string | null
+          person_type: string | null
+          phone_idd: string | null
+          phone_main: boolean | null
+          phone_number: string | null
+          phone_type: string | null
+          sex: string | null
+          state: string | null
+          street_name: string | null
+          zip_code: string | null
+        }
+        Insert: {
+          address_number?: string | null
+          address_type?: string | null
+          city?: string | null
+          city_id?: number | null
+          contact_email?: string | null
+          contact_name?: string | null
+          cpf?: string | null
+          created_at: string
+          email?: string | null
+          id: number
+          mail?: boolean | null
+          modified_at: string
+          name: string
+          neighborhood?: string | null
+          person_type?: string | null
+          phone_idd?: string | null
+          phone_main?: boolean | null
+          phone_number?: string | null
+          phone_type?: string | null
+          sex?: string | null
+          state?: string | null
+          street_name?: string | null
+          zip_code?: string | null
+        }
+        Update: {
+          address_number?: string | null
+          address_type?: string | null
+          city?: string | null
+          city_id?: number | null
+          contact_email?: string | null
+          contact_name?: string | null
+          cpf?: string | null
+          created_at?: string
+          email?: string | null
+          id?: number
+          mail?: boolean | null
+          modified_at?: string
+          name?: string
+          neighborhood?: string | null
+          person_type?: string | null
+          phone_idd?: string | null
+          phone_main?: boolean | null
+          phone_number?: string | null
+          phone_type?: string | null
+          sex?: string | null
+          state?: string | null
+          street_name?: string | null
+          zip_code?: string | null
+        }
+        Relationships: []
+      }
       system_config: {
         Row: {
           created_at: string
