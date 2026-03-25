@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Settings, Users, Plus, Trash2, Shield, ShieldCheck, Loader2, Pencil, Check, X, RefreshCw, MapPin, ChevronDown } from "lucide-react";
+import { Settings, Users, Plus, Trash2, Shield, ShieldCheck, Loader2, Pencil, Check, X, RefreshCw, MapPin, ChevronDown, FileType } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
@@ -52,6 +52,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { ReportConfigCard } from "@/components/configuracoes/ReportConfigCard";
+import { useTiposArquivo } from "@/hooks/useTiposArquivo";
 
 interface UserWithRole {
   id: string;
@@ -430,6 +431,9 @@ export default function Configuracoes() {
           </CollapsibleContent>
         </Card>
       </Collapsible>
+
+      {/* Tipos de Arquivo */}
+      <TiposArquivoCard />
 
       {/* Relatórios */}
       <ReportConfigCard />
