@@ -14,3 +14,9 @@ verify_jwt = false
 
 [functions.generate-weekly-report]
 verify_jwt = false
+
+[functions.upload-to-drive]
+verify_jwt = false
+
+[functions.list-drive-files]
+verify_jwt = false
