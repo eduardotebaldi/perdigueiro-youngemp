@@ -1100,6 +1100,7 @@ export type Database = {
           matricula: number
           num_lote: string
           onus: string
+          proprietario: string | null
         }
         Insert: {
           area: number
@@ -1108,6 +1109,7 @@ export type Database = {
           matricula: number
           num_lote: string
           onus?: string
+          proprietario?: string | null
         }
         Update: {
           area?: number
@@ -1116,6 +1118,7 @@ export type Database = {
           matricula?: number
           num_lote?: string
           onus?: string
+          proprietario?: string | null
         }
         Relationships: []
       }
