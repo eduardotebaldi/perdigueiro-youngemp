@@ -455,11 +455,14 @@ function PesquisaDetail({ pesquisa, onBack }: { pesquisa: PesquisaMercado; onBac
       ) : (
         <div className="space-y-2">
           {terrenos.map((t) => (
-            <Card key={t.id} className="group">
+            <Card key={t.id} className="group cursor-pointer hover:shadow-md transition-shadow" onClick={() => openEdit(t)}>
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
                   {t.imagem_url && (
-                    <button onClick={() => setPreviewImg(t.imagem_url)} className="shrink-0">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setPreviewImg(t.imagem_url); }}
+                      className="shrink-0"
+                    >
                       <img src={t.imagem_url} alt={t.nome} className="h-16 w-16 object-cover rounded border hover:opacity-80 transition" />
                     </button>
                   )}
@@ -495,30 +498,13 @@ function PesquisaDetail({ pesquisa, onBack }: { pesquisa: PesquisaMercado; onBac
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
                     {t.url_anuncio && (
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => window.open(t.url_anuncio!, "_blank")}>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); window.open(t.url_anuncio!, "_blank"); }}>
                         <ExternalLink className="h-3.5 w-3.5" />
                       </Button>
                     )}
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(t)}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openEdit(t); }} title="Editar">
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive">
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Excluir terreno?</AlertDialogTitle>
-                          <AlertDialogDescription>O terreno "{t.nome}" será removido.</AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => deleteTerreno.mutate(t.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Excluir</AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
                   </div>
                 </div>
               </CardContent>
