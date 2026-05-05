@@ -250,6 +250,37 @@ export function GlebaMap3D({
       });
     });
 
+    // Pins de pesquisa de mercado
+    pesquisaTerrenos.forEach((t) => {
+      const precoM2 = t.preco && t.tamanho_m2 ? (t.preco / t.tamanho_m2) : null;
+      const dataFmt = (() => { try { return new Date(t.pesquisa_data + "T00:00:00").toLocaleDateString("pt-BR"); } catch { return t.pesquisa_data; } })();
+      viewer.entities.add({
+        id: `pesquisa_${t.id}`,
+        name: `📍 ${t.nome}`,
+        position: Cartesian3.fromDegrees(t.longitude, t.latitude),
+        point: {
+          pixelSize: 14,
+          color: Color.fromCssColorString("#2563EB"),
+          outlineColor: Color.WHITE,
+          outlineWidth: 2,
+        },
+        description: `
+          <div style="font-family:Arial,sans-serif;max-width:320px">
+            <h3 style="margin:0 0 8px;color:#2563EB">📍 ${t.nome}</h3>
+            <p style="margin:2px 0;font-size:12px;color:#666"><strong>Pesquisa:</strong> ${t.pesquisa_nome} — ${dataFmt}</p>
+            ${t.preco ? `<p style="margin:4px 0"><strong>Preço:</strong> R$ ${t.preco.toLocaleString("pt-BR")}</p>` : ""}
+            ${t.tamanho_m2 ? `<p style="margin:4px 0"><strong>Área:</strong> ${t.tamanho_m2.toLocaleString("pt-BR")} m²</p>` : ""}
+            ${precoM2 ? `<p style="margin:4px 0;color:#2563EB"><strong>R$/m²:</strong> ${precoM2.toLocaleString("pt-BR",{maximumFractionDigits:2})}</p>` : ""}
+            ${t.tipo_terreno ? `<p style="margin:4px 0"><strong>Tipo:</strong> ${t.tipo_terreno}</p>` : ""}
+            ${t.condicoes_pagamento ? `<p style="margin:4px 0"><strong>Condições:</strong> ${t.condicoes_pagamento}</p>` : ""}
+            ${t.observacoes ? `<p style="margin:6px 0;font-style:italic">${t.observacoes}</p>` : ""}
+            ${t.imagem_url ? `<img src="${t.imagem_url}" style="max-width:100%;margin-top:8px;border-radius:4px" />` : ""}
+            ${t.url_anuncio ? `<p style="margin-top:8px"><a href="${t.url_anuncio}" target="_blank" style="color:#2563EB">🔗 Ver anúncio</a></p>` : ""}
+          </div>
+        `,
+      });
+    });
+
     // Voar para a primeira gleba quando as glebas forem carregadas
     if (firstGlebaCenter && glebas.length > 0) {
       viewer.camera.flyTo({
@@ -257,7 +288,7 @@ export function GlebaMap3D({
         duration: 2,
       });
     }
-  }, [glebas]);
+  }, [glebas, pesquisaTerrenos]);
 
   // Handler de clique
   useEffect(() => {
