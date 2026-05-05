@@ -22,9 +22,11 @@ async function validateAccessToken(req: Request, supabase: any): Promise<boolean
 // Status colors for Google Earth (AABBGGRR format)
 const STATUS_STYLES: Record<string, { fill: string; line: string; label: string }> = {
   identificada: { fill: "600000ff", line: "ff0000ff", label: "Identificada" },
+  analise_interna_realizada: { fill: "60e9a50e", line: "ffe9a50e", label: "Análise Interna Realizada" },
   informacoes_recebidas: { fill: "6000a5ff", line: "ff00a5ff", label: "Informações Recebidas" },
   visita_realizada: { fill: "6000ffff", line: "ff00ffff", label: "Visita Realizada" },
   proposta_enviada: { fill: "60ff0000", line: "ffff0000", label: "Proposta Enviada" },
+  minuta_enviada: { fill: "6008b3ea", line: "ff08b3ea", label: "Minuta Enviada" },
   protocolo_assinado: { fill: "6000ff00", line: "ff00ff00", label: "Protocolo Assinado" },
   descartada: { fill: "60808080", line: "ff808080", label: "Descartada" },
   proposta_recusada: { fill: "600000aa", line: "ff0000aa", label: "Proposta Recusada" },
