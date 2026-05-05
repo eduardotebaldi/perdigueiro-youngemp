@@ -353,6 +353,7 @@ export default function Mapa() {
           {!isLoading && (
             <GlebaMap3D 
               glebas={glebas} 
+              pesquisaTerrenos={pesquisaPins}
               onSelectGleba={setSelectedGleba}
               selectedGlebaId={selectedGleba?.id}
               isFullscreen={isFullscreen}
