@@ -21,7 +21,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Loader2, ChevronLeft, ChevronRight, Search, Star, ChevronsLeft, ChevronsRight, MapPin, X, MessageSquareOff, Clock, AlertTriangle } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, Search, Star, ChevronsLeft, ChevronsRight, MapPin, X, MessageSquareOff, Clock, AlertTriangle, HelpCircle } from "lucide-react";
+import { StatusDescriptionDialog } from "./StatusDescriptionDialog";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -93,6 +94,7 @@ function DraggableGlebaCard({ gleba, onViewGleba, showInactiveIcon }: { gleba: G
 }
 
 function KanbanColumn({ status, glebas, onViewGleba, isCollapsed, onToggleCollapse, inactiveGlebaIds }: KanbanColumnProps) {
+  const [descOpen, setDescOpen] = useState(false);
   const { setNodeRef, isOver } = useDroppable({
     id: `column-${status}`,
     data: { status },
@@ -140,9 +142,17 @@ function KanbanColumn({ status, glebas, onViewGleba, isCollapsed, onToggleCollap
         onClick={onToggleCollapse}
         title="Clique para colapsar"
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 group">
           <ChevronLeft className="h-4 w-4 text-muted-foreground" />
           <h3 className="font-semibold text-sm">{STATUS_LABELS[status]}</h3>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setDescOpen(true); }}
+            className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+            title="Descrição da etapa"
+          >
+            <HelpCircle className="h-3.5 w-3.5" />
+          </button>
         </div>
         <Badge variant="secondary" className={BADGE_COLORS[status]}>
           {glebas.length}
@@ -164,6 +174,12 @@ function KanbanColumn({ status, glebas, onViewGleba, isCollapsed, onToggleCollap
           </div>
         )}
       </div>
+      <StatusDescriptionDialog
+        open={descOpen}
+        onOpenChange={setDescOpen}
+        status={status}
+        statusLabel={STATUS_LABELS[status]}
+      />
     </div>
   );
 }
