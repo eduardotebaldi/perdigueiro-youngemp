@@ -47,9 +47,11 @@ interface KanbanColumnProps {
 
 const STATUS_COLORS: Record<string, string> = {
   identificada: "border-blue-200 dark:border-blue-800",
+  analise_interna_realizada: "border-sky-200 dark:border-sky-800",
   informacoes_recebidas: "border-cyan-200 dark:border-cyan-800",
   visita_realizada: "border-teal-200 dark:border-teal-800",
   proposta_enviada: "border-amber-200 dark:border-amber-800",
+  minuta_enviada: "border-yellow-200 dark:border-yellow-800",
   protocolo_assinado: "border-orange-200 dark:border-orange-800",
   descartada: "border-red-200 dark:border-red-800",
   proposta_recusada: "border-rose-200 dark:border-rose-800",
@@ -59,9 +61,11 @@ const STATUS_COLORS: Record<string, string> = {
 
 const BADGE_COLORS: Record<string, string> = {
   identificada: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+  analise_interna_realizada: "bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200",
   informacoes_recebidas: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200",
   visita_realizada: "bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200",
   proposta_enviada: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
+  minuta_enviada: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
   protocolo_assinado: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
   descartada: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
   proposta_recusada: "bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200",
