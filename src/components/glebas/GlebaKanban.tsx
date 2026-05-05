@@ -174,6 +174,12 @@ function KanbanColumn({ status, glebas, onViewGleba, isCollapsed, onToggleCollap
           </div>
         )}
       </div>
+      <StatusDescriptionDialog
+        open={descOpen}
+        onOpenChange={setDescOpen}
+        status={status}
+        statusLabel={STATUS_LABELS[status]}
+      />
     </div>
   );
 }
