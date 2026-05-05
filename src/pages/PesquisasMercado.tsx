@@ -1,7 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { Plus, Search, MapPin, Trash2, ChevronRight, CalendarDays, DollarSign, Ruler, FileText, ExternalLink } from "lucide-react";
+import { Plus, Search, MapPin, Trash2, ChevronRight, CalendarDays, DollarSign, Ruler, FileText, ExternalLink, Pencil, Image as ImageIcon, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -41,8 +40,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { usePesquisasMercado, usePesquisaTerrenos, PesquisaMercado } from "@/hooks/usePesquisasMercado";
+import { usePesquisasMercado, usePesquisaTerrenos, PesquisaMercado, PesquisaTerreno } from "@/hooks/usePesquisasMercado";
 import { useCidades } from "@/hooks/useCidades";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export default function PesquisasMercado() {
@@ -211,37 +211,117 @@ export default function PesquisasMercado() {
   );
 }
 
+interface TerrenoFormState {
+  nome: string;
+  preco: string;
+  tamanho_m2: string;
+  condicoes_pagamento: string;
+  tipo_terreno: string;
+  observacoes: string;
+  url_anuncio: string;
+  coordenadas: string; // "lat, lng"
+  imagem_url: string | null;
+}
+
+function emptyForm(): TerrenoFormState {
+  return { nome: "", preco: "", tamanho_m2: "", condicoes_pagamento: "", tipo_terreno: "", observacoes: "", url_anuncio: "", coordenadas: "", imagem_url: null };
+}
+
+function parseCoords(s: string): { lat: number | null; lng: number | null } {
+  if (!s.trim()) return { lat: null, lng: null };
+  const m = s.replace(/\s/g, "").match(/^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)$/);
+  if (!m) return { lat: NaN, lng: NaN };
+  return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+}
+
 function PesquisaDetail({ pesquisa, onBack }: { pesquisa: PesquisaMercado; onBack: () => void }) {
-  const { terrenos, isLoading, createTerreno, deleteTerreno } = usePesquisaTerrenos(pesquisa.id);
-  const [addOpen, setAddOpen] = useState(false);
+  const { terrenos, isLoading, createTerreno, updateTerreno, deleteTerreno } = usePesquisaTerrenos(pesquisa.id);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState<TerrenoFormState>(emptyForm());
+  const [uploading, setUploading] = useState(false);
+  const [previewImg, setPreviewImg] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Terreno form
-  const [tNome, setTNome] = useState("");
-  const [tPreco, setTPreco] = useState("");
-  const [tTamanho, setTTamanho] = useState("");
-  const [tCondicoes, setTCondicoes] = useState("");
-  const [tTipo, setTTipo] = useState("");
-  const [tObs, setTObs] = useState("");
-  const [tUrl, setTUrl] = useState("");
+  const openCreate = () => { setEditingId(null); setForm(emptyForm()); setDialogOpen(true); };
+  const openEdit = (t: PesquisaTerreno) => {
+    setEditingId(t.id);
+    setForm({
+      nome: t.nome,
+      preco: t.preco?.toString() ?? "",
+      tamanho_m2: t.tamanho_m2?.toString() ?? "",
+      condicoes_pagamento: t.condicoes_pagamento ?? "",
+      tipo_terreno: t.tipo_terreno ?? "",
+      observacoes: t.observacoes ?? "",
+      url_anuncio: t.url_anuncio ?? "",
+      coordenadas: t.latitude && t.longitude ? `${t.latitude}, ${t.longitude}` : "",
+      imagem_url: t.imagem_url ?? null,
+    });
+    setDialogOpen(true);
+  };
 
-  const handleAdd = async () => {
-    if (!tNome.trim()) { toast.error("Informe o nome"); return; }
+  const uploadImage = async (file: File) => {
+    setUploading(true);
     try {
-      await createTerreno.mutateAsync({
-        pesquisa_id: pesquisa.id,
-        nome: tNome.trim(),
-        preco: tPreco ? parseFloat(tPreco) : null,
-        tamanho_m2: tTamanho ? parseFloat(tTamanho) : null,
-        condicoes_pagamento: tCondicoes || null,
-        tipo_terreno: tTipo || null,
-        observacoes: tObs || null,
-        url_anuncio: tUrl || null,
-      });
-      toast.success("Terreno adicionado!");
-      setAddOpen(false);
-      setTNome(""); setTPreco(""); setTTamanho(""); setTCondicoes(""); setTTipo(""); setTObs(""); setTUrl("");
+      const ext = file.name.split(".").pop() || "png";
+      const path = `${pesquisa.id}/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from("pesquisa-imagens").upload(path, file);
+      if (error) throw error;
+      const { data } = supabase.storage.from("pesquisa-imagens").getPublicUrl(path);
+      setForm((f) => ({ ...f, imagem_url: data.publicUrl }));
+      toast.success("Imagem enviada!");
+    } catch (e: any) {
+      toast.error("Erro ao enviar imagem: " + (e?.message || ""));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handlePaste = async (e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of Array.from(items)) {
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) {
+          e.preventDefault();
+          await uploadImage(file);
+          return;
+        }
+      }
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!form.nome.trim()) { toast.error("Informe o nome"); return; }
+    const coords = parseCoords(form.coordenadas);
+    if (form.coordenadas && (Number.isNaN(coords.lat) || Number.isNaN(coords.lng))) {
+      toast.error("Coordenadas inválidas. Use: lat, lng");
+      return;
+    }
+    const payload = {
+      nome: form.nome.trim(),
+      preco: form.preco ? parseFloat(form.preco) : null,
+      tamanho_m2: form.tamanho_m2 ? parseFloat(form.tamanho_m2) : null,
+      condicoes_pagamento: form.condicoes_pagamento || null,
+      tipo_terreno: form.tipo_terreno || null,
+      observacoes: form.observacoes || null,
+      url_anuncio: form.url_anuncio || null,
+      latitude: coords.lat,
+      longitude: coords.lng,
+      imagem_url: form.imagem_url,
+    };
+    try {
+      if (editingId) {
+        await updateTerreno.mutateAsync({ id: editingId, ...payload });
+        toast.success("Terreno atualizado!");
+      } else {
+        await createTerreno.mutateAsync({ pesquisa_id: pesquisa.id, ...payload });
+        toast.success("Terreno adicionado!");
+      }
+      setDialogOpen(false);
     } catch {
-      toast.error("Erro ao adicionar terreno");
+      toast.error("Erro ao salvar terreno");
     }
   };
 
@@ -273,32 +353,65 @@ function PesquisaDetail({ pesquisa, onBack }: { pesquisa: PesquisaMercado; onBac
 
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Terrenos ({terrenos.length})</h2>
-        <Dialog open={addOpen} onOpenChange={setAddOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm"><Plus className="mr-1 h-4 w-4" />Adicionar Terreno</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Adicionar Terreno</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3 py-2">
-              <Input placeholder="Nome / Identificação *" value={tNome} onChange={(e) => setTNome(e.target.value)} />
-              <div className="grid grid-cols-2 gap-3">
-                <Input type="number" placeholder="Preço (R$)" value={tPreco} onChange={(e) => setTPreco(e.target.value)} />
-                <Input type="number" placeholder="Tamanho (m²)" value={tTamanho} onChange={(e) => setTTamanho(e.target.value)} />
-              </div>
-              <Input placeholder="Condições de pagamento" value={tCondicoes} onChange={(e) => setTCondicoes(e.target.value)} />
-              <Input placeholder="Tipo do terreno" value={tTipo} onChange={(e) => setTTipo(e.target.value)} />
-              <Input placeholder="URL do anúncio" value={tUrl} onChange={(e) => setTUrl(e.target.value)} />
-              <Textarea placeholder="Observações" value={tObs} onChange={(e) => setTObs(e.target.value)} rows={2} />
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setAddOpen(false)}>Cancelar</Button>
-              <Button onClick={handleAdd} disabled={createTerreno.isPending}>Adicionar</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <Button size="sm" onClick={openCreate}><Plus className="mr-1 h-4 w-4" />Adicionar Terreno</Button>
       </div>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" onPaste={handlePaste}>
+          <DialogHeader>
+            <DialogTitle>{editingId ? "Editar Terreno" : "Adicionar Terreno"}</DialogTitle>
+            <DialogDescription>Dica: você pode colar (Ctrl+V) uma imagem nesta janela.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <Input placeholder="Nome / Identificação *" value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} />
+            <div className="grid grid-cols-2 gap-3">
+              <Input type="number" placeholder="Preço (R$)" value={form.preco} onChange={(e) => setForm({ ...form, preco: e.target.value })} />
+              <Input type="number" placeholder="Tamanho (m²)" value={form.tamanho_m2} onChange={(e) => setForm({ ...form, tamanho_m2: e.target.value })} />
+            </div>
+            <Input placeholder="Condições de pagamento" value={form.condicoes_pagamento} onChange={(e) => setForm({ ...form, condicoes_pagamento: e.target.value })} />
+            <Input placeholder="Tipo do terreno" value={form.tipo_terreno} onChange={(e) => setForm({ ...form, tipo_terreno: e.target.value })} />
+            <Input placeholder="URL do anúncio" value={form.url_anuncio} onChange={(e) => setForm({ ...form, url_anuncio: e.target.value })} />
+            <Input placeholder="Coordenadas (lat, lng) — ex: -29.7869, -55.7619" value={form.coordenadas} onChange={(e) => setForm({ ...form, coordenadas: e.target.value })} />
+            <Textarea placeholder="Observações" value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} rows={2} />
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium flex items-center gap-2"><ImageIcon className="h-4 w-4" />Imagem (print do anúncio)</label>
+              {form.imagem_url ? (
+                <div className="relative inline-block">
+                  <img src={form.imagem_url} alt="Preview" className="max-h-40 rounded border" />
+                  <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-6 w-6" onClick={() => setForm({ ...form, imagem_url: null })}>
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+                    <Upload className="h-4 w-4 mr-1" />{uploading ? "Enviando..." : "Selecionar arquivo"}
+                  </Button>
+                  <span className="text-xs text-muted-foreground">ou cole (Ctrl+V) uma imagem</span>
+                </div>
+              )}
+              <input
+                ref={fileInputRef} type="file" accept="image/*" className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadImage(f); if (fileInputRef.current) fileInputRef.current.value = ""; }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleSubmit} disabled={createTerreno.isPending || updateTerreno.isPending}>
+              {editingId ? "Salvar" : "Adicionar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Image preview lightbox */}
+      <Dialog open={!!previewImg} onOpenChange={(o) => !o && setPreviewImg(null)}>
+        <DialogContent className="max-w-3xl">
+          {previewImg && <img src={previewImg} alt="Preview" className="w-full h-auto rounded" />}
+        </DialogContent>
+      </Dialog>
 
       {isLoading ? (
         <div className="space-y-2">{[1,2].map((i) => <Skeleton key={i} className="h-20" />)}</div>
@@ -312,11 +425,19 @@ function PesquisaDetail({ pesquisa, onBack }: { pesquisa: PesquisaMercado; onBac
           {terrenos.map((t) => (
             <Card key={t.id} className="group">
               <CardContent className="p-4">
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1 flex-1">
-                    <div className="flex items-center gap-2">
+                <div className="flex items-start gap-3">
+                  {t.imagem_url && (
+                    <button onClick={() => setPreviewImg(t.imagem_url)} className="shrink-0">
+                      <img src={t.imagem_url} alt={t.nome} className="h-16 w-16 object-cover rounded border hover:opacity-80 transition" />
+                    </button>
+                  )}
+                  <div className="space-y-1 flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-medium">{t.nome}</span>
                       {t.tipo_terreno && <Badge variant="outline" className="text-xs">{t.tipo_terreno}</Badge>}
+                      {t.latitude && t.longitude && (
+                        <Badge variant="secondary" className="text-xs gap-1"><MapPin className="h-3 w-3" />Geo</Badge>
+                      )}
                     </div>
                     <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                       {t.preco && (
@@ -340,15 +461,18 @@ function PesquisaDetail({ pesquisa, onBack }: { pesquisa: PesquisaMercado; onBac
                     {t.condicoes_pagamento && <p className="text-xs text-muted-foreground">{t.condicoes_pagamento}</p>}
                     {t.observacoes && <p className="text-xs text-muted-foreground italic">{t.observacoes}</p>}
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 shrink-0">
                     {t.url_anuncio && (
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => window.open(t.url_anuncio!, "_blank")}>
                         <ExternalLink className="h-3.5 w-3.5" />
                       </Button>
                     )}
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(t)}>
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive">
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive">
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </AlertDialogTrigger>

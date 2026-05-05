@@ -23,10 +23,26 @@ export interface PesquisaTerreno {
   tipo_terreno: string | null;
   observacoes: string | null;
   url_anuncio: string | null;
+  imagem_url: string | null;
   latitude: number | null;
   longitude: number | null;
   placemark_name: string | null;
   created_at: string;
+}
+
+export function useAllPesquisaTerrenos() {
+  return useQuery({
+    queryKey: ["pesquisa_terrenos_all"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pesquisa_mercado_terrenos")
+        .select("*, pesquisa:pesquisas_mercado(id, nome, data_pesquisa)")
+        .not("latitude", "is", null)
+        .not("longitude", "is", null);
+      if (error) throw error;
+      return data as (PesquisaTerreno & { pesquisa: { id: string; nome: string; data_pesquisa: string } | null })[];
+    },
+  });
 }
 
 export function usePesquisasMercado() {
