@@ -6489,6 +6489,8 @@ export type Database = {
         | "proposta_recusada"
         | "negocio_fechado"
         | "standby"
+        | "analise_interna_realizada"
+        | "minuta_enviada"
       paver_app_role: "admin" | "engenharia"
       permuta_status: "incerto" | "nao" | "sim"
       rh_app_role: "admin" | "coordenador" | "usuario"
@@ -6647,6 +6649,8 @@ export const Constants = {
         "proposta_recusada",
         "negocio_fechado",
         "standby",
+        "analise_interna_realizada",
+        "minuta_enviada",
       ],
       paver_app_role: ["admin", "engenharia"],
       permuta_status: ["incerto", "nao", "sim"],

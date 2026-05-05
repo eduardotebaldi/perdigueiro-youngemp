@@ -24,9 +24,11 @@ const GOOGLE_MAPS_API_KEY = "AIzaSyDqTgpc8FdUMf622yGI7IFHDcS_e9JncBI";
 // Cores por status
 const STATUS_COLORS: Record<string, Color> = {
   identificada: Color.fromCssColorString("#3b82f6").withAlpha(0.6),
+  analise_interna_realizada: Color.fromCssColorString("#0ea5e9").withAlpha(0.6),
   informacoes_recebidas: Color.fromCssColorString("#06b6d4").withAlpha(0.6),
   visita_realizada: Color.fromCssColorString("#14b8a6").withAlpha(0.6),
   proposta_enviada: Color.fromCssColorString("#f59e0b").withAlpha(0.6),
+  minuta_enviada: Color.fromCssColorString("#eab308").withAlpha(0.6),
   protocolo_assinado: Color.fromCssColorString("#f97316").withAlpha(0.6),
   descartada: Color.fromCssColorString("#ef4444").withAlpha(0.6),
   proposta_recusada: Color.fromCssColorString("#f43f5e").withAlpha(0.6),
@@ -36,9 +38,11 @@ const STATUS_COLORS: Record<string, Color> = {
 
 const STATUS_OUTLINE_COLORS: Record<string, Color> = {
   identificada: Color.fromCssColorString("#3b82f6"),
+  analise_interna_realizada: Color.fromCssColorString("#0ea5e9"),
   informacoes_recebidas: Color.fromCssColorString("#06b6d4"),
   visita_realizada: Color.fromCssColorString("#14b8a6"),
   proposta_enviada: Color.fromCssColorString("#f59e0b"),
+  minuta_enviada: Color.fromCssColorString("#eab308"),
   protocolo_assinado: Color.fromCssColorString("#f97316"),
   descartada: Color.fromCssColorString("#ef4444"),
   proposta_recusada: Color.fromCssColorString("#f43f5e"),

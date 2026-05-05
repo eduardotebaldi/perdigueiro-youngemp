@@ -7,9 +7,11 @@ type Gleba = Tables<"glebas">;
 
 const STATUS_LABELS: Record<string, string> = {
   identificada: "Identificada",
+  analise_interna_realizada: "Análise Interna Realizada",
   informacoes_recebidas: "Informações Recebidas",
   visita_realizada: "Visita Realizada",
   proposta_enviada: "Proposta Enviada",
+  minuta_enviada: "Minuta Enviada",
   protocolo_assinado: "Protocolo Assinado",
   descartada: "Descartada",
   proposta_recusada: "Proposta Recusada",
@@ -19,9 +21,10 @@ const STATUS_LABELS: Record<string, string> = {
 
 const STATUS_ORDER = [
   "identificada",
+  "analise_interna_realizada",
   "informacoes_recebidas",
-  "visita_realizada",
   "proposta_enviada",
+  "minuta_enviada",
   "protocolo_assinado",
   "descartada",
   "proposta_recusada",

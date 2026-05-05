@@ -9,9 +9,11 @@ type Gleba = Tables<"glebas">;
 
 const STATUS_COLORS: Record<string, string> = {
   identificada: "#3b82f6",
+  analise_interna_realizada: "#0ea5e9",
   informacoes_recebidas: "#06b6d4",
   visita_realizada: "#14b8a6",
   proposta_enviada: "#f59e0b",
+  minuta_enviada: "#eab308",
   protocolo_assinado: "#f97316",
   descartada: "#ef4444",
   proposta_recusada: "#f43f5e",
@@ -21,9 +23,11 @@ const STATUS_COLORS: Record<string, string> = {
 
 const STATUS_LABELS: Record<string, string> = {
   identificada: "Identificada",
+  analise_interna_realizada: "Análise Interna Realizada",
   informacoes_recebidas: "Informações Recebidas",
   visita_realizada: "Visita Realizada",
   proposta_enviada: "Proposta Enviada",
+  minuta_enviada: "Minuta Enviada",
   protocolo_assinado: "Protocolo Assinado",
   descartada: "Descartada",
   proposta_recusada: "Proposta Recusada",

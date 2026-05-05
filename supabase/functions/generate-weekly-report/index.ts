@@ -120,8 +120,10 @@ async function buildNewBusinessReport(supabase: any): Promise<string> {
   }
 
   const statusLabels: Record<string, string> = {
-    identificada: "Identificada", informacoes_recebidas: "Informações Recebidas",
+    identificada: "Identificada", analise_interna_realizada: "Análise Interna Realizada",
+    informacoes_recebidas: "Informações Recebidas",
     visita_realizada: "Visita Realizada", proposta_enviada: "Proposta Enviada",
+    minuta_enviada: "Minuta Enviada",
     protocolo_assinado: "Protocolo Assinado", descartada: "Descartada",
     proposta_recusada: "Proposta Recusada", negocio_fechado: "Negócio Fechado", standby: "Standby",
   };

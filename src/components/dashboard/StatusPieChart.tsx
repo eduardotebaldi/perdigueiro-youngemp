@@ -8,22 +8,26 @@ interface StatusPieChartProps {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  identificada: "#6366f1",          // indigo
-  informacoes_recebidas: "#8b5cf6", // violet
-  visita_realizada: "#0ea5e9",      // sky
-  proposta_enviada: "#f59e0b",      // amber
-  protocolo_assinado: "#10b981",    // emerald
-  descartada: "#ef4444",            // red
-  proposta_recusada: "#f97316",     // orange
-  negocio_fechado: "#22c55e",       // green
-  standby: "#6b7280",               // gray
+  identificada: "#6366f1",
+  analise_interna_realizada: "#0ea5e9",
+  informacoes_recebidas: "#8b5cf6",
+  visita_realizada: "#14b8a6",
+  proposta_enviada: "#f59e0b",
+  minuta_enviada: "#eab308",
+  protocolo_assinado: "#10b981",
+  descartada: "#ef4444",
+  proposta_recusada: "#f97316",
+  negocio_fechado: "#22c55e",
+  standby: "#6b7280",
 };
 
 const STATUS_LABELS: Record<string, string> = {
   identificada: "Identificada",
+  analise_interna_realizada: "Análise Interna",
   informacoes_recebidas: "Info. Recebidas",
   visita_realizada: "Visita Realizada",
   proposta_enviada: "Proposta Enviada",
+  minuta_enviada: "Minuta Enviada",
   protocolo_assinado: "Protocolo Assinado",
   descartada: "Descartada",
   proposta_recusada: "Proposta Recusada",

@@ -38,9 +38,11 @@ interface GlebaTableProps {
 
 const STATUS_COLORS: Record<string, string> = {
   identificada: "bg-blue-500/10 text-blue-600 border-blue-500/30",
+  analise_interna_realizada: "bg-sky-500/10 text-sky-600 border-sky-500/30",
   informacoes_recebidas: "bg-cyan-500/10 text-cyan-600 border-cyan-500/30",
   visita_realizada: "bg-teal-500/10 text-teal-600 border-teal-500/30",
   proposta_enviada: "bg-amber-500/10 text-amber-600 border-amber-500/30",
+  minuta_enviada: "bg-yellow-500/10 text-yellow-600 border-yellow-500/30",
   protocolo_assinado: "bg-orange-500/10 text-orange-600 border-orange-500/30",
   descartada: "bg-red-500/10 text-red-600 border-red-500/30",
   proposta_recusada: "bg-rose-500/10 text-rose-600 border-rose-500/30",
