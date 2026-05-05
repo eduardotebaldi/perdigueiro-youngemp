@@ -397,11 +397,43 @@ function PesquisaDetail({ pesquisa, onBack }: { pesquisa: PesquisaMercado; onBac
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSubmit} disabled={createTerreno.isPending || updateTerreno.isPending}>
-              {editingId ? "Salvar" : "Adicionar"}
-            </Button>
+          <DialogFooter className="gap-2 sm:justify-between">
+            <div>
+              {editingId && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" type="button">
+                      <Trash2 className="h-4 w-4 mr-1" />Excluir
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Excluir terreno?</AlertDialogTitle>
+                      <AlertDialogDescription>O terreno "{form.nome}" será removido.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={async () => {
+                          try {
+                            await deleteTerreno.mutateAsync(editingId);
+                            toast.success("Terreno removido!");
+                            setDialogOpen(false);
+                          } catch { toast.error("Erro ao remover"); }
+                        }}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >Excluir</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
+              <Button onClick={handleSubmit} disabled={createTerreno.isPending || updateTerreno.isPending}>
+                {editingId ? "Salvar" : "Adicionar"}
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
