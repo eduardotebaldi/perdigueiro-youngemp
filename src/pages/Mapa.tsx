@@ -41,6 +41,16 @@ const SYNC_FUNCTION_URL = "https://vvtympzatclvjaqucebr.supabase.co/functions/v1
 
 export default function Mapa() {
   const { glebas, isLoading, createGleba, refetch } = useGlebas();
+  const { data: pesquisaTerrenosRaw = [] } = useAllPesquisaTerrenos();
+  const pesquisaPins: PesquisaPin[] = pesquisaTerrenosRaw
+    .filter((t) => t.latitude != null && t.longitude != null && t.pesquisa)
+    .map((t) => ({
+      id: t.id, nome: t.nome, preco: t.preco, tamanho_m2: t.tamanho_m2,
+      condicoes_pagamento: t.condicoes_pagamento, tipo_terreno: t.tipo_terreno,
+      observacoes: t.observacoes, url_anuncio: t.url_anuncio, imagem_url: t.imagem_url,
+      latitude: t.latitude as number, longitude: t.longitude as number,
+      pesquisa_nome: t.pesquisa!.nome, pesquisa_data: t.pesquisa!.data_pesquisa,
+    }));
   const [selectedGleba, setSelectedGleba] = useState<Gleba | null>(null);
   const [editingGleba, setEditingGleba] = useState<Gleba | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
