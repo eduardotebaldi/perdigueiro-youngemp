@@ -46,8 +46,25 @@ const STATUS_OUTLINE_COLORS: Record<string, Color> = {
   standby: Color.fromCssColorString("#a855f7"),
 };
 
+export interface PesquisaPin {
+  id: string;
+  nome: string;
+  preco: number | null;
+  tamanho_m2: number | null;
+  condicoes_pagamento: string | null;
+  tipo_terreno: string | null;
+  observacoes: string | null;
+  url_anuncio: string | null;
+  imagem_url: string | null;
+  latitude: number;
+  longitude: number;
+  pesquisa_nome: string;
+  pesquisa_data: string;
+}
+
 interface GlebaMap3DProps {
   glebas: Gleba[];
+  pesquisaTerrenos?: PesquisaPin[];
   onSelectGleba?: (gleba: Gleba) => void;
   selectedGlebaId?: string | null;
   isFullscreen?: boolean;
