@@ -21,8 +21,8 @@ const STATUS_LABELS: Record<string, string> = {
 
 const STATUS_ORDER = [
   "identificada",
-  "analise_interna_realizada",
   "informacoes_recebidas",
+  "analise_interna_realizada",
   "proposta_enviada",
   "minuta_enviada",
   "protocolo_assinado",

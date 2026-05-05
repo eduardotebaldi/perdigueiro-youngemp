@@ -1394,6 +1394,7 @@ export type Database = {
           data_sincronizacao: string | null
           detalhes: Json | null
           id: number
+          resultados: Json | null
           sucesso: boolean | null
           tipo: string | null
           updated_at: string | null
@@ -1403,6 +1404,7 @@ export type Database = {
           data_sincronizacao?: string | null
           detalhes?: Json | null
           id?: number
+          resultados?: Json | null
           sucesso?: boolean | null
           tipo?: string | null
           updated_at?: string | null
@@ -1412,6 +1414,7 @@ export type Database = {
           data_sincronizacao?: string | null
           detalhes?: Json | null
           id?: number
+          resultados?: Json | null
           sucesso?: boolean | null
           tipo?: string | null
           updated_at?: string | null
