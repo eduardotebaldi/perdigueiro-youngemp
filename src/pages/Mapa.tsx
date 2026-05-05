@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useGlebas } from "@/hooks/useGlebas";
-import { GlebaMap3D, parseKmzFile } from "@/components/map/GlebaMap3D";
+import { useAllPesquisaTerrenos } from "@/hooks/usePesquisasMercado";
+import { GlebaMap3D, parseKmzFile, PesquisaPin } from "@/components/map/GlebaMap3D";
 import { GlebaCard } from "@/components/glebas/GlebaCard";
 import { EditGlebaDialog } from "@/components/glebas/EditGlebaDialog";
 import { Tables } from "@/integrations/supabase/types";
