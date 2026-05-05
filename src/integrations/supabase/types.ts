@@ -3928,6 +3928,7 @@ export type Database = {
           condicoes_pagamento: string | null
           created_at: string | null
           id: string
+          imagem_url: string | null
           latitude: number | null
           longitude: number | null
           nome: string
@@ -3943,6 +3944,7 @@ export type Database = {
           condicoes_pagamento?: string | null
           created_at?: string | null
           id?: string
+          imagem_url?: string | null
           latitude?: number | null
           longitude?: number | null
           nome: string
@@ -3958,6 +3960,7 @@ export type Database = {
           condicoes_pagamento?: string | null
           created_at?: string | null
           id?: string
+          imagem_url?: string | null
           latitude?: number | null
           longitude?: number | null
           nome?: string
