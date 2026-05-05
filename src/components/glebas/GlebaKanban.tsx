@@ -94,6 +94,7 @@ function DraggableGlebaCard({ gleba, onViewGleba, showInactiveIcon }: { gleba: G
 }
 
 function KanbanColumn({ status, glebas, onViewGleba, isCollapsed, onToggleCollapse, inactiveGlebaIds }: KanbanColumnProps) {
+  const [descOpen, setDescOpen] = useState(false);
   const { setNodeRef, isOver } = useDroppable({
     id: `column-${status}`,
     data: { status },
