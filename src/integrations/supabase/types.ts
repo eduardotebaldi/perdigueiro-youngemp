@@ -3134,6 +3134,27 @@ export type Database = {
           },
         ]
       }
+      gleba_status_descricoes: {
+        Row: {
+          descricao: string
+          status: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          descricao?: string
+          status: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          descricao?: string
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       glebas: {
         Row: {
           aceita_permuta: Database["public"]["Enums"]["permuta_status"] | null
