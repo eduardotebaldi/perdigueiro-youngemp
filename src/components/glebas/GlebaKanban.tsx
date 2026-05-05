@@ -142,9 +142,17 @@ function KanbanColumn({ status, glebas, onViewGleba, isCollapsed, onToggleCollap
         onClick={onToggleCollapse}
         title="Clique para colapsar"
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 group">
           <ChevronLeft className="h-4 w-4 text-muted-foreground" />
           <h3 className="font-semibold text-sm">{STATUS_LABELS[status]}</h3>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setDescOpen(true); }}
+            className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+            title="Descrição da etapa"
+          >
+            <HelpCircle className="h-3.5 w-3.5" />
+          </button>
         </div>
         <Badge variant="secondary" className={BADGE_COLORS[status]}>
           {glebas.length}
