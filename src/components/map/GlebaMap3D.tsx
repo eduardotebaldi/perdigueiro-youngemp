@@ -140,6 +140,7 @@ function getPolygonCenterDegrees(geojson: any): { lon: number; lat: number } | n
 
 export function GlebaMap3D({
   glebas,
+  pesquisaTerrenos = [],
   onSelectGleba,
   selectedGlebaId,
 }: GlebaMap3DProps) {
