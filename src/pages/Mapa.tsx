@@ -371,9 +371,10 @@ export default function Mapa() {
             <div className="space-y-2">
               {[
                 { status: "identificada", color: "#3b82f6", label: "Identificada" },
+                { status: "analise_interna_realizada", color: "#0ea5e9", label: "Análise Interna" },
                 { status: "informacoes_recebidas", color: "#06b6d4", label: "Info. Recebidas" },
-                { status: "visita_realizada", color: "#14b8a6", label: "Visita Realizada" },
                 { status: "proposta_enviada", color: "#f59e0b", label: "Proposta Enviada" },
+                { status: "minuta_enviada", color: "#eab308", label: "Minuta Enviada" },
                 { status: "protocolo_assinado", color: "#f97316", label: "Protocolo Assinado" },
                 { status: "descartada", color: "#ef4444", label: "Descartada" },
                 { status: "proposta_recusada", color: "#f43f5e", label: "Proposta Recusada" },
