@@ -37,9 +37,11 @@ interface DashboardStats {
 
 const STATUS_LABELS: Record<string, string> = {
   identificada: "Identificada",
+  analise_interna_realizada: "Análise Interna Realizada",
   informacoes_recebidas: "Informações Recebidas",
   visita_realizada: "Visita Realizada",
   proposta_enviada: "Proposta Enviada",
+  minuta_enviada: "Minuta Enviada",
   protocolo_assinado: "Protocolo Assinado",
   descartada: "Descartada",
   proposta_recusada: "Proposta Recusada",
