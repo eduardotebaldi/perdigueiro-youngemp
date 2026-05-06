@@ -3086,6 +3086,243 @@ export type Database = {
           },
         ]
       }
+      frota_abastecimentos: {
+        Row: {
+          created_at: string | null
+          data: string | null
+          id: string
+          litros: number | null
+          placa: string
+          updated_at: string | null
+          valor_total: number | null
+          valor_unitario: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          data?: string | null
+          id?: string
+          litros?: number | null
+          placa: string
+          updated_at?: string | null
+          valor_total?: number | null
+          valor_unitario?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          data?: string | null
+          id?: string
+          litros?: number | null
+          placa?: string
+          updated_at?: string | null
+          valor_total?: number | null
+          valor_unitario?: number | null
+        }
+        Relationships: []
+      }
+      frota_manutencoes: {
+        Row: {
+          created_at: string | null
+          data: string | null
+          descricao: string | null
+          id: string
+          mecanico: string | null
+          placa: string
+          updated_at: string | null
+          valor: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          data?: string | null
+          descricao?: string | null
+          id?: string
+          mecanico?: string | null
+          placa: string
+          updated_at?: string | null
+          valor?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          data?: string | null
+          descricao?: string | null
+          id?: string
+          mecanico?: string | null
+          placa?: string
+          updated_at?: string | null
+          valor?: number | null
+        }
+        Relationships: []
+      }
+      frota_revisoes: {
+        Row: {
+          created_at: string | null
+          data_ultima_manutencao: string | null
+          id: string
+          item_servico: string
+          periodicidade_km: number | null
+          placa: string
+          ultima_manutencao_km: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          data_ultima_manutencao?: string | null
+          id?: string
+          item_servico: string
+          periodicidade_km?: number | null
+          placa: string
+          ultima_manutencao_km?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          data_ultima_manutencao?: string | null
+          id?: string
+          item_servico?: string
+          periodicidade_km?: number | null
+          placa?: string
+          ultima_manutencao_km?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      frota_seguros: {
+        Row: {
+          corretora: string | null
+          created_at: string | null
+          id: string
+          placa: string
+          seguradora: string | null
+          updated_at: string | null
+          url_apolice: string | null
+          valor_seguro: number | null
+          vencimento: string | null
+        }
+        Insert: {
+          corretora?: string | null
+          created_at?: string | null
+          id?: string
+          placa: string
+          seguradora?: string | null
+          updated_at?: string | null
+          url_apolice?: string | null
+          valor_seguro?: number | null
+          vencimento?: string | null
+        }
+        Update: {
+          corretora?: string | null
+          created_at?: string | null
+          id?: string
+          placa?: string
+          seguradora?: string | null
+          updated_at?: string | null
+          url_apolice?: string | null
+          valor_seguro?: number | null
+          vencimento?: string | null
+        }
+        Relationships: []
+      }
+      frota_sinistros: {
+        Row: {
+          bo: string | null
+          created_at: string | null
+          data: string | null
+          descricao: string | null
+          id: string
+          placa: string
+          updated_at: string | null
+          valor: number | null
+        }
+        Insert: {
+          bo?: string | null
+          created_at?: string | null
+          data?: string | null
+          descricao?: string | null
+          id?: string
+          placa: string
+          updated_at?: string | null
+          valor?: number | null
+        }
+        Update: {
+          bo?: string | null
+          created_at?: string | null
+          data?: string | null
+          descricao?: string | null
+          id?: string
+          placa?: string
+          updated_at?: string | null
+          valor?: number | null
+        }
+        Relationships: []
+      }
+      frota_veiculos: {
+        Row: {
+          ano_modelo: string | null
+          created_at: string | null
+          dpvat: number | null
+          id: string
+          ipva: number | null
+          modelo: string | null
+          ordem: number | null
+          placa: string
+          proprietario: string | null
+          renavam: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ano_modelo?: string | null
+          created_at?: string | null
+          dpvat?: number | null
+          id?: string
+          ipva?: number | null
+          modelo?: string | null
+          ordem?: number | null
+          placa: string
+          proprietario?: string | null
+          renavam?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ano_modelo?: string | null
+          created_at?: string | null
+          dpvat?: number | null
+          id?: string
+          ipva?: number | null
+          modelo?: string | null
+          ordem?: number | null
+          placa?: string
+          proprietario?: string | null
+          renavam?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      frota_veiculos_km: {
+        Row: {
+          created_at: string | null
+          data_atualizacao: string | null
+          id: string
+          km_atual: number | null
+          placa: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          data_atualizacao?: string | null
+          id?: string
+          km_atual?: number | null
+          placa: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          data_atualizacao?: string | null
+          id?: string
+          km_atual?: number | null
+          placa?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       gleba_anexos: {
         Row: {
           arquivo: string
